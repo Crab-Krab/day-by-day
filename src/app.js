@@ -13,7 +13,16 @@
     animation.finished.catch(() => {}).then(() => { if (activeMotion.get(element) === animation) activeMotion.delete(element); });
     return animation;
   }
-  function revealView(element, direction = 0) { playMotion(element, [{ opacity: .35, transform: direction ? `translateX(${direction * 9}px)` : 'translateY(7px)' }, { opacity: 1, transform: 'translate(0,0)' }]); }
+  function revealView(element) { playMotion(element, [{ opacity: .35, transform: 'translateY(7px)' }, { opacity: 1, transform: 'translateY(0)' }]); }
+  function fadeDayContent() {
+    const list = $('taskList');
+    // Keep the heading, date buttons, and checklist frame stationary. On rapid clicks,
+    // continue from the current opacity rather than restarting a dim/slide effect.
+    activeMotion.get($('dailyView'))?.cancel();
+    let opacity = .8;
+    if (activeMotion.has(list) && typeof window.getComputedStyle === 'function') opacity = Number(window.getComputedStyle(list).opacity) || .8;
+    playMotion(list, [{ opacity }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
+  }
   function captureTaskPositions() {
     const positions = new Map(); if (!motionEnabled()) return positions;
     for (const container of [$('taskList'), $('routineList')]) for (const row of container.querySelectorAll('.task-row')) {
@@ -141,34 +150,40 @@
   }
   function chooseDate(date) {
     if (!validDate(date)) return;
-    const changed = selected !== date || view !== 'day', direction = view === 'day' && selected !== date ? (date > selected ? 1 : -1) : 0;
+    const previousView = view, changed = selected !== date || view !== 'day';
     selected = date; month = parseDate(date); view = 'day'; render();
-    if (changed) revealView($('dailyView'), direction);
+    if (changed) { if (previousView !== 'day') revealView($('dailyView')); else fadeDayContent(); }
   }
   function renderCalendar() {
     $('monthLabel').textContent = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
     const first = new Date(month.getFullYear(), month.getMonth(), 1, 12), start = monday(first);
-    const grid = $('calendarGrid'); grid.replaceChildren();
+    const grid = $('calendarGrid'), monthKey = `${month.getFullYear()}-${month.getMonth()}`;
+    if (grid.dataset.monthKey !== monthKey) { grid.replaceChildren(); grid.dataset.monthKey = monthKey; }
     for (let i = 0; i < 42; i++) {
       const date = plusDays(start, i), key = dateKey(date), count = tasksOn(key).length;
-      const button = el('button', [date.getMonth() !== month.getMonth() ? 'outside' : '', key === today ? 'today' : '', key === selected ? 'selected' : '', count ? 'has-tasks' : ''].filter(Boolean).join(' '), date.getDate());
+      let button = grid.children[i];
+      if (!button) { button = el('button', '', date.getDate()); grid.append(button); }
+      button.className = [date.getMonth() !== month.getMonth() ? 'outside' : '', key === today ? 'today' : '', key === selected ? 'selected' : '', count ? 'has-tasks' : ''].filter(Boolean).join(' ');
       button.type = 'button'; button.setAttribute('aria-label', `${fmt(key, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}, ${count} task${count === 1 ? '' : 's'}`);
-      if (key === today) button.setAttribute('aria-current', 'date');
-      button.setAttribute('aria-pressed', String(key === selected)); button.onclick = () => chooseDate(key); grid.append(button);
+      button.setAttribute('aria-current', key === today ? 'date' : 'false');
+      button.setAttribute('aria-pressed', String(key === selected)); button.onclick = () => chooseDate(key);
     }
   }
   function renderWeek() {
     const start = monday(parseDate(selected)), end = plusDays(start, 6);
     $('weekLabel').textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
-    $('weekStrip').replaceChildren();
+    const strip = $('weekStrip'), weekKey = dateKey(start);
+    if (strip.dataset.weekKey !== weekKey) { strip.replaceChildren(); strip.dataset.weekKey = weekKey; }
     for (let i = 0; i < 7; i++) {
       const date = plusDays(start, i), key = dateKey(date);
-      const button = el('button', `week-day${key === selected ? ' active' : ''}${key === today ? ' today' : ''}`);
+      let button = strip.children[i];
+      if (!button) { button = el('button', 'week-day'); button.append(el('span', 'weekday', DAYS[date.getDay()].slice(0, 3)), el('span', 'number', date.getDate())); strip.append(button); }
+      button.classList.toggle('active', key === selected); button.classList.toggle('today', key === today);
       button.type = 'button'; button.setAttribute('aria-pressed', String(key === selected)); button.setAttribute('aria-label', fmt(key, { weekday: 'long', month: 'long', day: 'numeric' }));
-      if (key === today) button.setAttribute('aria-current', 'date');
-      button.append(el('span', 'weekday', DAYS[date.getDay()].slice(0, 3)), el('span', 'number', date.getDate()));
-      if (tasksOn(key).length) button.append(el('span', 'day-dot'));
-      button.onclick = () => chooseDate(key); $('weekStrip').append(button);
+      button.setAttribute('aria-current', key === today ? 'date' : 'false');
+      const dot = button.querySelector('.day-dot');
+      if (tasksOn(key).length) { if (!dot) button.append(el('span', 'day-dot')); } else dot?.remove();
+      button.onclick = () => chooseDate(key);
     }
   }
   function makeEmpty(routines = false) {

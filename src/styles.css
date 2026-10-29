@@ -270,8 +270,7 @@ input::placeholder { color: var(--muted); }
 }
 .primary-button:active, .outline-button:active { transform: scale(.98); }
 .icon-button:not(:disabled):active, .check-button:active { transform: scale(.94); }
-.week-day { transition: background-color .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease; }
-@media (hover: hover) { .week-day:not(.active):hover { transform: translateY(-2px); } }
+.week-day { transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease; }
 dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
 dialog.is-closing { pointer-events: none; }
 dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }

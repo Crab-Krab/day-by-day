@@ -98,15 +98,20 @@ async function verifyMotion() {
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
   moving.ids.routinesNav.onclick(); assert.equal(moving.ids.routinesView.hidden,false);
-  moving.ids.weekStrip.children[0].onclick(); moving.ids.weekStrip.children[6].onclick();
+  moving.ids.weekStrip.children[0].onclick();
+  const weekButton=moving.ids.weekStrip.children[1], monthButton=moving.ids.calendarGrid.children[0];
+  weekButton.onclick(); assert.equal(moving.ids.weekStrip.children[1],weekButton); assert.equal(moving.ids.calendarGrid.children[0],monthButton);
+  moving.ids.weekStrip.children[6].onclick();
   assert.equal(moving.ids.dayTitle.textContent,'Sunday.'); assert.equal(moving.ids.routinesView.hidden,true);
-  assert.equal(moving.animations.some(animation=>animation.node===moving.ids.dailyView && animation.cancelled),true);
+  const dayFades=moving.animations.filter(animation=>animation.node===moving.ids.taskList);
+  assert.equal(dayFades.length>=2,true); assert.equal(dayFades.some(animation=>animation.cancelled),true);
+  assert.equal(dayFades.every(animation=>animation.frames.every(frame=>!('transform' in frame))),true);
   moving.ids.addTask.onclick(); moving.ids.taskDialog.dispatch('cancel');
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
   const reduced=boot(new Map(),clock,{motion:true,reducedMotion:true});
   reduced.ids.addTask.onclick(); reduced.ids.cancelDialog.onclick(); reduced.ids.routinesNav.onclick();
   assert.equal(reduced.ids.taskDialog.open,false); assert.equal(reduced.animations.length,0);
-  console.log('Motion passed: animated close, interrupted close/reopen, duplicate-save protection, rapid navigation, Escape, and reduced-motion fallback.');
+  console.log('Motion passed: stationary day navigation, stable calendar buttons, rapid-click fade cancellation, animated dialogs, duplicate-save protection, Escape, and reduced motion.');
 }
 verifyMotion().catch(error=>{console.error(error);process.exitCode=1;});
