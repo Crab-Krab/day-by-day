@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const read = file => fs.readFileSync(path.join(root, 'src', file), 'utf8');
+let html = read('index.html');
+html = html.replace('<link rel="stylesheet" href="styles.css">', () => '<style>' + read('styles.css') + '</style>');
+html = html.replace('<script src="theme.js"></script>', () => '<script>' + read('theme.js').replace(/<\/script/gi, '<\\/script') + '</script>');
+html = html.replace('<script src="app.js" defer></script>', '');
+html = html.replace('</body>', () => '<script>' + read('app.js').replace(/<\/script/gi, '<\\/script') + '</script>\n</body>');
+fs.writeFileSync(path.join(root, 'Day-by-Day.html'), html);
+console.log('Built Day-by-Day.html. Open it directly in your browser.');

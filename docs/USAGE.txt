@@ -1,0 +1,63 @@
+DAY BY DAY
+
+Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
+The downloaded file works without an internet connection or account.
+
+Use the sun/moon button beside Add task to switch between light and dark.
+Your choice is remembered in this browser.
+
+The app opens to today's list. Choose a weekday or a date on the month calendar
+to see another day. On a small screen, use the Calendar button to show the month.
+
+Use + Add task to enter a task, date, and One time or Every week.
+For weekly tasks, select any combination of weekdays under Repeat on.
+Mon-Fri selects the five weekdays; Every day selects all seven days.
+One task can repeat on multiple days and is edited as a single routine.
+Weekly routines begin on their Starting on date. Each scheduled date gets its
+own checkbox. Completing one occurrence does not check off other occurrences.
+Existing single-day tasks and older backups keep their schedules and history.
+Existing tasks remain All day until you assign a specific time.
+One-time tasks appear only on their chosen date. Unfinished tasks stay on that
+date rather than moving automatically to tomorrow.
+
+Use the pencil next to a task to edit or delete it. Deleting a weekly routine
+removes the routine; Undo is available briefly after deletion.
+
+Use the small up/down arrows beside the checkbox to move a task one place in its section.
+The order is saved in this browser and reused on other dates and future repeats.
+Completed tasks stay in their own section. Weekly routines also support ordering.
+
+TASK TIMES AND REMINDERS
+Choose All day for no due time, or Specific time to set a due time.
+For timed tasks, choose any combination of 5, 15, 30, or 60 minutes before due.
+Leave every reminder interval unchecked for a timed task with no reminder.
+Weekly tasks use the same local time and reminder settings on each selected day.
+
+Keep this HTML file open in your browser for reminders. No alert can run after
+the file/tab is closed or while the computer is asleep. Browsers can suspend or
+slow background tabs, so reminder timing is not guaranteed in the background.
+When the app resumes or reopens, missed reminders for tasks due within the last
+24 hours appear in the reminder panel. Multiple missed intervals are combined.
+Completed tasks do not generate reminders. The bell opens active reminders;
+you can dismiss a reminder or jump to that task's day. Later selected intervals
+can remind you again. Reminder history is kept locally to prevent duplicates
+after reloading; backups contain task settings but not the alert history.
+
+Desktop alerts are optional. Use Enable desktop alerts inside the timed-task
+form to request permission. Some browsers or work policies refuse desktop alerts
+for local files. In-app reminders still work, and the tab title shows a count.
+All dates and times use the computer's local timezone.
+
+Tasks and completion history save automatically in the current browser.
+Use the same browser and the same file location or web address each time.
+Browsers keep separate copies. The hosted app and downloaded HTML also keep
+separate copies. A private/incognito window will not keep your tasks after closing.
+Clearing browser data can erase saved tasks. Browser support for saving from a
+local file can vary; the app shows a warning if saving fails.
+
+Use Back up tasks to download a backup, and Restore backup to move that copy
+between browsers or between the hosted and downloaded versions. Restore replaces
+the current tasks and completion history, so make a backup first if needed.
+
+The app uses your device's local date. If it stays open overnight, it updates
+to the new day automatically when you were viewing today.

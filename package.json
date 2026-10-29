@@ -1,0 +1,14 @@
+{
+  "name": "day-by-day",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A standalone browser checklist with weekly routines, task times, and local reminders.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node tests/schedule.test.cjs && node tests/runtime.test.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
