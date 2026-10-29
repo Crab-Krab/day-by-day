@@ -4,9 +4,8 @@ A simple daily checklist that runs locally in your browser. Open **Day-by-Day.ht
 
 ## Download and use
 
-1. On this repository's main page, choose **Code → Download ZIP**.
-2. Extract the ZIP.
-3. Open **Day-by-Day.html** in Chrome, Edge, Firefox, or another modern browser.
+1. Download the latest working [Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html), or choose a published version under **Releases**.
+2. Open **Day-by-Day.html** in Chrome, Edge, Firefox, or another modern browser.
 
 Only the HTML file needs to be opened. The other files are for maintaining the app.
 
@@ -15,6 +14,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - Opens to today's checklist, with weekday navigation and a month calendar.
 - One-time tasks or weekly routines on any combination of days, with Mon–Fri and Every day shortcuts.
 - Optional task times, plus an All day option.
+- Optional descriptions for details, multiline notes, and clickable web links; expand **Notes & links** below a task to read them.
 - Reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected.
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
 - Up/down arrows beside each checkbox to save the task order.
@@ -61,4 +61,4 @@ Edit the source files, run the checks, rebuild, and include the updated **Day-by
 
 **Git** keeps a history of changes to files. A **repository** is the project folder and that history. A **commit** is a named checkpoint. **GitHub** stores the repository online so you can return to earlier versions and continue developing the app.
 
-The repository is private. Creating it does not publish a website or sync the tasks saved in your browser.
+The repository and its downloads are public, so downloading the app does not require signing in. Your saved tasks and descriptions stay in your browser; they are not part of this repository. Downloading the app does not publish a website or sync your tasks.

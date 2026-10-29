@@ -10,7 +10,10 @@
     activeMotion.get(element)?.cancel();
     const animation = element.animate(frames, { duration: 210, easing: 'cubic-bezier(.2,.7,.2,1)', ...options });
     activeMotion.set(element, animation);
-    animation.finished.catch(() => {}).then(() => { if (activeMotion.get(element) === animation) activeMotion.delete(element); });
+    // Release finished effects as well as their tracking entry. In particular, avoid
+    // leaving transformed dialog/row layers around after their visual motion ends.
+    const forget = () => { if (activeMotion.get(element) === animation) activeMotion.delete(element); };
+    animation.finished.then(() => { forget(); animation.cancel(); }, forget);
     return animation;
   }
   function revealView(element) { playMotion(element, [{ opacity: .35, transform: 'translateY(7px)' }, { opacity: 1, transform: 'translateY(0)' }]); }
@@ -45,7 +48,7 @@
   function closeTaskDialog() {
     const dialog = $('taskDialog'); if (!dialog.open || dialogClosing) return;
     dialogClosing = true; dialog.classList.toggle('is-closing', true);
-    const animation = playMotion(dialog, [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(5px) scale(.985)' }], { duration: 130, easing: 'ease-in' });
+    const animation = playMotion(dialog, [{ opacity: 1 }, { opacity: 0 }], { duration: 130, easing: 'ease-in' });
     if (!animation) { dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false); return; }
     dialogCloseMotion = animation;
     animation.finished.catch(() => {}).then(() => {
@@ -74,6 +77,22 @@
     return ordered;
   }
   function validTime(time) { return typeof time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
+  function descriptionParts(description) {
+    const parts = []; let cursor = 0;
+    for (const match of description.matchAll(/https?:\/\/[^\s<>"']+/gi)) {
+      let link = match[0].replace(/[.,!?;:]+$/, '');
+      // Keep balanced URL parentheses, but leave prose punctuation outside the link.
+      while (link.endsWith(')') && (link.match(/\)/g) || []).length > (link.match(/\(/g) || []).length) link = link.slice(0, -1);
+      try {
+        const url = new URL(link);
+        if (!['http:', 'https:'].includes(url.protocol)) continue;
+        if (match.index > cursor) parts.push({ text: description.slice(cursor, match.index) });
+        parts.push({ text: link, href: url.href }); cursor = match.index + link.length;
+      } catch (_) { /* Invalid URLs remain plain text. */ }
+    }
+    if (cursor < description.length) parts.push({ text: description.slice(cursor) });
+    return parts;
+  }
   function dueTime(date, time) { const due = parseDate(date), [hour, minute] = time.split(':').map(Number); due.setHours(hour, minute, 0, 0); return due.getTime(); }
   function formatTime(time) { const date = parseDate('2026-01-01'), [hour, minute] = time.split(':').map(Number); date.setHours(hour, minute); return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
   function reminderKey(task, date, offset) { return `${task.id}|${date}|${task.time}|${offset}`; }
@@ -98,16 +117,18 @@
     return results.sort((a, b) => a.dueAt - b.dueAt);
   }
   function validate(value) {
-    if (!value || ![1, 2, 3].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
+    if (!value || ![1, 2, 3, 4].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
     const ids = new Set();
     const tasks = value.tasks.map(t => {
       if (!t || typeof t.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.id) || ids.has(t.id) || typeof t.title !== 'string' || !t.title.trim() || t.title.length > 200 || !['once', 'weekly'].includes(t.kind)) throw new Error('Invalid task in backup.');
       ids.add(t.id);
+      const description = t.description === undefined ? '' : t.description;
+      if (typeof description !== 'string' || description.length > 5000) throw new Error('Invalid task description. Use up to 5,000 characters.');
       const time = t.time == null || t.time === '' ? null : t.time;
       if (time !== null && !validTime(time)) throw new Error('Invalid task time.');
       const rawReminders = t.reminders === undefined ? [] : t.reminders;
       if (!Array.isArray(rawReminders) || rawReminders.length > 4 || rawReminders.some(offset => ![5, 15, 30, 60].includes(offset))) throw new Error('Invalid reminder intervals.');
-      const timing = { time, reminders: time === null ? [] : [...new Set(rawReminders)].sort((a, b) => b - a) };
+      const timing = { description, time, reminders: time === null ? [] : [...new Set(rawReminders)].sort((a, b) => b - a) };
       if (t.kind === 'once') { if (!validDate(t.date)) throw new Error('Invalid task date.'); return { id: t.id, title: t.title.trim(), kind: t.kind, date: t.date, ...timing }; }
       // Accept original single-day tasks and backups without changing their IDs or completion history.
       const days = t.weekdays === undefined ? [t.weekday] : t.weekdays;
@@ -120,14 +141,15 @@
       if (!validDate(date) || !Array.isArray(entries) || entries.length > 20000 || entries.some(id => typeof id !== 'string')) throw new Error('Invalid completion history.');
       completed[date] = [...new Set(entries.filter(id => ids.has(id)))];
     }
-    return { version: 3, tasks, completed };
+    return { version: 4, tasks, completed };
   }
-  const empty = () => ({ version: 3, tasks: [], completed: {} });
+  const empty = () => ({ version: 4, tasks: [], completed: {} });
   let data = empty(), persistent = true;
   function storageError(message) { persistent = false; $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Not saved · back up your tasks'; }
   try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
   catch (_) { storageError('Saved tasks could not be loaded. Changes will last only for this session. Back up your tasks before closing, or restore a valid backup.'); }
   let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null;
+  const expandedDescriptions = new Set();
   let toastTimer, undoAction;
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
@@ -206,6 +228,17 @@
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
     heading.append(name, time); copy.append(heading, meta);
     if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
+    if (task.description) {
+      const details = el('details', 'task-description'), summary = el('summary', '', 'Notes & links'), body = el('div', 'description-body');
+      const expansionKey = `${routine ? 'routine' : selected}:${task.id}`;
+      details.open = expandedDescriptions.has(expansionKey);
+      details.addEventListener('toggle', () => { if (details.open) expandedDescriptions.add(expansionKey); else expandedDescriptions.delete(expansionKey); });
+      for (const part of descriptionParts(task.description)) {
+        if (part.href) { const link = el('a', '', part.text); link.href = part.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; body.append(link); }
+        else body.append(document.createTextNode(part.text));
+      }
+      details.append(summary, body); copy.append(details);
+    }
     row.append(copy);
     const actions = el('div', 'task-actions'), ordering = el('div', 'task-order'), position = peers.findIndex(peer => peer.id === task.id);
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
@@ -273,7 +306,7 @@
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'Delete routine' : 'Delete task';
-    $('taskTitle').value = task?.title || ''; $('taskForm').elements.kind.value = task?.kind || kind;
+    $('taskTitle').value = task?.title || ''; $('taskDescription').value = task?.description || ''; $('taskForm').elements.kind.value = task?.kind || kind;
     const date = task ? task.kind === 'weekly' ? task.startDate : task.date : selected;
     $('taskDate').value = date; $('taskDay').value = parseDate(date).getDay();
     selectWeekdays(task?.kind === 'weekly' ? weekdaysOf(task) : [parseDate(date).getDay()]);
@@ -281,13 +314,14 @@
     reminderInputs.forEach(input => { input.checked = (task?.reminders || []).includes(Number(input.value)); });
     updateTimingFields();
     updateHint(); $('taskDialog').showModal();
-    playMotion($('taskDialog'), [{ opacity: 0, transform: 'translateY(10px) scale(.975)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 200 });
+    playMotion($('taskDialog'), [{ opacity: 0 }, { opacity: 1 }], { duration: 180 });
     $('taskTitle').focus();
   }
   $('taskForm').addEventListener('submit', event => {
-    event.preventDefault(); const title = $('taskTitle').value.trim(), kind = $('taskForm').elements.kind.value, date = $('taskDate').value;
+    event.preventDefault(); const title = $('taskTitle').value.trim(), description = $('taskDescription').value.trim(), kind = $('taskForm').elements.kind.value, date = $('taskDate').value;
     if (dialogClosing) return;
     if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
+    if (description.length > 5000) { $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
     if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
     const weekdays = selectedWeekdays();
     if (kind === 'weekly' && !weekdays.length) { $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
@@ -295,7 +329,7 @@
     if (time !== null && !validTime(time)) { $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     const id = editingId || (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`);
-    const task = { id, title, kind, time, reminders, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
+    const task = { id, title, description, kind, time, reminders, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
     const wasEditing = Boolean(editingId); if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? task : t); else data.tasks.push(task);
     closeTaskDialog(); if (!wasEditing) { let first = parseDate(date); if (kind === 'weekly') { while (!weekdays.includes(first.getDay())) first = plusDays(first, 1); } selected = dateKey(first); month = first; view = 'day'; } save(); notify(wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
   });

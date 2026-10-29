@@ -27,6 +27,13 @@ date rather than moving automatically to tomorrow.
 Use the pencil next to a task to edit or delete it. Deleting a weekly routine
 removes the routine; Undo is available briefly after deletion.
 
+Add an optional Description when creating or editing a task. Use it for details,
+multiline notes, and web links (starting with https:// or http://), up to 5,000
+characters. Expand Notes & links below the task to read them; web links open in
+a new tab. Descriptions are shared across a routine's scheduled days, saved in
+this browser, and included in backups. Clear the Description field to remove it.
+Older tasks and backups load with empty descriptions.
+
 Use the small up/down arrows beside the checkbox to move a task one place in its section.
 The order is saved in this browser and reused on other dates and future repeats.
 Completed tasks stay in their own section. Weekly routines also support ordering.

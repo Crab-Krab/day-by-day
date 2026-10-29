@@ -63,12 +63,13 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-size: 16px; line-height: 1.5; }
-button, input, select { font: inherit; }
-button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button svg, button svg * { pointer-events: none; }
 button { cursor: pointer; color: inherit; }
 button:disabled { cursor: default; }
 button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
-input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 [hidden] { display: none !important; }
@@ -167,6 +168,13 @@ h1 span { color: var(--muted); }
 .check-button svg { width: 20px; height: 20px; stroke-width: 2; color: white; }
 .check-button[aria-pressed=true] { background: var(--green); border-color: var(--green); }
 .task-copy { flex: 1; min-width: 0; }
+.task-description { margin-top: 12px; color: var(--secondary); font-size: 14px; }
+.task-description summary { width: fit-content; cursor: pointer; padding: 4px 0; font-size: 13px; }
+.task-description summary:hover { color: var(--ink); }
+.task-description summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+.description-body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; margin-top: 7px; }
+.description-body a { color: var(--active-ink); text-decoration: underline; text-underline-offset: 3px; }
+.description-body a:hover { color: var(--ink); }
 .task-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 10px; margin-bottom: 6px; }
 .task-heading .task-name { margin: 0; }
 .time-badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--subtle); color: var(--secondary); font-size: 11px; white-space: nowrap; }
@@ -177,7 +185,7 @@ h1 span { color: var(--muted); }
 .task-meta svg { width: 14px; height: 14px; }
 .task-row.done { background: var(--done); }
 .task-row.done .task-name { text-decoration: line-through; color: var(--done-ink); }
-.task-row .edit-task { color: var(--secondary); flex-shrink: 0; width: 40px; height: 40px; }
+.task-row .edit-task { color: var(--secondary); flex-shrink: 0; width: 40px; height: 40px; touch-action: manipulation; }
 .task-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .task-order { display: grid; gap: 2px; flex-shrink: 0; }
 .task-order .move-task { width: 32px; height: 28px; padding: 0; border-radius: 6px; }
@@ -207,15 +215,19 @@ h1 span { color: var(--muted); }
 .warning { margin: 20px 48px 0; padding: 16px; background: #fff2df; color: #815218; border-radius: 8px; font-size: 14px; }
 [data-theme=dark] .warning { background: #423722; color: #f1d3a1; }
 dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; max-width: 540px; max-height: calc(100dvh - 32px); width: calc(100% - 32px); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #10231940; }
-dialog::backdrop { background: #17291f66; backdrop-filter: blur(4px); }
+dialog::backdrop { background: #17291f66; }
 [data-theme=dark] dialog::backdrop { background: #070d0a99; }
 #taskForm { padding: 32px; }
 .dialog-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
 .dialog-heading .eyebrow { font-size: 10px; margin-bottom: 8px; }
 .dialog-heading h2 { font-family: Georgia, serif; font-size: 34px; font-weight: 400; margin: 0; letter-spacing: -.7px; }
 form label, form legend { display: block; font-size: 14px; font-weight: 600; margin: 0 0 10px; color: var(--secondary); }
-input:not([type=radio]):not([type=checkbox]), select { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--field-border); background: var(--field); border-radius: 8px; font-size: 16px; color: var(--ink); min-width: 0; }
-input::placeholder { color: var(--muted); }
+input:not([type=radio]):not([type=checkbox]), select, textarea { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--field-border); background: var(--field); border-radius: 8px; font-size: 16px; color: var(--ink); min-width: 0; }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh; }
+.description-field { margin-top: 22px; }
+.optional-label { font-weight: 400; color: var(--muted); }
+.field-hint { margin: 7px 0 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
 .frequency { border: 0; padding: 0; margin: 26px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .frequency legend { margin-bottom: 12px; }
 .frequency label { margin: 0; position: relative; }
@@ -469,6 +481,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   <dialog id="taskDialog" aria-labelledby="dialogTitle">
     <form id="taskForm"><div class="dialog-heading"><div><p class="eyebrow">MAKE A LITTLE PLAN</p><h2 id="dialogTitle">Add a task</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
       <label for="taskTitle">What would you like to do?</label><input id="taskTitle" name="title" placeholder="e.g. Water the plants" maxlength="200" required autocomplete="off">
+      <div class="description-field"><label for="taskDescription">Description <span class="optional-label">(optional)</span></label><textarea id="taskDescription" name="description" rows="4" maxlength="5000" placeholder="Add details, notes, or https:// links…" aria-describedby="descriptionHint"></textarea><p class="field-hint" id="descriptionHint">Up to 5,000 characters. Web links become clickable in your checklist.</p></div>
       <fieldset class="frequency"><legend>How often?</legend><label><input type="radio" name="kind" value="once" checked><span><svg><use href="#i-calendar"/></svg>One time</span></label><label><input type="radio" name="kind" value="weekly"><span><svg><use href="#i-repeat"/></svg>Every week</span></label></fieldset>
       <fieldset id="weeklyDays" class="weekly-days" hidden><legend>Repeat on</legend><div class="day-presets"><button type="button" id="workdaysPreset">Mon–Fri</button><button type="button" id="everydayPreset">Every day</button></div><div class="weekday-picker"><label><input type="checkbox" name="weekdays" value="1" aria-label="Monday"><span>Mon</span></label><label><input type="checkbox" name="weekdays" value="2" aria-label="Tuesday"><span>Tue</span></label><label><input type="checkbox" name="weekdays" value="3" aria-label="Wednesday"><span>Wed</span></label><label><input type="checkbox" name="weekdays" value="4" aria-label="Thursday"><span>Thu</span></label><label><input type="checkbox" name="weekdays" value="5" aria-label="Friday"><span>Fri</span></label><label><input type="checkbox" name="weekdays" value="6" aria-label="Saturday"><span>Sat</span></label><label><input type="checkbox" name="weekdays" value="0" aria-label="Sunday"><span>Sun</span></label></div></fieldset>
       <div class="form-row" id="scheduleDateRow"><div id="onceDayField"><label for="taskDay">Day of the week</label><select id="taskDay"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></div><div><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31"></div></div>
@@ -493,7 +506,10 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     activeMotion.get(element)?.cancel();
     const animation = element.animate(frames, { duration: 210, easing: 'cubic-bezier(.2,.7,.2,1)', ...options });
     activeMotion.set(element, animation);
-    animation.finished.catch(() => {}).then(() => { if (activeMotion.get(element) === animation) activeMotion.delete(element); });
+    // Release finished effects as well as their tracking entry. In particular, avoid
+    // leaving transformed dialog/row layers around after their visual motion ends.
+    const forget = () => { if (activeMotion.get(element) === animation) activeMotion.delete(element); };
+    animation.finished.then(() => { forget(); animation.cancel(); }, forget);
     return animation;
   }
   function revealView(element) { playMotion(element, [{ opacity: .35, transform: 'translateY(7px)' }, { opacity: 1, transform: 'translateY(0)' }]); }
@@ -528,7 +544,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   function closeTaskDialog() {
     const dialog = $('taskDialog'); if (!dialog.open || dialogClosing) return;
     dialogClosing = true; dialog.classList.toggle('is-closing', true);
-    const animation = playMotion(dialog, [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(5px) scale(.985)' }], { duration: 130, easing: 'ease-in' });
+    const animation = playMotion(dialog, [{ opacity: 1 }, { opacity: 0 }], { duration: 130, easing: 'ease-in' });
     if (!animation) { dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false); return; }
     dialogCloseMotion = animation;
     animation.finished.catch(() => {}).then(() => {
@@ -557,6 +573,22 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     return ordered;
   }
   function validTime(time) { return typeof time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
+  function descriptionParts(description) {
+    const parts = []; let cursor = 0;
+    for (const match of description.matchAll(/https?:\/\/[^\s<>"']+/gi)) {
+      let link = match[0].replace(/[.,!?;:]+$/, '');
+      // Keep balanced URL parentheses, but leave prose punctuation outside the link.
+      while (link.endsWith(')') && (link.match(/\)/g) || []).length > (link.match(/\(/g) || []).length) link = link.slice(0, -1);
+      try {
+        const url = new URL(link);
+        if (!['http:', 'https:'].includes(url.protocol)) continue;
+        if (match.index > cursor) parts.push({ text: description.slice(cursor, match.index) });
+        parts.push({ text: link, href: url.href }); cursor = match.index + link.length;
+      } catch (_) { /* Invalid URLs remain plain text. */ }
+    }
+    if (cursor < description.length) parts.push({ text: description.slice(cursor) });
+    return parts;
+  }
   function dueTime(date, time) { const due = parseDate(date), [hour, minute] = time.split(':').map(Number); due.setHours(hour, minute, 0, 0); return due.getTime(); }
   function formatTime(time) { const date = parseDate('2026-01-01'), [hour, minute] = time.split(':').map(Number); date.setHours(hour, minute); return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
   function reminderKey(task, date, offset) { return `${task.id}|${date}|${task.time}|${offset}`; }
@@ -581,16 +613,18 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     return results.sort((a, b) => a.dueAt - b.dueAt);
   }
   function validate(value) {
-    if (!value || ![1, 2, 3].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
+    if (!value || ![1, 2, 3, 4].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
     const ids = new Set();
     const tasks = value.tasks.map(t => {
       if (!t || typeof t.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.id) || ids.has(t.id) || typeof t.title !== 'string' || !t.title.trim() || t.title.length > 200 || !['once', 'weekly'].includes(t.kind)) throw new Error('Invalid task in backup.');
       ids.add(t.id);
+      const description = t.description === undefined ? '' : t.description;
+      if (typeof description !== 'string' || description.length > 5000) throw new Error('Invalid task description. Use up to 5,000 characters.');
       const time = t.time == null || t.time === '' ? null : t.time;
       if (time !== null && !validTime(time)) throw new Error('Invalid task time.');
       const rawReminders = t.reminders === undefined ? [] : t.reminders;
       if (!Array.isArray(rawReminders) || rawReminders.length > 4 || rawReminders.some(offset => ![5, 15, 30, 60].includes(offset))) throw new Error('Invalid reminder intervals.');
-      const timing = { time, reminders: time === null ? [] : [...new Set(rawReminders)].sort((a, b) => b - a) };
+      const timing = { description, time, reminders: time === null ? [] : [...new Set(rawReminders)].sort((a, b) => b - a) };
       if (t.kind === 'once') { if (!validDate(t.date)) throw new Error('Invalid task date.'); return { id: t.id, title: t.title.trim(), kind: t.kind, date: t.date, ...timing }; }
       // Accept original single-day tasks and backups without changing their IDs or completion history.
       const days = t.weekdays === undefined ? [t.weekday] : t.weekdays;
@@ -603,14 +637,15 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       if (!validDate(date) || !Array.isArray(entries) || entries.length > 20000 || entries.some(id => typeof id !== 'string')) throw new Error('Invalid completion history.');
       completed[date] = [...new Set(entries.filter(id => ids.has(id)))];
     }
-    return { version: 3, tasks, completed };
+    return { version: 4, tasks, completed };
   }
-  const empty = () => ({ version: 3, tasks: [], completed: {} });
+  const empty = () => ({ version: 4, tasks: [], completed: {} });
   let data = empty(), persistent = true;
   function storageError(message) { persistent = false; $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Not saved · back up your tasks'; }
   try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
   catch (_) { storageError('Saved tasks could not be loaded. Changes will last only for this session. Back up your tasks before closing, or restore a valid backup.'); }
   let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null;
+  const expandedDescriptions = new Set();
   let toastTimer, undoAction;
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
@@ -689,6 +724,17 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
     heading.append(name, time); copy.append(heading, meta);
     if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
+    if (task.description) {
+      const details = el('details', 'task-description'), summary = el('summary', '', 'Notes & links'), body = el('div', 'description-body');
+      const expansionKey = `${routine ? 'routine' : selected}:${task.id}`;
+      details.open = expandedDescriptions.has(expansionKey);
+      details.addEventListener('toggle', () => { if (details.open) expandedDescriptions.add(expansionKey); else expandedDescriptions.delete(expansionKey); });
+      for (const part of descriptionParts(task.description)) {
+        if (part.href) { const link = el('a', '', part.text); link.href = part.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; body.append(link); }
+        else body.append(document.createTextNode(part.text));
+      }
+      details.append(summary, body); copy.append(details);
+    }
     row.append(copy);
     const actions = el('div', 'task-actions'), ordering = el('div', 'task-order'), position = peers.findIndex(peer => peer.id === task.id);
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
@@ -756,7 +802,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'Delete routine' : 'Delete task';
-    $('taskTitle').value = task?.title || ''; $('taskForm').elements.kind.value = task?.kind || kind;
+    $('taskTitle').value = task?.title || ''; $('taskDescription').value = task?.description || ''; $('taskForm').elements.kind.value = task?.kind || kind;
     const date = task ? task.kind === 'weekly' ? task.startDate : task.date : selected;
     $('taskDate').value = date; $('taskDay').value = parseDate(date).getDay();
     selectWeekdays(task?.kind === 'weekly' ? weekdaysOf(task) : [parseDate(date).getDay()]);
@@ -764,13 +810,14 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     reminderInputs.forEach(input => { input.checked = (task?.reminders || []).includes(Number(input.value)); });
     updateTimingFields();
     updateHint(); $('taskDialog').showModal();
-    playMotion($('taskDialog'), [{ opacity: 0, transform: 'translateY(10px) scale(.975)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 200 });
+    playMotion($('taskDialog'), [{ opacity: 0 }, { opacity: 1 }], { duration: 180 });
     $('taskTitle').focus();
   }
   $('taskForm').addEventListener('submit', event => {
-    event.preventDefault(); const title = $('taskTitle').value.trim(), kind = $('taskForm').elements.kind.value, date = $('taskDate').value;
+    event.preventDefault(); const title = $('taskTitle').value.trim(), description = $('taskDescription').value.trim(), kind = $('taskForm').elements.kind.value, date = $('taskDate').value;
     if (dialogClosing) return;
     if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
+    if (description.length > 5000) { $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
     if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
     const weekdays = selectedWeekdays();
     if (kind === 'weekly' && !weekdays.length) { $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
@@ -778,7 +825,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     if (time !== null && !validTime(time)) { $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     const id = editingId || (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`);
-    const task = { id, title, kind, time, reminders, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
+    const task = { id, title, description, kind, time, reminders, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
     const wasEditing = Boolean(editingId); if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? task : t); else data.tasks.push(task);
     closeTaskDialog(); if (!wasEditing) { let first = parseDate(date); if (kind === 'weekly') { while (!weekdays.includes(first.getDay())) first = plusDays(first, 1); } selected = dateKey(first); month = first; view = 'day'; } save(); notify(wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
   });

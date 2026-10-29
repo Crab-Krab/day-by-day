@@ -38,7 +38,7 @@ function boot(storage, initialClock, options = {}) {
     animations.push(animation); return animation;
   };
   for (const match of html.matchAll(/<(\w+)\b([^>]*\bid="([^"]+)"[^>]*)>/g)) { const node = new Node(match[1]); node.id = match[3]; node.hidden = /\bhidden\b/.test(match[2]); ids[node.id] = node; }
-  for (const match of html.matchAll(/<input\b([^>]*)>/g)) {
+  for (const match of html.matchAll(/<(?:input|textarea)\b([^>]*)>/g)) {
     const attrs = match[1], id = attrs.match(/\bid="([^"]*)"/)?.[1], node = ids[id] || new Node('input');
     node.name = attrs.match(/\bname="([^"]*)"/)?.[1]; node.type = attrs.match(/\btype="([^"]*)"/)?.[1]; node.value = attrs.match(/\bvalue="([^"]*)"/)?.[1] || ''; node.initialValue = node.value; node.checked = /\bchecked\b/.test(attrs); node.initialChecked = node.checked; inputs.push(node);
   }
@@ -66,7 +66,7 @@ app.ids.taskTime.value = '10:00';
 app.inputs.find(input=>input.name==='reminders' && input.value==='15').checked = true;
 app.ids.taskForm.dispatch('submit');
 let state = app.state();
-assert.equal(state.version,3); assert.equal(state.tasks[0].time,null);
+assert.equal(state.version,4); assert.equal(state.tasks[0].time,null);
 assert.equal(state.tasks[1].time,'10:00'); assert.deepEqual(state.tasks[1].reminders,[15]);
 assert.equal(app.ids.reminderPanel.hidden,false); assert.match(app.ids.reminderAlerts.textContent,/Timed reminder check/);
 assert.equal(JSON.parse(storage.get('day-by-day.reminders.v1')).alerts.length,1);
@@ -90,12 +90,27 @@ async function verifyMotion() {
   moving.ids.cancelDialog.onclick(); assert.equal(moving.ids.taskDialog.open,true);
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
+  assert.equal(moving.animations.every(animation=>animation.node!==moving.ids.taskDialog || animation.cancelled),true);
+  assert.equal(moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).every(animation=>animation.frames.every(frame=>!('transform' in frame))),true);
   moving.ids.addTask.onclick(); moving.ids.cancelDialog.onclick(); moving.ids.addTask.onclick();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,true);
   moving.ids.taskTitle.value='Save during transition';
   moving.ids.taskForm.dispatch('submit'); moving.ids.taskForm.dispatch('submit');
   assert.equal(moving.state().tasks.length,1);
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
+  await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
+  // Simulate a working session with reminders ticking and repeated edit cycles.
+  for (let cycle=0;cycle<12;cycle++) {
+    moving.clock(clock+cycle*60000); moving.tick();
+    moving.ids.taskList.querySelector('.edit-task').onclick(); assert.equal(moving.ids.taskDialog.open,true);
+    moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
+    await new Promise(resolve=>setImmediate(resolve));
+    moving.ids.cancelDialog.onclick(); moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
+    await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
+  }
+  moving.ids.taskList.querySelector('.check-button').onclick();
+  moving.ids.taskList.querySelector('.edit-task').onclick(); assert.equal(moving.ids.taskDialog.open,true);
+  moving.ids.cancelDialog.onclick(); moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
   moving.ids.routinesNav.onclick(); assert.equal(moving.ids.routinesView.hidden,false);
   moving.ids.weekStrip.children[0].onclick();
@@ -115,3 +130,31 @@ async function verifyMotion() {
   console.log('Motion passed: stationary day navigation, stable calendar buttons, rapid-click fade cancellation, animated dialogs, duplicate-save protection, Escape, and reduced motion.');
 }
 verifyMotion().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyDescriptions() {
+  const notesApp = boot(new Map(),clock), notes='Check the queue.\nhttps://example.com/guide\n<script>alert(1)</script> javascript:alert(2)';
+  notesApp.ids.addTask.onclick(); notesApp.ids.taskTitle.value='Opening checks'; notesApp.ids.taskDescription.value=notes;
+  notesApp.ids.taskForm.elements.kind.value='weekly'; notesApp.ids.workdaysPreset.onclick(); notesApp.ids.taskForm.dispatch('submit');
+  const id=notesApp.state().tasks[0].id;
+  assert.equal(notesApp.state().tasks[0].description,notes); assert.equal(notesApp.state().tasks[0].weekdays.length,5);
+  let row=notesApp.ids.taskList.querySelector('.task-row'), details=row.querySelector('details'), body=row.querySelector('.description-body');
+  assert.equal(details.open,false); assert.equal(body.textContent,notes); assert.equal(body.querySelector('script'),null);
+  const link=body.querySelector('a'); assert.equal(link.href,'https://example.com/guide'); assert.equal(link.target,'_blank'); assert.equal(link.rel,'noopener noreferrer');
+  details.open=true; details.dispatch('toggle'); row.querySelector('.check-button').onclick();
+  assert.equal(notesApp.ids.taskList.querySelector('details').open,true);
+  notesApp.ids.taskList.querySelector('.edit-task').onclick(); assert.equal(notesApp.ids.taskDescription.value,notes);
+  notesApp.ids.taskDescription.value='Updated details'; notesApp.ids.taskForm.dispatch('submit');
+  assert.equal(notesApp.state().completed['2026-10-28'].includes(id),true);
+  const reload=boot(notesApp.storage,clock); assert.equal(reload.ids.taskList.querySelector('.description-body').textContent,'Updated details');
+  reload.ids.nextWeek.onclick(); assert.equal(reload.ids.taskList.querySelector('.description-body').textContent,'Updated details');
+  assert.equal(reload.ids.taskList.querySelector('.check-button').getAttribute('aria-pressed'),'false');
+  reload.ids.routinesNav.onclick(); assert.equal(reload.ids.routineList.querySelector('.description-body').textContent,'Updated details');
+  reload.ids.routineList.querySelector('.edit-task').onclick(); reload.ids.taskDescription.value=''; reload.ids.taskForm.dispatch('submit');
+  assert.equal(reload.state().tasks[0].description,''); assert.equal(reload.ids.routineList.querySelector('details'),null);
+  reload.ids.addTask.onclick(); assert.equal(reload.ids.taskDescription.value,''); reload.ids.cancelDialog.onclick();
+  reload.ids.restoreFile.files=[{size:200,text:async()=>JSON.stringify({version:4,tasks:[{...reload.state().tasks[0],description:notes}],completed:{}})}];
+  await reload.ids.restoreFile.onchange(); assert.equal(reload.state().tasks[0].description,notes);
+  reload.ids.routineList.querySelector('.edit-task').onclick(); reload.ids.taskDescription.value='x'.repeat(5001); reload.ids.taskForm.dispatch('submit');
+  assert.equal(reload.ids.taskDialog.open,true); assert.equal(reload.state().tasks[0].description,notes); assert.match(reload.ids.formError.textContent,/description/);
+  console.log('Description runtime passed: create/edit/clear, safe links and text, expansion after completion, recurring occurrences, reload, restore, and oversized input.');
+}
+verifyDescriptions().catch(error=>{console.error(error);process.exitCode=1;});

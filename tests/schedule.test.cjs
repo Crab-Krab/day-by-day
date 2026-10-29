@@ -4,10 +4,10 @@ const assert = require('node:assert/strict');
 const source = fs.readFileSync('src/app.js', 'utf8');
 const start = source.indexOf('  function dateKey');
 const end = source.indexOf('  const empty =');
-const context = { Date, Set, Error, DAYS: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
+const context = { Date, Set, Error, URL, DAYS: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
 vm.createContext(context);
-vm.runInContext(source.slice(start, end) + ';this.api = {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate};', context);
-const {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate} = context.api;
+vm.runInContext(source.slice(start, end) + ';this.api = {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts};', context);
+const {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts} = context.api;
 assert.equal(dateKey(monday(parseDate('2026-11-01'))), '2026-10-26');
 assert.equal(dateKey(plusDays(parseDate('2026-11-01'), 1)), '2026-11-02');
 assert.equal(dateKey(plusDays(parseDate('2026-03-08'), 1)), '2026-03-09');
@@ -25,7 +25,8 @@ assert.equal(scheduled(once, '2026-11-04'), false);
 const state = validate({version:1, tasks:[weekly, once], completed:{'2026-10-28':['routine']}});
 const roundtrip = validate(JSON.parse(JSON.stringify(state)));
 assert.equal(roundtrip.completed['2026-10-28'].includes('routine'), true);
-assert.equal(roundtrip.version, 3);
+assert.equal(roundtrip.version, 4);
+assert.equal(roundtrip.tasks[0].description, '');
 assert.equal(roundtrip.tasks[0].time, null);
 assert.equal(roundtrip.tasks[0].reminders.length, 0);
 assert.equal(roundtrip.tasks[0].id, 'routine');
@@ -92,3 +93,19 @@ assert.equal(validTime('00:00'),true); assert.equal(validTime('23:59'),true);
 assert.equal(new Date(dueTime('2026-03-08','09:00')).getHours(),9);
 assert.equal(new Date(dueTime('2026-11-01','09:00')).getHours(),9);
 console.log('Passed: all-day migration, time validation, reminder thresholds and suppression, delayed catch-up, midnight reminders, next-day recurrence, backup roundtrip, ordering, completion history, and calendar boundaries.');
+const notes = 'Opening steps:\n1. Review <script>alert(1)</script>\n2. Visit https://example.com/guide?q=1&mode=work.\nInternal: http://intranet/checks\nReference (https://example.com/Plan_(work)).';
+for (const version of [1, 2, 3, 4]) {
+  const legacy = validate({version,tasks:[{...weekly,description:notes},once],completed:{'2026-10-28':['routine']}});
+  const backedUp = validate(JSON.parse(JSON.stringify(legacy)));
+  assert.equal(backedUp.tasks[0].description,notes); assert.equal(backedUp.tasks[1].description,'');
+  assert.equal(backedUp.completed['2026-10-28'][0],'routine');
+}
+for (const description of [null,123,{},'x'.repeat(5001)]) assert.throws(()=>validate({version:4,tasks:[{...once,description}],completed:{}}));
+assert.equal(validate({version:4,tasks:[{...once,description:'x'.repeat(5000)}],completed:{}}).tasks[0].description.length,5000);
+const parts = descriptionParts(notes), urls = parts.filter(part=>part.href);
+assert.equal(parts.map(part=>part.text).join(''),notes);
+assert.deepEqual(Array.from(urls,part=>part.href),['https://example.com/guide?q=1&mode=work','http://intranet/checks','https://example.com/Plan_(work)']);
+for (const text of ['javascript:alert(1)','data:text/html,test','file:///C:/work','https://','plain notes\nnext line']) {
+  const parts = descriptionParts(text); assert.equal(parts.some(part=>part.href),false); assert.equal(parts.map(part=>part.text).join(''),text);
+}
+console.log('Descriptions passed: legacy migration, backup preservation, length/type validation, multiline text, safe web links, and prose punctuation.');
