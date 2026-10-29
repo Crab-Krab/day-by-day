@@ -6,6 +6,10 @@ The downloaded file works without an internet connection or account.
 Use the sun/moon button beside Add task to switch between light and dark.
 Your choice is remembered in this browser.
 
+Day and view changes, task movement, and the task window use short, subtle
+animations. Enable Reduce motion in your device's accessibility settings to
+turn these effects off.
+
 The app opens to today's list. Choose a weekday or a date on the month calendar
 to see another day. On a small screen, use the Calendar button to show the month.
 

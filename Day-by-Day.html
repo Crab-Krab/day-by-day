@@ -269,6 +269,28 @@ input::placeholder { color: var(--muted); }
 .reminder-card .text-button { font-size: 12px; margin: 0; }
 .reminder-panel-note { margin: 0; padding: 11px 18px; background: var(--subtle); color: var(--secondary); font-size: 11px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+/* Quiet feedback for navigation and task edits; content updates immediately. */
+:root, .sidebar, .topbar, .checklist-card, .task-row, .time-badge, .section-label, .reminder-panel {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.primary-button, .outline-button, .icon-button, .nav-item, .check-button, .theme-toggle, .reminder-center-button {
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+.primary-button:active, .outline-button:active { transform: scale(.98); }
+.icon-button:not(:disabled):active, .check-button:active { transform: scale(.94); }
+.week-day { transition: background-color .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease; }
+@media (hover: hover) { .week-day:not(.active):hover { transform: translateY(-2px); } }
+dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
+dialog.is-closing { pointer-events: none; }
+dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
+.check-button[aria-pressed=true] svg { animation: check-enter .17s ease-out both; }
+.toast:not([hidden]), .reminder-panel:not([hidden]) { animation: notice-enter .18s ease-out both; }
+#weeklyDays:not([hidden]), #taskTimingFields:not([hidden]) { animation: field-enter .16s ease-out both; }
+@keyframes backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes backdrop-leave { from { opacity: 1; } to { opacity: 0; } }
+@keyframes check-enter { from { opacity: 0; transform: scale(.65); } to { opacity: 1; transform: scale(1); } }
+@keyframes notice-enter { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
+@keyframes field-enter { from { opacity: .3; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
 .form-error { font-size: 14px; color: var(--danger); line-height: 1.6; }
 .form-error:empty { display: none; }
 .dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 24px; margin-top: 26px; }
@@ -378,7 +400,7 @@ input::placeholder { color: var(--muted); }
   .reminder-center-button { width: 38px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *:before, *:after { transition: none !important; scroll-behavior: auto !important; }
+  *, *:before, *:after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 </style>
   <script>'use strict';
@@ -465,6 +487,47 @@ input::placeholder { color: var(--muted); }
   const KEY = 'day-by-day.v1';
   const $ = id => document.getElementById(id);
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const activeMotion = new WeakMap();
+  function motionEnabled() { return typeof $('dailyView').animate === 'function' && (typeof window.matchMedia !== 'function' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  function playMotion(element, frames, options = {}) {
+    if (!element || !motionEnabled() || typeof element.animate !== 'function') return null;
+    activeMotion.get(element)?.cancel();
+    const animation = element.animate(frames, { duration: 210, easing: 'cubic-bezier(.2,.7,.2,1)', ...options });
+    activeMotion.set(element, animation);
+    animation.finished.catch(() => {}).then(() => { if (activeMotion.get(element) === animation) activeMotion.delete(element); });
+    return animation;
+  }
+  function revealView(element, direction = 0) { playMotion(element, [{ opacity: .35, transform: direction ? `translateX(${direction * 9}px)` : 'translateY(7px)' }, { opacity: 1, transform: 'translate(0,0)' }]); }
+  function captureTaskPositions() {
+    const positions = new Map(); if (!motionEnabled()) return positions;
+    for (const container of [$('taskList'), $('routineList')]) for (const row of container.querySelectorAll('.task-row')) {
+      const rect = row.getBoundingClientRect(); if (rect.width) positions.set(`${container.id}:${row.dataset.id}`, { top: rect.top, left: rect.left });
+    }
+    return positions;
+  }
+  function settleTaskPositions(positions) {
+    if (!motionEnabled()) return;
+    for (const container of [$('taskList'), $('routineList')]) for (const row of container.querySelectorAll('.task-row')) {
+      const rect = row.getBoundingClientRect(); if (!rect.width) continue;
+      const previous = positions.get(`${container.id}:${row.dataset.id}`);
+      if (previous) {
+        const x = previous.left - rect.left, y = previous.top - rect.top;
+        if (Math.abs(x) + Math.abs(y) > .5 && Math.abs(y) < 350) playMotion(row, [{ transform: `translate(${x}px,${y}px)` }, { transform: 'translate(0,0)' }], { duration: 230 });
+      } else playMotion(row, [{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 170 });
+    }
+  }
+  let dialogClosing = false, dialogCloseMotion = null;
+  function closeTaskDialog() {
+    const dialog = $('taskDialog'); if (!dialog.open || dialogClosing) return;
+    dialogClosing = true; dialog.classList.toggle('is-closing', true);
+    const animation = playMotion(dialog, [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(5px) scale(.985)' }], { duration: 130, easing: 'ease-in' });
+    if (!animation) { dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false); return; }
+    dialogCloseMotion = animation;
+    animation.finished.catch(() => {}).then(() => {
+      if (dialogCloseMotion !== animation) return;
+      dialogCloseMotion = null; dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false);
+    });
+  }
   function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
   function parseDate(s) { const [y, m, d] = s.split('-').map(Number); const result = new Date(0); result.setHours(12, 0, 0, 0); result.setFullYear(y, m - 1, d); return result; }
   function validDate(s) { return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && s >= '1900-01-01' && s <= '9999-12-31' && dateKey(parseDate(s)) === s; }
@@ -551,7 +614,7 @@ input::placeholder { color: var(--muted); }
       try { localStorage.setItem(KEY, JSON.stringify(data)); }
       catch (_) { storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.'); }
     }
-    render();
+    render(true);
     checkReminders();
   }
   function notify(message, undo) {
@@ -560,7 +623,12 @@ input::placeholder { color: var(--muted); }
     if (undo) { const button = el('button', '', 'Undo'); button.type = 'button'; button.onclick = () => { undoAction?.(); undoAction = null; toast.hidden = true; save(); }; toast.append(button); }
     toast.hidden = false; toastTimer = setTimeout(() => { toast.hidden = true; undoAction = null; }, undo ? 12000 : 4000);
   }
-  function chooseDate(date) { if (!validDate(date)) return; selected = date; month = parseDate(date); view = 'day'; render(); }
+  function chooseDate(date) {
+    if (!validDate(date)) return;
+    const changed = selected !== date || view !== 'day', direction = view === 'day' && selected !== date ? (date > selected ? 1 : -1) : 0;
+    selected = date; month = parseDate(date); view = 'day'; render();
+    if (changed) revealView($('dailyView'), direction);
+  }
   function renderCalendar() {
     $('monthLabel').textContent = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
     const first = new Date(month.getFullYear(), month.getMonth(), 1, 12), start = monday(first);
@@ -627,7 +695,8 @@ input::placeholder { color: var(--muted); }
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
     row.prepend(ordering); actions.append(edit); row.append(actions); return row;
   }
-  function render() {
+  function render(animateRows = false) {
+    const previousPositions = animateRows ? captureTaskPositions() : null;
     $('dailyView').hidden = view !== 'day'; $('routinesView').hidden = view !== 'routines';
     $('todayNav').classList.toggle('active', view === 'day'); $('routinesNav').classList.toggle('active', view === 'routines');
     $('todayCount').textContent = tasksOn(today).filter(t => !isDone(t.id, today)).length;
@@ -647,6 +716,7 @@ input::placeholder { color: var(--muted); }
     const routines = data.tasks.filter(t => t.kind === 'weekly');
     $('routineList').replaceChildren(...(routines.length ? routines.map(t => taskRow(t, true, routines)) : [makeEmpty(true)]));
     renderCalendar(); renderWeek();
+    if (previousPositions) settleTaskPositions(previousPositions);
   }
   const weekdayInputs = [...document.querySelectorAll('input[name="weekdays"]')];
   const reminderInputs = [...document.querySelectorAll('input[name="reminders"]')];
@@ -668,6 +738,7 @@ input::placeholder { color: var(--muted); }
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
   function openTask(task = null, kind = 'once') {
+    dialogCloseMotion?.cancel(); dialogCloseMotion = null; dialogClosing = false; $('taskDialog').classList.toggle('is-closing', false);
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'Delete routine' : 'Delete task';
@@ -678,10 +749,13 @@ input::placeholder { color: var(--muted); }
     $('taskForm').elements.timing.value = task?.time ? 'timed' : 'allday'; $('taskTime').value = task?.time || '';
     reminderInputs.forEach(input => { input.checked = (task?.reminders || []).includes(Number(input.value)); });
     updateTimingFields();
-    updateHint(); $('taskDialog').showModal(); $('taskTitle').focus();
+    updateHint(); $('taskDialog').showModal();
+    playMotion($('taskDialog'), [{ opacity: 0, transform: 'translateY(10px) scale(.975)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 200 });
+    $('taskTitle').focus();
   }
   $('taskForm').addEventListener('submit', event => {
     event.preventDefault(); const title = $('taskTitle').value.trim(), kind = $('taskForm').elements.kind.value, date = $('taskDate').value;
+    if (dialogClosing) return;
     if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
     if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
     const weekdays = selectedWeekdays();
@@ -692,7 +766,7 @@ input::placeholder { color: var(--muted); }
     const id = editingId || (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`);
     const task = { id, title, kind, time, reminders, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
     const wasEditing = Boolean(editingId); if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? task : t); else data.tasks.push(task);
-    $('taskDialog').close(); if (!wasEditing) { let first = parseDate(date); if (kind === 'weekly') { while (!weekdays.includes(first.getDay())) first = plusDays(first, 1); } selected = dateKey(first); month = first; view = 'day'; } save(); notify(wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
+    closeTaskDialog(); if (!wasEditing) { let first = parseDate(date); if (kind === 'weekly') { while (!weekdays.includes(first.getDay())) first = plusDays(first, 1); } selected = dateKey(first); month = first; view = 'day'; } save(); notify(wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
   });
   $('taskDay').onchange = () => { if (validDate($('taskDate').value)) { const base = monday(parseDate($('taskDate').value)); $('taskDate').value = dateKey(plusDays(base, (Number($('taskDay').value) + 6) % 7)); } updateHint(); };
   $('taskDate').onchange = () => { if (validDate($('taskDate').value)) $('taskDay').value = parseDate($('taskDate').value).getDay(); updateHint(); };
@@ -702,15 +776,18 @@ input::placeholder { color: var(--muted); }
   $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
   $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
   $('deleteTask').onclick = () => {
+    if (dialogClosing) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
-    data.tasks.splice(index, 1); $('taskDialog').close(); save(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
+    data.tasks.splice(index, 1); closeTaskDialog(); save(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
   };
-  for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = () => $('taskDialog').close();
+  for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
+  $('taskDialog').addEventListener('cancel', event => { event.preventDefault(); closeTaskDialog(); });
   $('addTask').onclick = () => openTask(null, view === 'routines' ? 'weekly' : 'once'); $('inlineAdd').onclick = () => openTask();
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
-  $('routinesNav').onclick = () => { view = 'routines'; render(); };
+  $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
-  $('prevMonth').onclick = () => { month = new Date(month.getFullYear(), month.getMonth() - 1, 1, 12); renderCalendar(); }; $('nextMonth').onclick = () => { month = new Date(month.getFullYear(), month.getMonth() + 1, 1, 12); renderCalendar(); };
+  function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
+  $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function backup() {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob), link = el('a'); link.href = url; link.download = `day-by-day-backup-${today}.json`; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); notify('Backup downloaded. Keep it somewhere safe.');
   }

@@ -19,6 +19,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
 - Up/down arrows beside each checkbox to save the task order.
 - Light and dark themes with an animated sun/moon button.
+- Subtle day/view transitions, smooth task movement, and a gentle task-window animation; reduced-motion settings are respected.
 - Automatic local saving and JSON backup/restore.
 
 ## Your data
