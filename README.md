@@ -8,7 +8,7 @@ A simple daily checklist that runs locally in your browser. Open **Day-by-Day.ht
 2. Extract the ZIP.
 3. Open **Day-by-Day.html** in Chrome, Edge, Firefox, or another modern browser.
 
-Only that HTML file is needed at work. The other files are for maintaining the app.
+Only the HTML file needs to be opened. The other files are for maintaining the app.
 
 ## Features
 
