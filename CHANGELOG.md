@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.0 — 2026-10-30
+
 - Fix disabled Every week controls when editing one-time tasks. Allow conversion with multiple weekdays, preserve original earlier/completed occurrences and details, start future repeats unchecked, and offer Undo.
 - Add Overdue above the checklist for earlier unfinished one-time tasks and today's unfinished tasks after their due time, including routines. Refresh automatically as time passes, keep each task in one section, retain weekday ordering and completion progress, and preserve original-date completion and Move to today for earlier tasks.
 - Add last-backup-export status, backup notices, and optional browser storage protection where supported.
@@ -15,6 +17,10 @@
 - Preserve routine definitions with effective-date revisions and completed-occurrence snapshots. Add End routine, an ended-routine history view, and skip/restore for a single current or future occurrence.
 - Migrate saved data/backups to format 5 while accepting formats 1–5. Older HTML versions cannot read the new format; previously removed history cannot be reconstructed.
 - Include sidebar/calendar alignment fixes, the checklist-header Add action, and the filled Back to today button committed after v1.1.0.
+
+Update note: Back up before replacing your working HTML. This release reads formats 1–5 and writes format 5; older HTML versions cannot read format 5. Use the same browser and file location when updating, and restore your exported backup if needed. History already removed by earlier versions cannot be reconstructed.
+
+Validation: JavaScript syntax, standalone packaging, and automated scheduling/reminders, migration/history, ordering, theme, notification timing, and application runtime checks. Actual local-file visual behavior in Edge, Chrome, and Firefox was not verified in this environment.
 
 ## 1.1.0 — 2026-10-29
 
