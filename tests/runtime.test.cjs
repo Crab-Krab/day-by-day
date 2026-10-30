@@ -203,3 +203,20 @@ function verifyTimeSorting() {
   console.log('Sorting runtime passed: automatic defaults, unrestricted arrows, switching from displayed order, saved custom order, reload, editing times, routines, future dates, and reset to due-time order.');
 }
 verifyTimeSorting();
+function verifyAlphabeticalSorting() {
+  const tasks=[['b','Task B','12:00'],['z','Zebra',null],['a','task a','12:00'],['apple','Apple',null]].map(([id,title,time])=>({id,title,time,kind:'weekly',weekdays:[3],startDate:'2026-10-28',reminders:[]}));
+  const storage=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{}})]]);
+  let sorted=boot(storage,clock);
+  const ids=container=>container.querySelectorAll('.task-row').map(row=>row.dataset.id);
+  assert.deepEqual(ids(sorted.ids.taskList),['a','b','apple','z']);
+  sorted.ids.routinesNav.onclick(); assert.deepEqual(ids(sorted.ids.routineList),['a','b','apple','z']);
+  sorted.ids.routineList.querySelectorAll('.task-row').find(row=>row.dataset.id==='b').querySelector('.move-up').onclick();
+  assert.deepEqual(ids(sorted.ids.routineList),['b','a','apple','z']);
+  sorted=boot(storage,clock); assert.deepEqual(ids(sorted.ids.taskList),['b','a','apple','z']);
+  sorted.ids.sortDay.onclick(); assert.deepEqual(ids(sorted.ids.taskList),['a','b','apple','z']);
+  sorted.ids.taskList.querySelectorAll('.task-row').find(row=>row.dataset.id==='a').querySelector('.edit-task').onclick();
+  sorted.ids.taskTitle.value='Task Z'; sorted.ids.taskForm.dispatch('submit');
+  assert.deepEqual(ids(sorted.ids.taskList),['b','a','apple','z']);
+  console.log('Alphabetical runtime passed: same-time and all-day defaults, routines, manual override, persisted custom order, reset, and renamed tasks.');
+}
+verifyAlphabeticalSorting();

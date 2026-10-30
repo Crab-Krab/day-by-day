@@ -38,6 +38,9 @@ this browser, and included in backups. Clear the Description field to remove it.
 Older tasks and backups load with empty descriptions.
 
 Tasks default to due-time order, earliest first, with All day tasks at the end.
+Tasks with the same time sort alphabetically by name, ignoring capitalization;
+the All day group also sorts alphabetically. Numbered titles use natural order
+(Task 2 before Task 10). Custom ordering takes precedence over these defaults.
 Use the small up/down arrows beside the checkbox to move any task in its section,
 regardless of due time. The first move switches to custom ordering, starting from
 the current due-time order. Custom ordering is saved, included in backups, and

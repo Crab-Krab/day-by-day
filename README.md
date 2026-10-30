@@ -17,7 +17,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
 - Reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected.
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
-- Tasks default to due-time order, earliest first with all-day tasks last. Use the up/down arrows to move any task into a saved custom order, regardless of time. **Sort by due time** restores automatic sorting.
+- Tasks default to due-time order, earliest first with all-day tasks last. Tasks sharing a due time sort alphabetically by name, ignoring capitalization; all-day tasks also sort alphabetically. Use the up/down arrows to move any task into a saved custom order. **Sort by due time** restores automatic sorting.
 - Light and dark themes with an animated sun/moon button.
 - Subtle heading fades and a gentle task-window animation; reduced-motion settings are respected. The interactive checklist stays stationary to avoid a suspected Edge rendering issue.
 - Automatic local saving and JSON backup/restore.

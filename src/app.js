@@ -57,7 +57,9 @@
   }
   function validTime(time) { return typeof time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
   function taskTimeOrder(task) { return validTime(task.time) ? Number(task.time.slice(0, 2)) * 60 + Number(task.time.slice(3)) : 1440; }
-  function sortTasksByTime(tasks) { return tasks.slice().sort((a, b) => taskTimeOrder(a) - taskTimeOrder(b)); }
+  function sortTasksByTime(tasks) {
+    return tasks.slice().sort((a, b) => taskTimeOrder(a) - taskTimeOrder(b) || a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true }));
+  }
   function descriptionPreview(description) {
     const lines = description.split('\n'), firstLines = lines.slice(0, 3).join('\n'), characters = Array.from(firstLines);
     const truncated = lines.length > 3 || characters.length > 240;
