@@ -280,7 +280,7 @@
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
     $('jumpToday').hidden = selected === today;
     const tasks = tasksOn(selected), pending = tasks.filter(t => !isDone(t.id)), done = tasks.filter(t => isDone(t.id));
-    $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : 'A little progress starts here';
+    $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : ''; $('completionText').hidden = !tasks.length;
     $('progressBar').style.width = `${tasks.length ? done.length / tasks.length * 100 : 0}%`;
     $('daySubtitle').textContent = tasks.length && !pending.length ? 'All done for this day. Enjoy a little breathing room.' : 'A fresh day. A little space to get things done.';
     const list = $('taskList'); list.replaceChildren();

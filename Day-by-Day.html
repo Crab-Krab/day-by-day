@@ -141,6 +141,7 @@ h1 span { color: var(--muted); }
 .subtitle { font-size: 16px; color: var(--secondary); margin: 0; line-height: 1.7; }
 .outline-button { background: transparent; border: 1px solid var(--field-border); border-radius: 8px; min-height: 42px; padding: 10px 15px; font-size: 13px; white-space: nowrap; color: var(--secondary); }
 .outline-button:hover { background: var(--hover); color: var(--ink); }
+#jumpToday { min-height: 42px; font-size: 13px; padding: 10px 15px; }
 .week-section { margin-bottom: 28px; }
 .week-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .week-heading>span { font-size: 14px; color: var(--secondary); }
@@ -156,12 +157,13 @@ h1 span { color: var(--muted); }
 .week-day .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); position: absolute; bottom: 8px; }
 .week-day.active .day-dot { background: #d2e7ba; }
 .checklist-card { border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
-.checklist-card .inline-add, .routines-card #routineList { border-radius: 0 0 14px 14px; }
-.routines-card .task-row:last-child { border-radius: 0 0 14px 14px; }
+.routines-card #routineList, #taskList>:last-child, .routines-card .task-row:last-child { border-radius: 0 0 14px 14px; }
 .checklist-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 20px; gap: 16px; }
 .checklist-header h2 { font-size: 18px; font-weight: 600; margin: 0; display: flex; gap: 11px; align-items: center; }
 .checklist-header h2>span { font-size: 12px; background: var(--subtle); color: var(--secondary); min-width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }
 .checklist-header>span { color: var(--secondary); font-size: 13px; }
+.checklist-title { min-width: 0; }
+.completion-summary { display: block; margin-top: 5px; color: var(--secondary); font-size: 13px; }
 .checklist-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; color: var(--secondary); font-size: 13px; text-align: right; }
 .sort-button { border: 0; padding: 4px 0; background: transparent; color: var(--secondary); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
 .sort-button:hover { color: var(--ink); }
@@ -201,9 +203,9 @@ h1 span { color: var(--muted); }
 .move-task:disabled:hover { background: transparent; color: var(--secondary); }
 .task-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
 .section-label { font-size: 11px; letter-spacing: 1.5px; font-weight: 600; color: var(--secondary); background: var(--done); padding: 14px 28px; border-block: 1px solid var(--line); }
-.inline-add { display: flex; align-items: center; gap: 12px; border: 0; border-top: 1px dashed var(--line); background: var(--surface); color: var(--secondary); font-size: 15px; text-align: left; min-height: 66px; padding: 19px 28px; width: 100%; }
+.inline-add { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--subtle); color: var(--active-ink); font-size: 13px; text-align: left; min-height: 40px; padding: 8px 12px; white-space: nowrap; }
 .inline-add:hover { background: var(--hover); color: var(--ink); }
-.inline-add>span { font-size: 25px; font-weight: 300; line-height: 20px; }
+.inline-add>span { font-size: 21px; font-weight: 300; line-height: 20px; }
 .daily-footer { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 24px; line-height: 1.7; }
 .daily-footer svg { width: 15px; height: 15px; }
 .empty-state { padding: 42px 24px 40px; text-align: center; }
@@ -374,7 +376,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .eyebrow { font-size: 10px; letter-spacing: 1.3px; }
   h1 { font-size: 42px; letter-spacing: -1.5px; }
   .subtitle { font-size: 14px; }
-  .page-heading .outline-button { font-size: 11px; padding: 8px 10px; margin-top: 29px; }
+  .page-heading #jumpToday { font-size: 11px; padding: 8px 10px; margin-top: 29px; }
   .week-heading>span { font-size: 12px; }
   .week-strip { gap: 5px; }
   .week-day { min-height: 84px; border-radius: 9px; padding: 13px 1px 18px; gap: 8px; }
@@ -384,6 +386,9 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .checklist-header h2 { font-size: 16px; gap: 8px; }
   .checklist-header>span { max-width: 125px; text-align: right; font-size: 11px; }
   .checklist-header-actions { max-width: 125px; font-size: 11px; }
+  .daily-checklist-header { flex-wrap: wrap; gap: 12px; }
+  .daily-checklist-header .checklist-header-actions { max-width: 100%; margin-left: auto; }
+  .completion-summary { font-size: 12px; }
   .progress-track { margin-inline: 18px; }
   .task-row { padding: 18px; gap: 12px; }
   .task-name { font-size: 16px; }
@@ -395,7 +400,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .empty-state { padding: 34px 18px; }
   .empty-state h3 { font-size: 26px; }
   .empty-state p { font-size: 14px; }
-  .inline-add { font-size: 14px; padding-inline: 18px; }
+  .inline-add { font-size: 12px; padding-inline: 10px; }
   .daily-footer { font-size: 11px; align-items: flex-start; text-align: center; }
   .daily-footer svg { margin-top: 2px; }
   .main-footer { margin-inline: 18px; font-size: 11px; }
@@ -475,9 +480,9 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       <header class="topbar"><div class="breadcrumb"><span class="breadcrumb-prefix">YOUR EVERYDAY SPACE</span><span class="breadcrumb-divider">/</span><b id="viewBreadcrumb">My day</b></div><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span>Add task</span></button></div></header>
       <div id="storageWarning" class="warning" role="alert" hidden></div>
       <section id="dailyView" class="content">
-        <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="outline-button">Back to today</button></div>
+        <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="primary-button">Back to today</button></div>
         <section class="week-section" aria-label="Select a day"><div class="week-heading"><span id="weekLabel"></span><div class="arrow-group"><button id="prevWeek" class="icon-button" aria-label="Previous week"><svg><use href="#i-arrow"/></svg></button><button id="nextWeek" class="icon-button" aria-label="Next week"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div><div id="weekStrip" class="week-strip"></div></section>
-        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header"><h2>Your checklist <span id="taskTotal">0</span></h2><div class="checklist-header-actions"><span id="completionText">A little progress starts here</span><button type="button" id="sortDay" class="sort-button" hidden>Sort by due time</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div id="taskList"></div><button id="inlineAdd" class="inline-add"><span>+</span> Add a task to this day</button></section>
+        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button><button type="button" id="sortDay" class="sort-button" hidden>Sort by due time</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div id="taskList"></div></section>
         <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div>
       </section>
       <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1 id="routinesTitle">Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span>Repeat every week</span><button type="button" id="sortRoutines" class="sort-button" hidden>Sort by due time</button></div></div><div id="routineList"></div></section><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
@@ -782,7 +787,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
     $('jumpToday').hidden = selected === today;
     const tasks = tasksOn(selected), pending = tasks.filter(t => !isDone(t.id)), done = tasks.filter(t => isDone(t.id));
-    $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : 'A little progress starts here';
+    $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : ''; $('completionText').hidden = !tasks.length;
     $('progressBar').style.width = `${tasks.length ? done.length / tasks.length * 100 : 0}%`;
     $('daySubtitle').textContent = tasks.length && !pending.length ? 'All done for this day. Enjoy a little breathing room.' : 'A fresh day. A little space to get things done.';
     const list = $('taskList'); list.replaceChildren();
