@@ -12,15 +12,18 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 ## Features
 
 - Opens to today's checklist, with weekday navigation and a month calendar.
+- Shows earlier unfinished one-time tasks on today’s page, with completion against the original date or an explicit Move to today action.
 - One-time tasks or weekly routines on any combination of days, with Mon–Fri and Every day shortcuts.
 - Optional task times, plus an All day option.
 - Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
-- Reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected.
+- Best-effort reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected. Newly entered tasks already past due do not immediately generate old alerts.
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
 - Tasks default to due-time order, earliest first with all-day tasks last. Tasks sharing a due time sort alphabetically by name, ignoring capitalization; all-day tasks also sort alphabetically. Use the up/down arrows to move any task into a saved custom order. **Sort by due time** restores automatic sorting.
 - Light and dark themes with an animated sun/moon button.
 - Subtle heading fades and a gentle task-window animation; reduced-motion settings are respected. The interactive checklist stays stationary to avoid a suspected Edge rendering issue.
-- Automatic local saving and JSON backup/restore.
+- Automatic local saving and JSON backup/restore, last-export status, and gentle backup nudges after 25 changes or a week with unexported changes.
+- Keyboard focus returns to the saved task. Undo remains available above the checklist until the next data change, dismissal, or closing/reloading the tab; it has no short countdown.
+- Follows the system theme until you choose a light/dark preference. Weekday names follow the browser locale; weeks still start Monday.
 
 ## Your data
 
@@ -28,11 +31,19 @@ Tasks, completion history, settings, and reminder history stay in the browser yo
 
 Use the same browser and HTML file location to return to your data. File-based storage behavior can vary by browser. Use **Back up tasks** before clearing browser data, changing browsers, moving the file, or replacing your working copy. **Restore backup** transfers a saved copy to another browser or device.
 
+“Last backup exported” records when a download was initiated, not whether you saved the file successfully. The optional **Request storage protection** control appears only where the browser supports it; permission can be refused and clearing browser data can still remove tasks. Backups remain necessary.
+
+## Current ordering and history behavior
+
+Custom task order and the choice between custom/automatic sorting are shared across dates and Weekly routines. Changing a routine edits its definition for every scheduled date, including past dates. Deleting it removes the routine from all dates, and its completion history is not retained as an independent archive after reloading. Export a backup before changes when you need a historical copy. Independent ordering and historical routine versions require separate product decisions.
+
 ## Reminders
 
 Keep the HTML file open and the computer awake. A closed file cannot send reminders, and sleeping or suspended browser tabs can delay them. The app catches up on missed reminders for tasks due within the previous 24 hours when it resumes. Completing a task suppresses its reminders.
 
 In-app reminders work without notification permission. Desktop alerts are optional and depend on browser support, permission, and workplace policies; some browsers refuse them for local files. All times use the computer's local timezone.
+
+Supported tabs cooperate through Web Locks to avoid both delivering the same reminder. Where browser/origin restrictions prevent this, delivery falls back to the existing best-effort model. A closed or sleeping app still cannot act as a guaranteed alarm.
 
 ## Making changes
 

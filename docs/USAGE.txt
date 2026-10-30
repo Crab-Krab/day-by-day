@@ -4,7 +4,8 @@ Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
 The downloaded file works without an internet connection or account.
 
 Use the sun/moon button beside Add task to switch between light and dark.
-Your choice is remembered in this browser.
+The first visit follows your system theme. Your choice is remembered in this browser.
+Weekday names follow the browser locale; weeks still start Monday.
 
 Day and view headings and the task window use short, subtle fades. The clickable
 checklist and its task rows do not move or fade, as a precaution for an intermittent
@@ -22,11 +23,17 @@ Weekly routines begin on their Starting on date. Each scheduled date gets its
 own checkbox. Completing one occurrence does not check off other occurrences.
 Existing single-day tasks and older backups keep their schedules and history.
 Existing tasks remain All day until you assign a specific time.
-One-time tasks appear only on their chosen date. Unfinished tasks stay on that
-date rather than moving automatically to tomorrow.
+One-time tasks keep their original date. Earlier unfinished one-time tasks also
+appear in Earlier, unfinished on today's page. Completing one there records its
+completion on the original date. Move to today explicitly changes its date.
+Missed recurring occurrences are not carried into this section.
 
 Use the pencil next to a task to edit or delete it. Deleting a weekly routine
-removes the routine; Undo is available briefly after deletion.
+removes the routine. Undo is available above the checklist without a countdown,
+until the next data change, dismissal, or closing/reloading this tab.
+Routine edits apply to past and future dates. Deleting a routine removes it from
+all dates; completion history is not an independent archive after reloading.
+Export a backup before routine changes when you need a historical copy.
 
 Add an optional Description when creating or editing a task. Use it for details,
 multiline notes, and web links (starting with https:// or http://), up to 5,000
@@ -64,6 +71,9 @@ Completed tasks do not generate reminders. The bell opens active reminders;
 you can dismiss a reminder or jump to that task's day. Later selected intervals
 can remind you again. Reminder history is kept locally to prevent duplicates
 after reloading; backups contain task settings but not the alert history.
+New tasks or changed schedules already past their due time do not trigger old
+reminders immediately. Existing-task catch-up remains available. Supported tabs
+use Web Locks to coordinate delivery; unsupported browsers fall back to best effort.
 
 Desktop alerts are optional. Use Enable desktop alerts inside the timed-task
 form to request permission. Some browsers or work policies refuse desktop alerts
@@ -80,6 +90,14 @@ local file can vary; the app shows a warning if saving fails.
 Use Back up tasks to download a backup, and Restore backup to move that copy
 between browsers or between the hosted and downloaded versions. Restore replaces
 the current tasks and completion history, so make a backup first if needed.
+Last backup exported records when a download was initiated; check that it saved.
+A gentle backup notice appears after 25 changes or a week with unexported changes.
+Remind me tomorrow postpones that notice for a day. Backup status stays in this
+browser and is separate from exported tasks. Storage protection can be requested
+where supported; it does not replace backups or prevent deliberate data clearing.
+
+The one-time task form uses one Date input. The single-letter N shortcut has been
+removed to avoid accidental activation. Use the Add task button with mouse or keyboard.
 
 The app uses your device's local date. If it stays open overnight, it updates
 to the new day automatically when you were viewing today.

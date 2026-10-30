@@ -21,9 +21,9 @@
   --field: #ffffff;
   --field-border: #7a8d6e;
   --danger: #a34d38;
-  --outside: #67765d;
+  --outside: #5f6e55;
   --shadow: 0 6px 24px #243b3306;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: system-ui, 'Segoe UI', Arial, sans-serif;
   font-synthesis: none;
   color: var(--ink);
   background: var(--paper);
@@ -97,6 +97,21 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .calendar-grid .selected.has-tasks:after { background: #d6e8c6; }
 .calendar-key { position: relative; display: flex; align-items: center; padding-inline-start: var(--calendar-label-inset); font-size: 12px; color: var(--secondary); margin-top: 15px; }
 .calendar-key span { position: absolute; inset-inline-start: calc(var(--calendar-label-inset) - 11px); top: 50%; margin-top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+.backup-status { line-height: 1.6; }
+.backup-notice, .undo-notice { margin: 16px 48px 0; padding: 14px 18px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--subtle); color: var(--ink); font-size: 13px; }
+.backup-notice p { margin: 0 0 9px; }
+.backup-notice>div, .undo-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.undo-notice>span { flex: 1; }
+.overdue-section { margin-top: 24px; }
+.overdue-hint { margin: -8px 28px 12px; font-size: 13px; color: var(--secondary); }
+.move-today { margin-top: 9px; font-size: 13px; text-decoration: underline; }
+#overdueList>.task-row:last-child { border-radius: 0 0 14px 14px; }
+.restore-content { padding: 28px; }
+.restore-content h2 { margin-top: 0; font-family: Georgia, serif; font-weight: 400; font-size: 28px; }
+.restore-content p { color: var(--secondary); line-height: 1.7; }
+.restore-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+@media (max-width: 860px) { .backup-notice, .undo-notice { margin-inline: 24px; } }
+@media (max-width: 560px) { .backup-notice, .undo-notice { margin-inline: 18px; } .overdue-hint { margin-inline: 18px; } }
 .sidebar-note { display: flex; gap: 10px; align-items: flex-start; margin: 32px 0; color: var(--secondary); }
 .sidebar-note svg { width: 20px; height: 20px; margin-top: 2px; }
 .sidebar-note p { font-size: 13px; line-height: 1.8; margin: 0; }

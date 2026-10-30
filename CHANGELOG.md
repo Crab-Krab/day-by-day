@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Add Earlier, unfinished for overdue one-time tasks, with original-date completion and Move to today.
+- Add last-backup-export status, backup notices, and optional browser storage protection where supported.
+- Restore focus after task dialogs; keep Undo available near the checklist until the next change without a timed deadline; announce status updates through an always-present live region.
+- Use stable completion-toggle labels, remove the single-letter N shortcut, improve light-theme calendar contrast, and use system fonts.
+- Simplify one-time scheduling to a single Date field, follow the system theme until explicitly overridden, and localize weekday names consistently with dates.
+- Clarify best-effort reminders, suppress newly entered past-due alerts, and coordinate reminder delivery with Web Locks where supported.
+- Count calendar tasks without sorting and cache counts during rendering.
+- Document the current shared ordering and routine-history limitations pending product decisions.
+- Include sidebar/calendar alignment fixes, the checklist-header Add action, and the filled Back to today button committed after v1.1.0.
+
 ## 1.1.0 — 2026-10-29
 
 - Add optional task descriptions for details, multiline notes, and clickable HTTP/HTTPS links. Descriptions save locally and are included in backups.

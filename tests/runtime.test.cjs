@@ -7,7 +7,7 @@ const source = fs.readFileSync('src/app.js', 'utf8');
 function boot(storage, initialClock, options = {}) {
   let clock = initialClock, uid = 0;
   class Clock extends Date { constructor(...args) { super(...(args.length ? args : [clock])); } static now() { return clock; } }
-  const intervals = [], ids = {}, extras = {}, inputs = [], animations = [];
+  const intervals = [], timeouts = [], ids = {}, extras = {}, inputs = [], animations = [], notices = [];
   class Node {
     constructor(tag = 'div') { this.tagName = tag.toUpperCase(); this.children = []; this.dataset = {}; this.style = {}; this.attrs = {}; this.listeners = {}; this.className = ''; this._text = ''; this.value = ''; this.checked = false; this.hidden = false; this.disabled = false; this.open = false; }
     set textContent(value) { this._text = String(value); this.children = []; }
@@ -24,12 +24,13 @@ function boot(storage, initialClock, options = {}) {
     querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
     get classList() { return {toggle:(name, force) => { const names = new Set(this.className.split(' ').filter(Boolean)); const add = force === undefined ? !names.has(name) : force; add ? names.add(name) : names.delete(name); this.className = [...names].join(' '); return add; }}; }
     focus() { document.activeElement = this; }
+    get isConnected() { return !this.detached; }
     scrollIntoView() {}
     getBoundingClientRect() { return {top:0,left:0,width:1}; }
     showModal() { this.open = true; }
     close() { this.open = false; }
     click() { this.onclick?.(); }
-    remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); }
+    remove() { this.detached=true; if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); }
     reset() { for (const input of inputs) { input.value = input.initialValue || ''; input.checked = input.initialChecked || false; } }
   }
   if (options.motion) Node.prototype.animate = function(frames, settings) {
@@ -48,11 +49,18 @@ function boot(storage, initialClock, options = {}) {
     Object.defineProperty(radios, 'value', {get(){return this.find(input=>input.checked)?.value || '';},set(value){this.forEach(input=>input.checked=input.value===value);}});
     ids.taskForm.elements[name] = radios;
   }
-  const document = {title:'',hidden:false,body:new Node('body'),getElementById(id){if(!ids[id])throw Error('Missing element '+id);return ids[id];},createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag),createTextNode:text=>Object.assign(new Node('text'),{_text:String(text)}),querySelector(selector){return extras[selector] ||= new Node(selector==='main'?'main':'div');},querySelectorAll(selector){const name=selector.match(/name="(.*?)"/)?.[1];return inputs.filter(input=>input.name===name);},addEventListener(){}};
+  const documentListeners={},windowListeners={};
+  const document = {title:'',hidden:false,body:new Node('body'),getElementById(id){if(!ids[id])throw Error('Missing element '+id);return ids[id];},createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag),createTextNode:text=>Object.assign(new Node('text'),{_text:String(text)}),querySelector(selector){return extras[selector] ||= new Node(selector==='main'?'main':'div');},querySelectorAll(selector){const name=selector.match(/name="(.*?)"/)?.[1];return inputs.filter(input=>input.name===name);},addEventListener:(name,callback)=>{(documentListeners[name] ||= []).push(callback);}};
   const localStorage = {getItem:key=>storage.get(key) ?? null,setItem:(key,value)=>storage.set(key,String(value))};
-  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener(){},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:()=>1,clearTimeout(){},setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,confirm:()=>true,Blob,URL};
-  vm.createContext(context); vm.runInContext(source,context);
-  return {ids,inputs,context,storage,animations,clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
+  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{timeouts.push({fn,ms});return timeouts.length;},clearTimeout(id){if(timeouts[id-1])timeouts[id-1].cancelled=true;},queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL};
+  if(options.navigator)context.navigator=options.navigator;
+  if(options.secure)context.window.isSecureContext=true;
+  if(options.notifications) {
+    class Notice { static permission='granted'; constructor(title,settings){notices.push({title,settings});} close(){} }
+    context.Notification=Notice;context.window.Notification=Notice;context.window.isSecureContext=true;
+  }
+  vm.createContext(context); vm.runInContext(options.countSorts ? source.replace('function sortTasksByTime(tasks) {','function sortTasksByTime(tasks) { globalThis.sortCalls=(globalThis.sortCalls||0)+1;') : source,context);
+  return {ids,inputs,context,storage,animations,notices,documentListeners,windowListeners,flushTimeouts:()=>timeouts.splice(0).forEach(timer=>{if(!timer.cancelled)timer.fn();}),clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
 }
 const clock = new Date(2026,9,28,9,45).getTime();
 const storage = new Map([['day-by-day.v1', JSON.stringify({version:2,tasks:[{id:'existing',title:'Existing routine',kind:'weekly',weekdays:[3],startDate:'2026-10-28'}],completed:{}})]]);
@@ -154,7 +162,9 @@ async function verifyDescriptions() {
   assert.equal(reload.state().tasks[0].description,''); assert.equal(reload.ids.routineList.querySelector('.task-description'),null);
   reload.ids.addTask.onclick(); assert.equal(reload.ids.taskDescription.value,''); reload.ids.cancelDialog.onclick();
   reload.ids.restoreFile.files=[{size:200,text:async()=>JSON.stringify({version:4,tasks:[{...reload.state().tasks[0],description:notes}],completed:{}})}];
-  await reload.ids.restoreFile.onchange(); assert.equal(reload.state().tasks[0].description,notes);
+  const restored=reload.ids.restoreFile.onchange(); await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(reload.ids.restoreDialog.open,true); reload.ids.confirmRestore.onclick();
+  await restored; assert.equal(reload.state().tasks[0].description,notes);
   reload.ids.routineList.querySelector('.edit-task').onclick(); reload.ids.taskDescription.value='x'.repeat(5001); reload.ids.taskForm.dispatch('submit');
   assert.equal(reload.ids.taskDialog.open,true); assert.equal(reload.state().tasks[0].description,notes); assert.match(reload.ids.formError.textContent,/description/);
   const longApp=boot(new Map(),clock), url='https://example.com/'+ 'a'.repeat(300), longNotes=url+'\nAdditional details.\nAnother line.\nLast line.';
@@ -220,3 +230,65 @@ function verifyAlphabeticalSorting() {
   console.log('Alphabetical runtime passed: same-time and all-day defaults, routines, manual override, persisted custom order, reset, and renamed tasks.');
 }
 verifyAlphabeticalSorting();
+async function verifyReliability() {
+  const tasks=[{id:'old',title:'Old task',kind:'once',date:'2026-10-27',time:'08:00',reminders:[5],description:'Keep these notes'},{id:'done',title:'Done old task',kind:'once',date:'2026-10-26'},{id:'routine',title:'Yesterday routine',kind:'weekly',weekdays:[2],startDate:'2026-10-20'},{id:'current',title:'Current task',kind:'once',date:'2026-10-28'}];
+  const stored=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{'2026-10-26':['done']}})]]);
+  const work=boot(stored,clock,{countSorts:true});
+  assert.equal(work.ids.overdueSection.hidden,false);assert.equal(work.ids.overdueList.querySelectorAll('.task-row').length,1);
+  assert.equal(work.ids.todayCount.textContent,'2');assert.equal(work.context.sortCalls,3);
+  work.ids.nextMonth.onclick();assert.equal(work.context.sortCalls,3);
+  work.ids.overdueList.querySelector('.check-button').onclick();
+  assert.deepEqual(work.state().completed['2026-10-27'],['old']);assert.equal(work.state().tasks[0].date,'2026-10-27');assert.equal(work.ids.overdueSection.hidden,true);
+  work.ids.prevWeek.onclick(); assert.equal(work.ids.overdueSection.hidden,true); work.ids.todayNav.onclick();
+  // Edit/save restores focus to the replacement Edit button after the dialog closes.
+  work.ids.taskList.querySelector('.edit-task').onclick();work.ids.taskTitle.value='Updated current task';work.ids.taskForm.dispatch('submit');
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(work.context.document.activeElement,work.ids.taskList.querySelector('.edit-task'));
+  work.ids.taskList.querySelector('.edit-task').onclick();work.ids.deleteTask.onclick();
+  assert.equal(work.ids.undoNotice.hidden,false);work.flushTimeouts();assert.equal(work.ids.undoNotice.hidden,false);assert.equal(work.ids.toast.hidden,true);
+  work.ids.prevMonth.onclick();assert.equal(work.ids.undoNotice.hidden,false);work.ids.undoAction.onclick();assert.equal(work.state().tasks.some(task=>task.id==='current'),true);
+  assert.equal(work.ids.statusAnnouncement.textContent,'Change undone.');assert.equal(work.ids.statusAnnouncement.hidden,false);
+  assert.equal(work.documentListeners.keydown,undefined);
+  const moving=boot(new Map([['day-by-day.v1',JSON.stringify({version:4,tasks:[tasks[0]],completed:{}})]]),clock);
+  moving.ids.overdueList.querySelector('.move-today').onclick();assert.equal(moving.state().tasks[0].date,'2026-10-28');assert.equal(moving.state().tasks[0].description,'Keep these notes');assert.equal(moving.ids.reminderPanel.hidden,true);
+  moving.ids.undoAction.onclick();assert.equal(moving.state().tasks[0].date,'2026-10-27');assert.equal(moving.state().tasks[0].reminderFrom,0);
+  const backup=boot(new Map([['day-by-day.v1',JSON.stringify({version:4,tasks:[tasks[3]],completed:{}})]]),clock);
+  for(let i=0;i<25;i++)backup.ids.taskList.querySelector('.check-button').onclick();
+  assert.equal(backup.ids.backupNotice.hidden,false);backup.ids.backupLater.onclick();assert.equal(backup.ids.backupNotice.hidden,true);
+  backup.clock(clock+86400001);backup.windowListeners.focus.forEach(callback=>callback());assert.equal(backup.ids.backupNotice.hidden,false);
+  backup.ids.backupNow.onclick();assert.equal(backup.ids.backupNotice.hidden,true);assert.match(backup.ids.lastBackup.textContent,/Last backup exported/);
+  assert.equal(JSON.parse(backup.storage.get('day-by-day.backup.v1')).changes,0);
+  const reopened=boot(backup.storage,clock+86400001);assert.match(reopened.ids.lastBackup.textContent,/Last backup exported/);
+  // The restore dialog can cancel replacement without altering the saved checklist.
+  reopened.ids.restoreFile.files=[{size:100,text:async()=>JSON.stringify({version:4,tasks:[],completed:{}})}];
+  const cancelRestore=reopened.ids.restoreFile.onchange();await new Promise(resolve=>setImmediate(resolve));reopened.ids.cancelRestore.onclick();await cancelRestore;
+  assert.equal(reopened.state().tasks.length,1);
+  const newPast=boot(new Map(),clock);newPast.ids.addTask.onclick();newPast.ids.taskTitle.value='Past due entry';newPast.ids.taskForm.elements.timing.value='timed';newPast.ids.taskTime.value='08:00';newPast.inputs.find(input=>input.name==='reminders'&&input.value==='5').checked=true;newPast.ids.taskForm.dispatch('submit');
+  assert.equal(newPast.ids.reminderPanel.hidden,true);
+  // Validate stable names for completion toggles in both states.
+  const button=newPast.ids.taskList.querySelector('.check-button');assert.equal(button.getAttribute('aria-label'),'Past due entry');button.onclick();
+  assert.equal(newPast.ids.taskList.querySelector('.check-button').getAttribute('aria-label'),'Past due entry');
+  console.log('Reliability runtime passed: overdue completion/move/undo, saved dates, edit focus, persistent Undo, live announcements, calendar counting, backup nudges/status/reload, restore cancel, removed single-key shortcut, and past-time reminders.');
+}
+verifyReliability().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyReminderCoordination() {
+  const tasks=[{id:'shared',title:'Shared reminder',kind:'once',date:'2026-10-28',time:'10:00',reminders:[15]}];
+  const shared=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{}})]]);
+  let held=false;
+  const locks={request:(_name,_options,callback)=>Promise.resolve().then(()=>{
+    if(held)return callback(null);
+    held=true;return Promise.resolve(callback({name:'test'})).finally(()=>{held=false;});
+  })};
+  const first=boot(shared,clock,{navigator:{locks},notifications:true}),second=boot(shared,clock,{navigator:{locks},notifications:true});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(first.notices.length+second.notices.length,1);
+  first.tick();second.tick();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(first.notices.length+second.notices.length,1);
+  const fallback=boot(new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{}})]]),clock,{navigator:{locks:{request:()=>Promise.reject(Error('not supported for origin'))}},notifications:true});
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(fallback.notices.length,1);
+  const protection=boot(new Map(),clock,{secure:true,navigator:{storage:{persist:async()=>true}}});
+  assert.equal(protection.ids.protectStorage.hidden,false);await protection.ids.protectStorage.onclick();assert.match(protection.ids.storageProtectionStatus.textContent,/granted/);
+  const refused=boot(new Map(),clock,{secure:true,navigator:{storage:{persist:async()=>false}}});await refused.ids.protectStorage.onclick();assert.match(refused.ids.storageProtectionStatus.textContent,/did not grant/);
+  const unsupported=boot(new Map(),clock);assert.equal(unsupported.ids.protectStorage.hidden,true);
+  console.log('Reminder coordination passed: shared-tab lock, duplicate suppression, unsupported-origin fallback, and optional storage protection grant/refusal.');
+}
+verifyReminderCoordination().catch(error=>{console.error(error);process.exitCode=1;});

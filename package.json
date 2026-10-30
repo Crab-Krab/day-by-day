@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node tests/schedule.test.cjs && node tests/runtime.test.cjs"
+    "test": "node tests/schedule.test.cjs && node tests/runtime.test.cjs && node tests/theme.test.cjs"
   },
   "engines": {
     "node": ">=20"

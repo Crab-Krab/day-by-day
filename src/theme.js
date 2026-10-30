@@ -1,8 +1,10 @@
 'use strict';
 (() => {
   const key = 'day-by-day.theme';
-  let theme = 'light';
-  try { if (localStorage.getItem(key) === 'dark') theme = 'dark'; } catch (_) { /* The toggle also works when storage is unavailable. */ }
+  const systemTheme = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  let savedChoice = null;
+  try { const saved = localStorage.getItem(key); if (['light', 'dark'].includes(saved)) savedChoice = saved; } catch (_) { /* The toggle also works when storage is unavailable. */ }
+  let theme = savedChoice || (systemTheme?.matches ? 'dark' : 'light');
   function apply(value) {
     theme = value === 'dark' ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
@@ -21,8 +23,14 @@
     apply(theme);
     button.addEventListener('click', () => {
       apply(theme === 'dark' ? 'light' : 'dark');
+      savedChoice = theme;
       try { localStorage.setItem(key, theme); } catch (_) { /* Keep the selection for this session. */ }
     });
   });
-  window.addEventListener('storage', event => { if (event.key === key || event.key === null) apply(event.newValue === 'dark' ? 'dark' : 'light'); });
+  systemTheme?.addEventListener?.('change', event => { if (!savedChoice) apply(event.matches ? 'dark' : 'light'); });
+  window.addEventListener('storage', event => {
+    if (event.key !== key && event.key !== null) return;
+    savedChoice = ['light', 'dark'].includes(event.newValue) ? event.newValue : null;
+    apply(savedChoice || (systemTheme?.matches ? 'dark' : 'light'));
+  });
 })();
