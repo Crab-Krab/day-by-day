@@ -334,3 +334,45 @@ async function verifyWeekdayOrdersAndHistory() {
   console.log('Weekday/history runtime passed: independent weekdays, future-week reuse, scoped reset, unchanged task array, dated edits, completed snapshots, skip/restore, ending without deletion, archive reload, read-only history, and backup migration.');
 }
 verifyWeekdayOrdersAndHistory().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyOneTimeConversion() {
+  for (const [date,completed] of [['2026-10-28',false],['2026-10-28',true],['2026-10-20',false],['2026-10-20',true],['2026-10-30',false],['2026-10-30',true]]) {
+    const original={id:'once',kind:'once',title:'Test task',description:'Notes https://example.com',date,time:'11:00',reminders:[15],reminderFrom:0};
+    const saved={version:5,tasks:[original],completed:completed?{[date]:['once']}:{},weekdayOrders:{3:['once']},routineOrder:null};
+    const store=new Map([['day-by-day.v1',JSON.stringify(saved)]]);
+    let work=boot(store,clock);
+    // Open the original occurrence from its calendar week.
+    if(date<'2026-10-26')work.ids.prevWeek.onclick();
+    work.ids.weekStrip.children[date==='2026-10-20'?1:date==='2026-10-30'?4:2].onclick();
+    work.ids.taskList.querySelector('.edit-task').onclick();
+    const weekly=work.ids.taskForm.elements.kind.find(input=>input.value==='weekly');
+    assert.equal(weekly.disabled,false);
+    work.ids.taskForm.elements.kind.value='weekly';weekly.onchange();
+    assert.equal(work.ids.weeklyDays.hidden,false);assert.equal(work.ids.routineChanges.hidden,true);
+    work.ids.workdaysPreset.onclick();
+    work.ids.taskTitle.value='Converted task';work.ids.taskForm.dispatch('submit');
+    await new Promise(resolve=>setImmediate(resolve));
+    const state=work.state(),task=state.tasks[0];
+    assert.equal(state.tasks.length,1);assert.equal(task.id,'once');assert.equal(task.kind,'weekly');
+    assert.deepEqual(task.weekdays,[1,2,3,4,5]);assert.equal(task.description,original.description);
+    assert.equal(task.time,'11:00');assert.deepEqual(task.reminders,[15]);
+    assert.deepEqual(state.weekdayOrders[3],['once']);assert.deepEqual(state.completed,saved.completed);
+    assert.equal(task.versions[0].from,date<'2026-10-28'?'2026-10-28':date);
+    const keepsOriginal=date<'2026-10-28'||completed;
+    assert.equal(Boolean(task.snapshots[date]),keepsOriginal);
+    if(keepsOriginal)assert.equal(task.snapshots[date].title,original.title);
+    assert.equal(work.ids.formError.textContent,'');assert.equal(work.ids.storageWarning.hidden,true);
+    // Serialized saved data uses the same validation path as reopening/restoring a backup.
+    work=boot(store,clock);assert.equal(work.ids.storageWarning.hidden,true);assert.equal(work.state().tasks[0].kind,'weekly');
+    work.ids.nextWeek.onclick();
+    assert.equal(work.ids.taskList.querySelector('.check-button').getAttribute('aria-pressed'),'false');
+    work.ids.taskList.querySelector('.edit-task').onclick();
+    assert.equal(work.ids.taskForm.elements.kind.value,'weekly');assert.equal(work.ids.taskTitle.value,'Converted task');
+  }
+  const undo=boot(new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[{id:'undo',kind:'once',title:'Undo conversion',date:'2026-10-28'}],completed:{}})]]),clock);
+  undo.ids.taskList.querySelector('.edit-task').onclick();
+  undo.ids.taskForm.elements.kind.value='weekly';undo.ids.taskForm.elements.kind[1].onchange();undo.ids.taskForm.dispatch('submit');
+  assert.equal(undo.state().tasks[0].kind,'weekly');undo.ids.undoAction.onclick();assert.equal(undo.state().tasks[0].kind,'once');
+  assert.equal(undo.state().tasks[0].date,'2026-10-28');
+  console.log('Conversion runtime passed: enabled frequency controls, weekday presets, past/today/future and completed tasks, notes/time/reminders, IDs/orders/history, reload, fresh future checkboxes, and Undo.');
+}
+verifyOneTimeConversion().catch(error=>{console.error(error);process.exitCode=1;});

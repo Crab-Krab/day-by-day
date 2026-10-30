@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fix disabled Every week controls when editing one-time tasks. Allow conversion with multiple weekdays, preserve original earlier/completed occurrences and details, start future repeats unchecked, and offer Undo.
 - Add Earlier, unfinished for overdue one-time tasks, with original-date completion and Move to today.
 - Add last-backup-export status, backup notices, and optional browser storage protection where supported.
 - Restore focus after task dialogs; keep Undo available near the checklist until the next change without a timed deadline; announce status updates through an always-present live region.

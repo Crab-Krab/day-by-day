@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('src/app.js','utf8'),context={Date,Set,Map,URL,Error,DAYS:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']};
 vm.createContext(context);
-vm.runInContext(source.slice(source.indexOf('  function dateKey'),source.indexOf('  const empty ='))+';this.api={validate,scheduled,resolveTask,reviseRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime};',context);
-const {validate,scheduled,resolveTask,reviseRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime}=context.api;
+vm.runInContext(source.slice(source.indexOf('  function dateKey'),source.indexOf('  const empty ='))+';this.api={validate,scheduled,resolveTask,reviseRoutine,createRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime};',context);
+const {validate,scheduled,resolveTask,reviseRoutine,createRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime}=context.api;
 const original={id:'work',title:'Original',description:'Old notes',kind:'weekly',weekdays:[1,3],startDate:'2026-10-01',time:'10:00',reminders:[15]};
 let state=validate({version:4,tasks:[original],completed:{'2026-10-26':['work'],'2026-10-28':['work']},sortMode:'manual'});
 assert.equal(state.version,5);for(let day=0;day<7;day++)assert.deepEqual(Array.from(state.weekdayOrders[day]),['work']);
@@ -37,4 +37,26 @@ for(const bad of [{weekdayOrders:{7:[]}}, {weekdayOrders:{1:'bad'}}, {routineOrd
 assert.throws(()=>validate({version:5,tasks:[{...original,versions:[{from:'bad',...routineFields(original)}]}],completed:{}}));
 assert.throws(()=>validate({version:5,tasks:[{...original,exceptions:['bad']}],completed:{}}));
 assert.throws(()=>validate({version:5,tasks:[{...original,snapshots:{'bad':routineFields(original)}}],completed:{}}));
+// Converting a one-time task keeps its identity and original historical details,
+// without inventing weekly occurrences before the conversion starts.
+const once={id:'converted',kind:'once',title:'Original once',description:'Original link https://example.com',date:'2026-10-20',time:'09:00',reminders:[15]};
+const converted=createRoutine({...original,id:once.id,title:'New routine'},once,'2026-10-28',{});
+assert.equal(scheduled(converted,'2026-10-20'),true);
+assert.equal(resolveTask(converted,'2026-10-20').title,once.title);
+assert.equal(resolveTask(converted,'2026-10-20').description,once.description);
+assert.equal(resolveTask(converted,'2026-10-20').time,once.time);
+assert.equal(scheduled(converted,'2026-10-26'),false);
+assert.equal(scheduled(converted,'2026-10-28'),true);
+assert.equal(resolveTask(converted,'2026-10-28').title,'New routine');
+const futureOnce={...once,date:'2026-10-30'};
+const futureCompleted=createRoutine({...original,id:once.id},futureOnce,'2026-10-28',{'2026-10-30':[once.id]});
+assert.equal(scheduled(futureCompleted,'2026-10-30'),true);
+assert.equal(resolveTask(futureCompleted,'2026-10-30').title,once.title);
+const futurePending=createRoutine({...original,id:once.id},futureOnce,'2026-10-28',{});
+assert.equal(scheduled(futurePending,'2026-10-30'),false);
+const roundtrip=validate(JSON.parse(JSON.stringify({version:5,tasks:[futureCompleted],completed:{'2026-10-30':[once.id]},weekdayOrders:{3:[once.id]},routineOrder:null})));
+assert.equal(roundtrip.completed['2026-10-30'][0],once.id);
+assert.equal(resolveTask(roundtrip.tasks[0],'2026-10-30').description,once.description);
+assert.equal(scheduled({...converted,endedOn:'2026-10-28'},'2026-10-20'),true);
 console.log('History/order passed: legacy migration, completed snapshots, effective revisions, dated reminder settings, skips, end dates, backup roundtrip, independent weekday preferences, insertion moves, and invalid backups.');
+console.log('Conversion history passed: original details, past/completed occurrences, no invented past repeats, pending future rescheduling, identity/order preservation, backup roundtrip, and ending.');

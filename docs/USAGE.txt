@@ -34,8 +34,12 @@ apply from that date onward and replace later planned edits. Earlier days and
 completed occurrences keep their saved details, including name, notes, and time.
 End routine stops new occurrences starting on the chosen date and keeps the
 routine in Ended routines. View history opens its most recent scheduled date.
-Ended routine details are read-only. Task type is fixed after creation; create
-a new task to switch between one-time and repeating.
+Ended routine details are read-only. To convert a one-time task, edit it, select
+Every week, and choose its weekdays. Repeats begin on the chosen starting date
+or today, whichever is later. Earlier or completed original occurrences keep
+their details; future repeats start unchecked. Undo restores the one-time task.
+To change a weekly routine into a one-time task, create a separate one-time
+task and end the routine to preserve its history.
 Skip this occurrence hides one incomplete occurrence today or in the future.
 Restore occurrence brings it back from Skipped for this date. Other repeats
 are unchanged. Undo is available above the checklist without a countdown, until

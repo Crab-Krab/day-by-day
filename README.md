@@ -40,7 +40,9 @@ Rearranging Monday affects future Mondays and leaves other weekdays alone. Chang
 
 When editing a routine, choose **Apply changes / end routine from** (today or later). Saving replaces any changes scheduled from that date onward; earlier definitions and completed occurrences remain available on their calendar dates. **End routine** stops new occurrences on and after the chosen date and lists the routine under **Ended routines**, with a history link. Ended routines can be viewed read-only. Use **Skip this occurrence** on an incomplete current/future occurrence, and **Restore occurrence** in the skipped section to undo a skip.
 
-Task type is fixed after creation; create a new task to switch between one-time and repeating. History removed by older app versions cannot be reconstructed. Back up before updating: this build writes data/backup format 5 and accepts formats 1–5; older HTML versions cannot read format 5.
+To convert a one-time task, edit it and select **Every week**, then choose its weekdays. The routine begins on the chosen starting date or today, whichever is later. Earlier or completed original occurrences keep their saved details; future repeats start unchecked. Undo restores the one-time task. To change a weekly routine into a one-time task, create a separate one-time task and end the routine to preserve its history.
+
+History removed by older app versions cannot be reconstructed. Back up before updating: this build writes data/backup format 5 and accepts formats 1–5; older HTML versions cannot read format 5.
 
 ## Reminders
 

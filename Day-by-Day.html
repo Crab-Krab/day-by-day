@@ -614,6 +614,13 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   function routineFields(task) {
     return { title: task.title, description: task.description || '', weekdays: [...weekdaysOf(task)], startDate: task.startDate, time: task.time || null, reminders: [...(task.reminders || [])], reminderFrom: task.reminderFrom || 0 };
   }
+  function createRoutine(task, previous, from, completed) {
+    const snapshots = {};
+    if (previous?.kind === 'once' && (previous.date < from || (completed[previous.date] || []).includes(previous.id))) {
+      snapshots[previous.date] = routineFields({ ...previous, weekdays: [parseDate(previous.date).getDay()], startDate: previous.date });
+    }
+    return { ...task, versions: [{ from, ...routineFields(task) }], snapshots, exceptions: [], endedOn: null };
+  }
   function routineVersion(task, date, includeSnapshot = true) {
     if (includeSnapshot && task.snapshots?.[date]) return task.snapshots[date];
     if (!task.versions) return task;
@@ -1092,10 +1099,13 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   function updateHint() {
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
-    $('routineChanges').hidden = !(editingId && weekly);
+    const source = data.tasks.find(task => task.id === editingId);
+    const converting = source?.kind === 'once' && weekly;
+    $('routineChanges').hidden = !(source?.kind === 'weekly' && weekly);
     const date = $('taskDate').value;
+    const begins = converting && date < today ? today : date;
     const days = selectedWeekdays();
-    $('scheduleHint').textContent = validDate(date) ? weekly ? days.length ? `${recurrenceLabel(days)}, starting ${fmt(date, { month: 'short', day: 'numeric', year: 'numeric' })}. Each date has its own checkbox.${editingId ? ' Earlier dates and completed occurrences keep their saved details.' : ''}` : 'Select at least one day for this routine.' : `Only on ${fmt(date, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}.` : 'Choose a date for this task.';
+    $('scheduleHint').textContent = validDate(date) ? weekly ? days.length ? `${recurrenceLabel(days)}, starting ${fmt(begins, { month: 'short', day: 'numeric', year: 'numeric' })}. Each date has its own checkbox.${converting ? ' This converts your one-time task. An earlier or completed original occurrence stays in history.' : editingId ? ' Earlier dates and completed occurrences keep their saved details.' : ''}` : 'Select at least one day for this routine.' : `Only on ${fmt(date, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}.` : 'Choose a date for this task.';
     $('workdaysPreset').setAttribute('aria-pressed', String(days.length === 5 && [1, 2, 3, 4, 5].every(day => days.includes(day))));
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
@@ -1110,7 +1120,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
-    [...$('taskForm').elements.kind].forEach(input => { input.disabled = Boolean(task); });
+    [...$('taskForm').elements.kind].forEach(input => { input.disabled = source?.kind === 'weekly'; });
     $('taskEffectiveDate').value = effective; $('taskEffectiveDate').min = today;
     $('taskTitle').value = task?.title || ''; $('taskDescription').value = task?.description || ''; $('taskForm').elements.kind.value = task?.kind || kind;
     const date = task ? task.kind === 'weekly' ? task.startDate : task.date : selected;
@@ -1155,19 +1165,21 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     const id = editingId || (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`);
     const previous = data.tasks.find(task => task.id === editingId);
     const effective = $('taskEffectiveDate').value;
-    if (previous && previous.kind !== kind) { $('formError').textContent = 'Create a new task to change between one-time and repeating.'; return; }
+    if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
     if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
     const scheduleChanged = !previous || previous.time !== time || previous.kind !== kind || (previous.kind === 'once' ? previous.date !== date : previous.startDate !== date || JSON.stringify(previous.weekdays) !== JSON.stringify(weekdays));
     const reminderFrom = scheduleChanged ? Date.now() : (previous.reminderFrom || 0);
     const task = { id, title, description, kind, time, reminders, reminderFrom, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
-    const record = kind === 'weekly' ? previous ? reviseRoutine(previous, task, effective, data.completed) : { ...task, versions: [{ from: date, ...routineFields(task) }], snapshots: {}, exceptions: [], endedOn: null } : task;
+    const converted = previous?.kind === 'once' && kind === 'weekly';
+    const begins = converted && date < today ? today : date;
+    const record = kind === 'weekly' ? previous?.kind === 'weekly' ? reviseRoutine(previous, task, effective, data.completed) : createRoutine(task, previous, begins, data.completed) : task;
     dialogFocusTarget = { taskId: id };
     const wasEditing = Boolean(editingId);
     if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? record : t);
     else data.tasks.push(record);
     closeTaskDialog();
-    if (!wasEditing) {
-      let first = parseDate(date);
+    if (!wasEditing || converted) {
+      let first = parseDate(begins);
       if (kind === 'weekly') {
         while (!weekdays.includes(first.getDay())) first = plusDays(first, 1);
       }
@@ -1176,7 +1188,9 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       view = 'day';
     }
     save();
-    notify(wasEditing && kind === 'weekly' ? `Routine changes apply from ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. History is preserved.` : wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
+    if (converted) {
+      notify('One-time task converted to a weekly routine.', () => { data.tasks = data.tasks.map(item => item.id === id ? previous : item); selected = previous.date; month = parseDate(selected); view = 'day'; });
+    } else notify(wasEditing && kind === 'weekly' ? `Routine changes apply from ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. History is preserved.` : wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
   });
   $('taskDate').onchange = updateHint;
   [...$('taskForm').elements.kind].forEach(radio => radio.onchange = updateHint);
