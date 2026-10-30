@@ -1,6 +1,6 @@
 # Day by Day
 
-A daily checklist with weekly routines, a calendar, and reminders—all in one HTML file. Open it locally in Chrome, Edge, Firefox, or another modern browser. No account, installation, server, or internet connection is needed to use the app.
+A daily checklist with weekly routines, a calendar, and reminders-all in one HTML file. Open it locally in Chrome, Edge, Firefox, or another modern browser. No account, installation, server, or internet connection is needed to use the app.
 
 **[Download Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/releases/latest/download/Day-by-Day.html)** · [User guide](docs/USAGE.txt) · [Release notes](https://github.com/Crab-Krab/day-by-day/releases)
 
