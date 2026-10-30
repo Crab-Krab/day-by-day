@@ -118,16 +118,18 @@ async function verifyMotion() {
   weekButton.onclick(); assert.equal(moving.ids.weekStrip.children[1],weekButton); assert.equal(moving.ids.calendarGrid.children[0],monthButton);
   moving.ids.weekStrip.children[6].onclick();
   assert.equal(moving.ids.dayTitle.textContent,'Sunday.'); assert.equal(moving.ids.routinesView.hidden,true);
-  const dayFades=moving.animations.filter(animation=>animation.node===moving.ids.taskList);
+  const dayFades=moving.animations.filter(animation=>animation.node===moving.ids.dayTitle);
   assert.equal(dayFades.length>=2,true); assert.equal(dayFades.some(animation=>animation.cancelled),true);
   assert.equal(dayFades.every(animation=>animation.frames.every(frame=>!('transform' in frame))),true);
+  const interactiveContainers=[moving.ids.dailyView,moving.ids.routinesView,moving.ids.taskList,moving.ids.routineList];
+  assert.equal(moving.animations.some(animation=>interactiveContainers.includes(animation.node) || animation.node.className.split(' ').includes('task-row')),false);
   moving.ids.addTask.onclick(); moving.ids.taskDialog.dispatch('cancel');
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
   const reduced=boot(new Map(),clock,{motion:true,reducedMotion:true});
   reduced.ids.addTask.onclick(); reduced.ids.cancelDialog.onclick(); reduced.ids.routinesNav.onclick();
   assert.equal(reduced.ids.taskDialog.open,false); assert.equal(reduced.animations.length,0);
-  console.log('Motion passed: stationary day navigation, stable calendar buttons, rapid-click fade cancellation, animated dialogs, duplicate-save protection, Escape, and reduced motion.');
+  console.log('Motion passed: heading-only fades, no animation on checklist ancestors or rows, stable date controls, repeated edit cycles, interrupted dialogs, Escape, and reduced motion.');
 }
 verifyMotion().catch(error=>{console.error(error);process.exitCode=1;});
 async function verifyDescriptions() {

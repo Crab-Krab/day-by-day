@@ -146,7 +146,9 @@ h1 span { color: var(--muted); }
 .week-day.active .number { color: white; }
 .week-day .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); position: absolute; bottom: 8px; }
 .week-day.active .day-dot { background: #d2e7ba; }
-.checklist-card { border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.checklist-card { border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+.checklist-card .inline-add, .routines-card #routineList { border-radius: 0 0 14px 14px; }
+.routines-card .task-row:last-child { border-radius: 0 0 14px 14px; }
 .checklist-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 20px; gap: 16px; }
 .checklist-header h2 { font-size: 18px; font-weight: 600; margin: 0; display: flex; gap: 11px; align-items: center; }
 .checklist-header h2>span { font-size: 12px; background: var(--subtle); color: var(--secondary); min-width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }

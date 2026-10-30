@@ -19,7 +19,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
 - Tasks default to due-time order, earliest first with all-day tasks last. Use the up/down arrows to move any task into a saved custom order, regardless of time. **Sort by due time** restores automatic sorting.
 - Light and dark themes with an animated sun/moon button.
-- Subtle day/view transitions, smooth task movement, and a gentle task-window animation; reduced-motion settings are respected.
+- Subtle heading fades and a gentle task-window animation; reduced-motion settings are respected. The interactive checklist stays stationary to avoid a suspected Edge rendering issue.
 - Automatic local saving and JSON backup/restore.
 
 ## Your data

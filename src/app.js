@@ -16,33 +16,12 @@
     animation.finished.then(() => { forget(); animation.cancel(); }, forget);
     return animation;
   }
-  function revealView(element) { playMotion(element, [{ opacity: .35, transform: 'translateY(7px)' }, { opacity: 1, transform: 'translateY(0)' }]); }
+  function revealView(element) {
+    // Keep the interactive checklist outside animated/composited ancestors.
+    playMotion(element.id === 'dailyView' ? $('dayTitle') : $('routinesTitle'), [{ opacity: .5 }, { opacity: 1 }]);
+  }
   function fadeDayContent() {
-    const list = $('taskList');
-    // Keep the heading, date buttons, and checklist frame stationary. On rapid clicks,
-    // continue from the current opacity rather than restarting a dim/slide effect.
-    activeMotion.get($('dailyView'))?.cancel();
-    let opacity = .8;
-    if (activeMotion.has(list) && typeof window.getComputedStyle === 'function') opacity = Number(window.getComputedStyle(list).opacity) || .8;
-    playMotion(list, [{ opacity }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
-  }
-  function captureTaskPositions() {
-    const positions = new Map(); if (!motionEnabled()) return positions;
-    for (const container of [$('taskList'), $('routineList')]) for (const row of container.querySelectorAll('.task-row')) {
-      const rect = row.getBoundingClientRect(); if (rect.width) positions.set(`${container.id}:${row.dataset.id}`, { top: rect.top, left: rect.left });
-    }
-    return positions;
-  }
-  function settleTaskPositions(positions) {
-    if (!motionEnabled()) return;
-    for (const container of [$('taskList'), $('routineList')]) for (const row of container.querySelectorAll('.task-row')) {
-      const rect = row.getBoundingClientRect(); if (!rect.width) continue;
-      const previous = positions.get(`${container.id}:${row.dataset.id}`);
-      if (previous) {
-        const x = previous.left - rect.left, y = previous.top - rect.top;
-        if (Math.abs(x) + Math.abs(y) > .5 && Math.abs(y) < 350) playMotion(row, [{ transform: `translate(${x}px,${y}px)` }, { transform: 'translate(0,0)' }], { duration: 230 });
-      } else playMotion(row, [{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 170 });
-    }
+    playMotion($('dayTitle'), [{ opacity: .8 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
   }
   let dialogClosing = false, dialogCloseMotion = null;
   function closeTaskDialog() {
@@ -171,7 +150,7 @@
       try { localStorage.setItem(KEY, JSON.stringify(data)); }
       catch (_) { storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.'); }
     }
-    render(true);
+    render();
     checkReminders();
   }
   function notify(message, undo) {
@@ -288,8 +267,7 @@
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
     row.prepend(ordering); actions.append(edit); row.append(actions); return row;
   }
-  function render(animateRows = false) {
-    const previousPositions = animateRows ? captureTaskPositions() : null;
+  function render() {
     $('dailyView').hidden = view !== 'day'; $('routinesView').hidden = view !== 'routines';
     $('todayNav').classList.toggle('active', view === 'day'); $('routinesNav').classList.toggle('active', view === 'routines');
     $('todayCount').textContent = tasksOn(today).filter(t => !isDone(t.id, today)).length;
@@ -310,7 +288,6 @@
     const routines = orderedTasks(data.tasks.filter(t => t.kind === 'weekly'));
     $('routineList').replaceChildren(...(routines.length ? routines.map(t => taskRow(t, true, routines)) : [makeEmpty(true)]));
     renderCalendar(); renderWeek();
-    if (previousPositions) settleTaskPositions(previousPositions);
   }
   const weekdayInputs = [...document.querySelectorAll('input[name="weekdays"]')];
   const reminderInputs = [...document.querySelectorAll('input[name="reminders"]')];
