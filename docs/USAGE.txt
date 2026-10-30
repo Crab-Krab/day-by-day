@@ -36,9 +36,13 @@ Web links open in a new tab. Descriptions are shared across a routine's schedule
 this browser, and included in backups. Clear the Description field to remove it.
 Older tasks and backups load with empty descriptions.
 
-Use the small up/down arrows beside the checkbox to move a task one place in its section.
-The order is saved in this browser and reused on other dates and future repeats.
-Completed tasks stay in their own section. Weekly routines also support ordering.
+Tasks are sorted by due time, earliest first, with All day tasks at the end.
+Completed tasks stay in their own section, also sorted by due time. The same
+sorting applies to Weekly routines. Changing a task's time updates its position.
+Use the small up/down arrows beside the checkbox to arrange tasks that share
+the same due time, or to arrange All day tasks. Arrows cannot move a task past
+one with a different time. Your preferred order within each time group is saved
+in this browser and reused on other dates and future repeats.
 
 TASK TIMES AND REMINDERS
 Choose All day for no due time, or Specific time to set a due time.

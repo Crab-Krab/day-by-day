@@ -169,3 +169,29 @@ async function verifyDescriptions() {
   console.log('Description runtime passed: visible short notes, long previews, Show more/less, complete URL targets, stable control nodes, create/edit/clear, recurring occurrences, reload, restore, and oversized input.');
 }
 verifyDescriptions().catch(error=>{console.error(error);process.exitCode=1;});
+function verifyTimeSorting() {
+  const tasks=[['all-1',null],['late','17:00'],['nine-1','09:00'],['midnight','00:00'],['nine-2','09:00'],['all-2',null],['done-late','18:00'],['done-early','08:00'],['done-all',null]].map(([id,time])=>({id,title:id,kind:'weekly',weekdays:[3],startDate:'2026-10-28',time,reminders:[]}));
+  const storage=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{'2026-10-28':['done-late','done-early','done-all']}})]]);
+  let sorted=boot(storage,clock);
+  const rowIds=container=>container.querySelectorAll('.task-row').map(row=>row.dataset.id);
+  const findRow=id=>sorted.ids.taskList.querySelectorAll('.task-row').find(row=>row.dataset.id===id);
+  assert.deepEqual(rowIds(sorted.ids.taskList),['midnight','nine-1','nine-2','late','all-1','all-2','done-early','done-late','done-all']);
+  const nine=findRow('nine-1'); assert.equal(nine.querySelector('.move-up').disabled,true); assert.equal(nine.querySelector('.move-down').disabled,false);
+  nine.querySelector('.move-up').onclick();
+  assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,3),['midnight','nine-1','nine-2']);
+  nine.querySelector('.move-down').onclick();
+  assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,3),['midnight','nine-2','nine-1']);
+  findRow('all-2').querySelector('.move-up').onclick();
+  assert.deepEqual(rowIds(sorted.ids.taskList).slice(4,6),['all-2','all-1']);
+  sorted=boot(storage,clock); assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,6),['midnight','nine-2','nine-1','late','all-2','all-1']);
+  findRow('late').querySelector('.edit-task').onclick(); sorted.ids.taskTime.value='07:00'; sorted.ids.taskForm.dispatch('submit');
+  assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,4),['midnight','late','nine-2','nine-1']);
+  findRow('late').querySelector('.edit-task').onclick(); sorted.ids.taskForm.elements.timing.value='allday'; sorted.ids.taskForm.dispatch('submit');
+  assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,6),['midnight','nine-2','nine-1','all-2','late','all-1']);
+  sorted.ids.routinesNav.onclick();
+  assert.deepEqual(rowIds(sorted.ids.routineList),['midnight','done-early','nine-2','nine-1','done-late','all-2','late','all-1','done-all']);
+  sorted.ids.nextWeek.onclick();
+  assert.deepEqual(rowIds(sorted.ids.taskList),['midnight','done-early','nine-2','nine-1','done-late','all-2','late','all-1','done-all']);
+  console.log('Sorting runtime passed: due-time sections, completed tasks, guarded arrows, saved ties/all-day ordering, reload, edited times, weekly routines, and future occurrences.');
+}
+verifyTimeSorting();

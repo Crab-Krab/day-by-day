@@ -573,6 +573,8 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     return ordered;
   }
   function validTime(time) { return typeof time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
+  function taskTimeOrder(task) { return validTime(task.time) ? Number(task.time.slice(0, 2)) * 60 + Number(task.time.slice(3)) : 1440; }
+  function sortTasksByTime(tasks) { return tasks.slice().sort((a, b) => taskTimeOrder(a) - taskTimeOrder(b)); }
   function descriptionPreview(description) {
     const lines = description.split('\n'), firstLines = lines.slice(0, 3).join('\n'), characters = Array.from(firstLines);
     const truncated = lines.length > 3 || characters.length > 240;
@@ -655,7 +657,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
   function fmt(date, options) { return parseDate(date).toLocaleDateString(undefined, options); }
-  function tasksOn(date) { return data.tasks.filter(t => scheduled(t, date)); }
+  function tasksOn(date) { return sortTasksByTime(data.tasks.filter(t => scheduled(t, date))); }
   function isDone(id, date = selected) { return (data.completed[date] || []).includes(id); }
   function save() {
     if (persistent) {
@@ -761,9 +763,11 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
       const move = el('button', `icon-button move-task move-${direction}`); move.type = 'button'; move.append(icon('arrow'));
       move.title = `Move ${direction}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.dataset.move = direction;
-      move.disabled = !peers[position + step];
+      const neighbor = peers[position + step], sameTime = neighbor && taskTimeOrder(neighbor) === taskTimeOrder(task);
+      move.disabled = !sameTime;
+      if (neighbor && !sameTime) move.title = 'Tasks are sorted by due time. Move tasks within the same time or the all-day group.';
       move.onclick = () => {
-        const neighbor = peers[position + step]; if (!neighbor) return;
+        if (!sameTime) return;
         data.tasks = reorderTasks(data.tasks, task.id, neighbor.id); save();
         const container = routine ? $('routineList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
@@ -794,7 +798,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     if (!tasks.length) list.append(makeEmpty());
     pending.forEach(task => list.append(taskRow(task, false, pending)));
     if (done.length) { list.append(el('div', 'section-label', `COMPLETED · ${done.length}`)); done.forEach(task => list.append(taskRow(task, false, done))); }
-    const routines = data.tasks.filter(t => t.kind === 'weekly');
+    const routines = sortTasksByTime(data.tasks.filter(t => t.kind === 'weekly'));
     $('routineList').replaceChildren(...(routines.length ? routines.map(t => taskRow(t, true, routines)) : [makeEmpty(true)]));
     renderCalendar(); renderWeek();
     if (previousPositions) settleTaskPositions(previousPositions);
@@ -969,7 +973,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus();
   // Pure date helpers are exposed for focused schedule verification.
-  window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate });
+  window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, reorderTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
 })();
 </script>
 </body>

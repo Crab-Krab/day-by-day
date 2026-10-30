@@ -17,7 +17,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
 - Reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected.
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
-- Up/down arrows beside each checkbox to save the task order.
+- Tasks sort by due time, earliest first, with all-day tasks at the end of each section. Up/down arrows beside each checkbox adjust the order of tasks with the same time or within the all-day group.
 - Light and dark themes with an animated sun/moon button.
 - Subtle day/view transitions, smooth task movement, and a gentle task-window animation; reduced-motion settings are respected.
 - Automatic local saving and JSON backup/restore.
