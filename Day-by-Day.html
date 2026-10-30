@@ -160,6 +160,9 @@ h1 span { color: var(--muted); }
 .checklist-header h2 { font-size: 18px; font-weight: 600; margin: 0; display: flex; gap: 11px; align-items: center; }
 .checklist-header h2>span { font-size: 12px; background: var(--subtle); color: var(--secondary); min-width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }
 .checklist-header>span { color: var(--secondary); font-size: 13px; }
+.checklist-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; color: var(--secondary); font-size: 13px; text-align: right; }
+.sort-button { border: 0; padding: 4px 0; background: transparent; color: var(--secondary); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.sort-button:hover { color: var(--ink); }
 .progress-track { height: 4px; background: var(--subtle); margin: 0 28px; border-radius: 4px; overflow: hidden; }
 .progress-track>div { height: 100%; background: #85a970; transition: width .3s; width: 0; }
 .task-row { display: flex; align-items: flex-start; gap: 16px; padding: 22px 28px; border-bottom: 1px solid var(--line); min-height: 98px; }
@@ -378,6 +381,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .checklist-header { padding: 20px 18px 18px; gap: 8px; }
   .checklist-header h2 { font-size: 16px; gap: 8px; }
   .checklist-header>span { max-width: 125px; text-align: right; font-size: 11px; }
+  .checklist-header-actions { max-width: 125px; font-size: 11px; }
   .progress-track { margin-inline: 18px; }
   .task-row { padding: 18px; gap: 12px; }
   .task-name { font-size: 16px; }
@@ -471,10 +475,10 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       <section id="dailyView" class="content">
         <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="outline-button">Back to today</button></div>
         <section class="week-section" aria-label="Select a day"><div class="week-heading"><span id="weekLabel"></span><div class="arrow-group"><button id="prevWeek" class="icon-button" aria-label="Previous week"><svg><use href="#i-arrow"/></svg></button><button id="nextWeek" class="icon-button" aria-label="Next week"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div><div id="weekStrip" class="week-strip"></div></section>
-        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText">A little progress starts here</span></div><div class="progress-track"><div id="progressBar"></div></div><div id="taskList"></div><button id="inlineAdd" class="inline-add"><span>+</span> Add a task to this day</button></section>
+        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header"><h2>Your checklist <span id="taskTotal">0</span></h2><div class="checklist-header-actions"><span id="completionText">A little progress starts here</span><button type="button" id="sortDay" class="sort-button" hidden>Sort by due time</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div id="taskList"></div><button id="inlineAdd" class="inline-add"><span>+</span> Add a task to this day</button></section>
         <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div>
       </section>
-      <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1>Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><span>Repeat every week</span></div><div id="routineList"></div></section><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
+      <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1>Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span>Repeat every week</span><button type="button" id="sortRoutines" class="sort-button" hidden>Sort by due time</button></div></div><div id="routineList"></div></section><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
       <footer class="main-footer"><span>Less remembering. More doing.</span><span>day by day.</span></footer>
     </main>
   </div>
@@ -621,6 +625,8 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   }
   function validate(value) {
     if (!value || ![1, 2, 3, 4].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
+    const sortMode = value.sortMode === undefined ? 'due' : value.sortMode;
+    if (!['due', 'manual'].includes(sortMode)) throw new Error('Invalid task sort mode.');
     const ids = new Set();
     const tasks = value.tasks.map(t => {
       if (!t || typeof t.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.id) || ids.has(t.id) || typeof t.title !== 'string' || !t.title.trim() || t.title.length > 200 || !['once', 'weekly'].includes(t.kind)) throw new Error('Invalid task in backup.');
@@ -644,9 +650,9 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       if (!validDate(date) || !Array.isArray(entries) || entries.length > 20000 || entries.some(id => typeof id !== 'string')) throw new Error('Invalid completion history.');
       completed[date] = [...new Set(entries.filter(id => ids.has(id)))];
     }
-    return { version: 4, tasks, completed };
+    return { version: 4, tasks, completed, sortMode };
   }
-  const empty = () => ({ version: 4, tasks: [], completed: {} });
+  const empty = () => ({ version: 4, tasks: [], completed: {}, sortMode: 'due' });
   let data = empty(), persistent = true;
   function storageError(message) { persistent = false; $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Not saved · back up your tasks'; }
   try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
@@ -657,7 +663,8 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
   function fmt(date, options) { return parseDate(date).toLocaleDateString(undefined, options); }
-  function tasksOn(date) { return sortTasksByTime(data.tasks.filter(t => scheduled(t, date))); }
+  function orderedTasks(tasks) { return data.sortMode === 'manual' ? tasks : sortTasksByTime(tasks); }
+  function tasksOn(date) { return orderedTasks(data.tasks.filter(t => scheduled(t, date))); }
   function isDone(id, date = selected) { return (data.completed[date] || []).includes(id); }
   function save() {
     if (persistent) {
@@ -763,11 +770,12 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
       const move = el('button', `icon-button move-task move-${direction}`); move.type = 'button'; move.append(icon('arrow'));
       move.title = `Move ${direction}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.dataset.move = direction;
-      const neighbor = peers[position + step], sameTime = neighbor && taskTimeOrder(neighbor) === taskTimeOrder(task);
-      move.disabled = !sameTime;
-      if (neighbor && !sameTime) move.title = 'Tasks are sorted by due time. Move tasks within the same time or the all-day group.';
+      const neighbor = peers[position + step]; move.disabled = !neighbor;
       move.onclick = () => {
-        if (!sameTime) return;
+        if (!neighbor) return;
+        // Start custom ordering from what is currently displayed, not creation order.
+        if (data.sortMode !== 'manual') data.tasks = sortTasksByTime(data.tasks);
+        data.sortMode = 'manual';
         data.tasks = reorderTasks(data.tasks, task.id, neighbor.id); save();
         const container = routine ? $('routineList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
@@ -787,6 +795,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     $('todayCount').textContent = tasksOn(today).filter(t => !isDone(t.id, today)).length;
     $('routineCount').textContent = data.tasks.filter(t => t.kind === 'weekly').length;
     $('viewBreadcrumb').textContent = view === 'day' ? 'My day' : 'Weekly routines';
+    for (const id of ['sortDay', 'sortRoutines']) { $(id).hidden = data.sortMode !== 'manual'; }
     $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
     $('jumpToday').hidden = selected === today;
@@ -798,7 +807,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     if (!tasks.length) list.append(makeEmpty());
     pending.forEach(task => list.append(taskRow(task, false, pending)));
     if (done.length) { list.append(el('div', 'section-label', `COMPLETED · ${done.length}`)); done.forEach(task => list.append(taskRow(task, false, done))); }
-    const routines = sortTasksByTime(data.tasks.filter(t => t.kind === 'weekly'));
+    const routines = orderedTasks(data.tasks.filter(t => t.kind === 'weekly'));
     $('routineList').replaceChildren(...(routines.length ? routines.map(t => taskRow(t, true, routines)) : [makeEmpty(true)]));
     renderCalendar(); renderWeek();
     if (previousPositions) settleTaskPositions(previousPositions);
@@ -872,6 +881,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
   $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
+  $('sortDay').onclick = $('sortRoutines').onclick = () => { data.sortMode = 'due'; save(); notify('Sorted by due time. All-day tasks are last.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function backup() {

@@ -151,6 +151,9 @@ h1 span { color: var(--muted); }
 .checklist-header h2 { font-size: 18px; font-weight: 600; margin: 0; display: flex; gap: 11px; align-items: center; }
 .checklist-header h2>span { font-size: 12px; background: var(--subtle); color: var(--secondary); min-width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }
 .checklist-header>span { color: var(--secondary); font-size: 13px; }
+.checklist-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; color: var(--secondary); font-size: 13px; text-align: right; }
+.sort-button { border: 0; padding: 4px 0; background: transparent; color: var(--secondary); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.sort-button:hover { color: var(--ink); }
 .progress-track { height: 4px; background: var(--subtle); margin: 0 28px; border-radius: 4px; overflow: hidden; }
 .progress-track>div { height: 100%; background: #85a970; transition: width .3s; width: 0; }
 .task-row { display: flex; align-items: flex-start; gap: 16px; padding: 22px 28px; border-bottom: 1px solid var(--line); min-height: 98px; }
@@ -369,6 +372,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .checklist-header { padding: 20px 18px 18px; gap: 8px; }
   .checklist-header h2 { font-size: 16px; gap: 8px; }
   .checklist-header>span { max-width: 125px; text-align: right; font-size: 11px; }
+  .checklist-header-actions { max-width: 125px; font-size: 11px; }
   .progress-track { margin-inline: 18px; }
   .task-row { padding: 18px; gap: 12px; }
   .task-name { font-size: 16px; }

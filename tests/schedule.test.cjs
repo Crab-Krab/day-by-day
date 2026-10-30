@@ -123,3 +123,9 @@ assert.deepEqual(Array.from(timedOrder,task=>task.id),['midnight','nine-1','nine
 assert.equal(mixedTimes[0].id,'all-1');
 assert.deepEqual(Array.from(sortTasksByTime(reorderTasks(mixedTimes,'nine-2','nine-1')),task=>task.id),['midnight','nine-2','nine-1','afternoon','late','all-1','all-2']);
 console.log('Time sorting passed: midnight, morning/afternoon, 23:59, all-day last, stable ties, and non-mutating saved order.');
+assert.equal(validate({version:4,tasks:[once],completed:{}}).sortMode,'due');
+const manualBackup=validate(JSON.parse(JSON.stringify({version:4,tasks:[once,weekly],completed:{'2026-10-28':['once']},sortMode:'manual'})));
+assert.equal(manualBackup.sortMode,'manual'); assert.deepEqual(Array.from(manualBackup.tasks,task=>task.id),['once','routine']);
+assert.equal(manualBackup.completed['2026-10-28'][0],'once');
+assert.throws(()=>validate({version:4,tasks:[once],completed:{},sortMode:'invalid'}));
+console.log('Sort preference passed: older backups default to due time and custom order survives backup validation.');

@@ -125,6 +125,8 @@
   }
   function validate(value) {
     if (!value || ![1, 2, 3, 4].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
+    const sortMode = value.sortMode === undefined ? 'due' : value.sortMode;
+    if (!['due', 'manual'].includes(sortMode)) throw new Error('Invalid task sort mode.');
     const ids = new Set();
     const tasks = value.tasks.map(t => {
       if (!t || typeof t.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.id) || ids.has(t.id) || typeof t.title !== 'string' || !t.title.trim() || t.title.length > 200 || !['once', 'weekly'].includes(t.kind)) throw new Error('Invalid task in backup.');
@@ -148,9 +150,9 @@
       if (!validDate(date) || !Array.isArray(entries) || entries.length > 20000 || entries.some(id => typeof id !== 'string')) throw new Error('Invalid completion history.');
       completed[date] = [...new Set(entries.filter(id => ids.has(id)))];
     }
-    return { version: 4, tasks, completed };
+    return { version: 4, tasks, completed, sortMode };
   }
-  const empty = () => ({ version: 4, tasks: [], completed: {} });
+  const empty = () => ({ version: 4, tasks: [], completed: {}, sortMode: 'due' });
   let data = empty(), persistent = true;
   function storageError(message) { persistent = false; $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Not saved · back up your tasks'; }
   try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
@@ -161,7 +163,8 @@
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
   function fmt(date, options) { return parseDate(date).toLocaleDateString(undefined, options); }
-  function tasksOn(date) { return sortTasksByTime(data.tasks.filter(t => scheduled(t, date))); }
+  function orderedTasks(tasks) { return data.sortMode === 'manual' ? tasks : sortTasksByTime(tasks); }
+  function tasksOn(date) { return orderedTasks(data.tasks.filter(t => scheduled(t, date))); }
   function isDone(id, date = selected) { return (data.completed[date] || []).includes(id); }
   function save() {
     if (persistent) {
@@ -267,11 +270,12 @@
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
       const move = el('button', `icon-button move-task move-${direction}`); move.type = 'button'; move.append(icon('arrow'));
       move.title = `Move ${direction}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.dataset.move = direction;
-      const neighbor = peers[position + step], sameTime = neighbor && taskTimeOrder(neighbor) === taskTimeOrder(task);
-      move.disabled = !sameTime;
-      if (neighbor && !sameTime) move.title = 'Tasks are sorted by due time. Move tasks within the same time or the all-day group.';
+      const neighbor = peers[position + step]; move.disabled = !neighbor;
       move.onclick = () => {
-        if (!sameTime) return;
+        if (!neighbor) return;
+        // Start custom ordering from what is currently displayed, not creation order.
+        if (data.sortMode !== 'manual') data.tasks = sortTasksByTime(data.tasks);
+        data.sortMode = 'manual';
         data.tasks = reorderTasks(data.tasks, task.id, neighbor.id); save();
         const container = routine ? $('routineList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
@@ -291,6 +295,7 @@
     $('todayCount').textContent = tasksOn(today).filter(t => !isDone(t.id, today)).length;
     $('routineCount').textContent = data.tasks.filter(t => t.kind === 'weekly').length;
     $('viewBreadcrumb').textContent = view === 'day' ? 'My day' : 'Weekly routines';
+    for (const id of ['sortDay', 'sortRoutines']) { $(id).hidden = data.sortMode !== 'manual'; }
     $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
     $('jumpToday').hidden = selected === today;
@@ -302,7 +307,7 @@
     if (!tasks.length) list.append(makeEmpty());
     pending.forEach(task => list.append(taskRow(task, false, pending)));
     if (done.length) { list.append(el('div', 'section-label', `COMPLETED · ${done.length}`)); done.forEach(task => list.append(taskRow(task, false, done))); }
-    const routines = sortTasksByTime(data.tasks.filter(t => t.kind === 'weekly'));
+    const routines = orderedTasks(data.tasks.filter(t => t.kind === 'weekly'));
     $('routineList').replaceChildren(...(routines.length ? routines.map(t => taskRow(t, true, routines)) : [makeEmpty(true)]));
     renderCalendar(); renderWeek();
     if (previousPositions) settleTaskPositions(previousPositions);
@@ -376,6 +381,7 @@
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
   $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
+  $('sortDay').onclick = $('sortRoutines').onclick = () => { data.sortMode = 'due'; save(); notify('Sorted by due time. All-day tasks are last.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function backup() {
