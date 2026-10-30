@@ -4,7 +4,7 @@ A simple daily checklist that runs locally in your browser. Open **Day-by-Day.ht
 
 ## Download and use
 
-1. Download the latest working [Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html), or choose a published version under **Releases**.
+1. Download [Day-by-Day.html from the latest release](https://github.com/Crab-Krab/day-by-day/releases/latest/download/Day-by-Day.html). For changes not yet released, use the [latest working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html).
 2. Open **Day-by-Day.html** in Chrome, Edge, Firefox, or another modern browser.
 
 Only the HTML file needs to be opened. The other files are for maintaining the app.
