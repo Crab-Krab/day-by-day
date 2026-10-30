@@ -1,6 +1,6 @@
 {
   "name": "day-by-day",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "A standalone browser checklist with weekly routines, task times, and local reminders.",
   "license": "UNLICENSED",

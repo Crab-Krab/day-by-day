@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+## 1.2.1 — 2026-10-30
+
 - Fix routine edits from Weekly routines defaulting to the last browsed future date; use today there while keeping the selected date for calendar edits. Routine-edit Undo restores replaced future revisions and original details.
 - Preserve and export unreadable original saved data from the load warning; prevent empty fallback sessions from being exported as normal backups. Keep unsaved-session exports distinct, retain original data if restore cannot save, and warn before replacing unreadable data.
 - Include occurrence dates in stable completion-toggle labels, re-announce repeated status messages, and restore visible focus by opening today after Move to today. Avoid hidden checklist controls when restoring focus from the routine catalog.
 - Add regression coverage for failed-load recovery and restore failures, routine-edit dates/Undo, repeated announcements, dated labels, and Move to today focus.
+
+Saved data remains format 5, compatible with v1.2.0. Automated scheduling, runtime, history/migration, theme, and standalone packaging checks passed. Actual local-file visual behavior across browsers is not verified by these checks.
 
 ## 1.2.0 — 2026-10-30
 
