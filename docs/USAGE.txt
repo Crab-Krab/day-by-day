@@ -47,8 +47,11 @@ To change a weekly routine into a one-time task, create a separate one-time
 task and end the routine to preserve its history.
 Skip this occurrence hides one incomplete occurrence today or in the future.
 Restore occurrence brings it back from Skipped for this date. Other repeats
-are unchanged. Undo is available above the checklist without a countdown, until
-the next data change, dismissal, or closing/reloading this tab.
+are unchanged. Action confirmations, including the Undo banner above the
+checklist, dismiss automatically after 10 seconds. The timer pauses while the
+message is hovered, its controls have keyboard focus, or the tab is hidden.
+Undo also ends with the next data change, dismissal, or closing/reloading this
+tab. Task reminder notifications have no automatic dismissal timer.
 
 Add an optional Description when creating or editing a task. Use it for details,
 multiline notes, and web links (starting with https:// or http://), up to 5,000

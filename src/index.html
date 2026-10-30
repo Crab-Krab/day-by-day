@@ -63,7 +63,7 @@
     </form>
   </dialog>
   <dialog id="restoreDialog" aria-labelledby="restoreTitle"><div class="restore-content"><h2 id="restoreTitle">Restore backup?</h2><p>This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.</p><div class="restore-actions"><button type="button" id="cancelRestore" class="outline-button">Cancel</button><button type="button" id="confirmRestore" class="primary-button">Restore backup</button></div></div></dialog>
-  <div id="toast" class="toast" hidden></div>
+  <div id="toast" class="toast" hidden><span id="toastMessage"></span><button type="button" id="dismissToast" aria-label="Dismiss notification">Dismiss</button></div>
   <div id="statusAnnouncement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
   <section id="reminderPanel" class="reminder-panel" aria-label="Task reminders" hidden><div class="reminder-panel-heading"><h2><svg><use href="#i-bell"/></svg>Task reminders</h2><button type="button" class="text-button" id="dismissAllReminders">Dismiss all</button></div><div id="reminderAlerts"></div><p class="reminder-panel-note">Best-effort reminders while this file is open.</p></section>
   <div id="reminderAnnouncement" class="sr-only" role="status" aria-live="polite"></div>

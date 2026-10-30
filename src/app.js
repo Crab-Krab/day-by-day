@@ -313,7 +313,44 @@
     $('backupNoticeText').textContent = `${text}. You have changes to back up.`;
     localNote.textContent = `${persistent ? 'Saved in this browser' : 'Not saved in this browser'} · ${text}`;
   }
-  let toastTimer, undoAction;
+  let undoAction;
+  function timedNotice(node, onHide = () => {}) {
+    const duration = 10000;
+    let timer, started = null, remaining = duration, hovered = false, generation = 0;
+    const paused = () => document.hidden || hovered || node.contains(document.activeElement);
+    function pause() {
+      clearTimeout(timer);
+      generation++;
+      if (started !== null) remaining = Math.max(0, remaining - (Date.now() - started));
+      started = null;
+    }
+    function hide() {
+      pause(); node.hidden = true; hovered = false; onHide();
+    }
+    function resume() {
+      if (node.hidden || paused() || started !== null) return;
+      started = Date.now();
+      const current = ++generation;
+      timer = setTimeout(() => {
+        if (current !== generation) return;
+        if (paused()) { pause(); return; }
+        hide();
+      }, remaining);
+    }
+    function show() {
+      pause(); remaining = duration;
+      hovered = node.matches(':hover');
+      node.hidden = false; resume();
+    }
+    node.addEventListener('pointerenter', () => { hovered = true; pause(); });
+    node.addEventListener('pointerleave', () => { hovered = false; resume(); });
+    node.addEventListener('focusin', pause);
+    node.addEventListener('focusout', () => queueMicrotask(resume));
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); else resume(); });
+    return { show, hide };
+  }
+  const toastNotice = timedNotice($('toast'));
+  const undoNotice = timedNotice($('undoNotice'), () => { undoAction = null; });
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
   function fmt(date, options) { return parseDate(date).toLocaleDateString(undefined, options); }
@@ -328,8 +365,8 @@
   }
   function isDone(id, date = selected) { return (data.completed[date] || []).includes(id); }
   function save() {
-    // Undo is one step, without a timer; the next data change supersedes it.
-    undoAction = null; $('undoNotice').hidden = true;
+    // A new data change supersedes the previous one-step Undo.
+    undoNotice.hide();
     if (persistent) {
       try { localStorage.setItem(KEY, JSON.stringify(data)); }
       catch (_) { storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.'); }
@@ -342,11 +379,13 @@
     checkReminders();
   }
   function notify(message, undo) {
-    clearTimeout(toastTimer);
-    $('statusAnnouncement').textContent = undo ? `${message} Undo is available above the checklist until your next change.` : message;
-    const toast = $('toast'); toast.replaceChildren(document.createTextNode(message));
-    if (undo) { undoAction = undo; $('undoNotice').hidden = false; $('undoMessage').textContent = message; }
-    toast.hidden = false; toastTimer = setTimeout(() => { toast.hidden = true; }, 4000);
+    toastNotice.hide();
+    $('statusAnnouncement').textContent = undo ? `${message} Undo is available above the checklist for 10 seconds. The timer pauses while the message is hovered or focused, or the tab is hidden.` : message;
+    if (undo) {
+      undoAction = undo; $('undoMessage').textContent = message; undoNotice.show();
+    } else {
+      $('toastMessage').textContent = message; toastNotice.show();
+    }
   }
   function chooseDate(date) {
     if (!validDate(date)) return;
@@ -704,10 +743,11 @@
   $('backupNow').onclick = backup;
   $('backupLater').onclick = () => { backupStatus.snoozedUntil = Date.now() + 86400000; persistBackupStatus(); renderBackupStatus(); };
   $('undoAction').onclick = () => {
-    const action = undoAction; undoAction = null; $('undoNotice').hidden = true;
+    const action = undoAction; undoNotice.hide();
     if (action) { action(); save(); notify('Change undone.'); $('inlineAdd').focus({ preventScroll: true }); }
   };
-  $('dismissUndo').onclick = () => { undoAction = null; $('undoNotice').hidden = true; $('inlineAdd').focus({ preventScroll: true }); };
+  $('dismissUndo').onclick = () => { undoNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
+  $('dismissToast').onclick = () => { toastNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   let restoreDecision = null, restoreFocusTarget = null;
   function confirmRestore() {
     restoreFocusTarget = document.activeElement;
@@ -729,7 +769,7 @@
       if (file.size > 10000000) throw new Error('This file is too large. Choose a Day by Day backup under 10 MB.');
       const next = validate(JSON.parse(await file.text()));
       if (data.tasks.length && !await confirmRestore()) return;
-      undoAction = null; $('undoNotice').hidden = true;
+      undoNotice.hide();
       data = next; persistent = true; $('storageWarning').hidden = true; $('saveStatus').textContent = 'Saved in this browser'; save(); notify('Backup restored.');
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
@@ -828,8 +868,7 @@
     if (event.key === KEY) {
       try {
         data = event.newValue ? validate(JSON.parse(event.newValue)) : empty();
-        undoAction = null;
-        $('undoNotice').hidden = true;
+        undoNotice.hide();
         render();
         checkReminders();
       } catch (_) {

@@ -23,7 +23,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - Light and dark themes with an animated sun/moon button.
 - Subtle heading fades and a gentle task-window animation; reduced-motion settings are respected. The interactive checklist stays stationary to avoid a suspected Edge rendering issue.
 - Automatic local saving and JSON backup/restore, last-export status, and gentle backup nudges after 25 changes or a week with unexported changes.
-- Keyboard focus returns to the saved task. Undo remains available above the checklist until the next data change, dismissal, or closing/reloading the tab; it has no short countdown.
+- Keyboard focus returns to the saved task. Action confirmations, including the Undo banner, dismiss automatically after 10 seconds. The timer pauses while hovered, keyboard-focused, or the tab is hidden. Undo also ends on the next data change, dismissal, or closing/reloading the tab. Task reminders have no automatic dismissal timer.
 - Follows the system theme until you choose a light/dark preference. Weekday names follow the browser locale; weeks still start Monday.
 
 ## Your data

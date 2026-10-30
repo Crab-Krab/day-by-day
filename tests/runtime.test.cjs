@@ -7,7 +7,8 @@ const source = fs.readFileSync('src/app.js', 'utf8');
 function boot(storage, initialClock, options = {}) {
   let clock = initialClock, uid = 0;
   class Clock extends Date { constructor(...args) { super(...(args.length ? args : [clock])); } static now() { return clock; } }
-  const intervals = [], timeouts = [], ids = {}, extras = {}, inputs = [], animations = [], notices = [];
+  const intervals = [], timeouts = new Map(), ids = {}, extras = {}, inputs = [], animations = [], notices = [];
+  let timerId = 0;
   class Node {
     constructor(tag = 'div') { this.tagName = tag.toUpperCase(); this.children = []; this.dataset = {}; this.style = {}; this.attrs = {}; this.listeners = {}; this.className = ''; this._text = ''; this.value = ''; this.checked = false; this.hidden = false; this.disabled = false; this.open = false; }
     set textContent(value) { this._text = String(value); this.children = []; }
@@ -22,6 +23,7 @@ function boot(storage, initialClock, options = {}) {
     matches(selector) { if (selector.startsWith('.')) return this.className.split(' ').includes(selector.slice(1)); if (selector.startsWith('[data-move=')) return this.dataset.move === selector.match(/"(.*?)"/)[1]; return this.tagName.toLowerCase() === selector; }
     querySelectorAll(selector) { return this.children.flatMap(child => [...(child.matches(selector) ? [child] : []), ...child.querySelectorAll(selector)]); }
     querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+    contains(node) { return this === node || this.children.some(child=>child.contains(node)); }
     get classList() { return {toggle:(name, force) => { const names = new Set(this.className.split(' ').filter(Boolean)); const add = force === undefined ? !names.has(name) : force; add ? names.add(name) : names.delete(name); this.className = [...names].join(' '); return add; }}; }
     focus() { document.activeElement = this; }
     get isConnected() { return !this.detached; }
@@ -43,6 +45,8 @@ function boot(storage, initialClock, options = {}) {
     const attrs = match[1], id = attrs.match(/\bid="([^"]*)"/)?.[1], node = ids[id] || new Node('input');
     node.name = attrs.match(/\bname="([^"]*)"/)?.[1]; node.type = attrs.match(/\btype="([^"]*)"/)?.[1]; node.value = attrs.match(/\bvalue="([^"]*)"/)?.[1] || ''; node.initialValue = node.value; node.checked = /\bchecked\b/.test(attrs); node.initialChecked = node.checked; inputs.push(node);
   }
+  ids.undoNotice.append(ids.undoMessage,ids.undoAction,ids.dismissUndo);
+  ids.toast.append(ids.toastMessage,ids.dismissToast);
   ids.taskForm.elements = {};
   for (const name of ['kind','timing']) {
     const radios = inputs.filter(input => input.name === name);
@@ -52,7 +56,7 @@ function boot(storage, initialClock, options = {}) {
   const documentListeners={},windowListeners={};
   const document = {title:'',hidden:false,body:new Node('body'),getElementById(id){if(!ids[id])throw Error('Missing element '+id);return ids[id];},createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag),createTextNode:text=>Object.assign(new Node('text'),{_text:String(text)}),querySelector(selector){return extras[selector] ||= new Node(selector==='main'?'main':'div');},querySelectorAll(selector){const name=selector.match(/name="(.*?)"/)?.[1];return inputs.filter(input=>input.name===name);},addEventListener:(name,callback)=>{(documentListeners[name] ||= []).push(callback);}};
   const localStorage = {getItem:key=>storage.get(key) ?? null,setItem:(key,value)=>storage.set(key,String(value))};
-  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{timeouts.push({fn,ms});return timeouts.length;},clearTimeout(id){if(timeouts[id-1])timeouts[id-1].cancelled=true;},queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL};
+  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL};
   if(options.navigator)context.navigator=options.navigator;
   if(options.secure)context.window.isSecureContext=true;
   if(options.notifications) {
@@ -60,7 +64,16 @@ function boot(storage, initialClock, options = {}) {
     context.Notification=Notice;context.window.Notification=Notice;context.window.isSecureContext=true;
   }
   vm.createContext(context); vm.runInContext(options.countSorts ? source.replace('function sortTasksByTime(tasks) {','function sortTasksByTime(tasks) { globalThis.sortCalls=(globalThis.sortCalls||0)+1;') : source,context);
-  return {ids,inputs,context,storage,animations,notices,documentListeners,windowListeners,flushTimeouts:()=>timeouts.splice(0).forEach(timer=>{if(!timer.cancelled)timer.fn();}),clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),refresh:()=>intervals.find(timer=>timer.ms===30000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
+  function advance(ms) {
+    const until=clock+ms;
+    for(;;) {
+      const next=[...timeouts].filter(([,timer])=>timer.at<=until).sort((a,b)=>a[1].at-b[1].at)[0];
+      if(!next)break;
+      clock=Math.max(clock,next[1].at);timeouts.delete(next[0]);next[1].fn();
+    }
+    clock=until;
+  }
+  return {ids,inputs,context,storage,animations,notices,documentListeners,windowListeners,advance,flushTimeouts:()=>{const pending=[...timeouts.values()];timeouts.clear();pending.forEach(timer=>timer.fn());},clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),refresh:()=>intervals.find(timer=>timer.ms===30000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
 }
 const clock = new Date(2026,9,28,9,45).getTime();
 const storage = new Map([['day-by-day.v1', JSON.stringify({version:2,tasks:[{id:'existing',title:'Existing routine',kind:'weekly',weekdays:[3],startDate:'2026-10-28'}],completed:{}})]]);
@@ -248,7 +261,7 @@ async function verifyReliability() {
   work.ids.taskList.querySelector('.edit-task').onclick();work.ids.taskTitle.value='Updated current task';work.ids.taskForm.dispatch('submit');
   await new Promise(resolve=>setImmediate(resolve));assert.equal(work.context.document.activeElement,work.ids.taskList.querySelector('.edit-task'));
   work.ids.taskList.querySelector('.edit-task').onclick();work.ids.deleteTask.onclick();
-  assert.equal(work.ids.undoNotice.hidden,false);work.flushTimeouts();assert.equal(work.ids.undoNotice.hidden,false);assert.equal(work.ids.toast.hidden,true);
+  assert.equal(work.ids.undoNotice.hidden,false);assert.equal(work.ids.toast.hidden,true);
   work.ids.prevMonth.onclick();assert.equal(work.ids.undoNotice.hidden,false);work.ids.undoAction.onclick();assert.equal(work.state().tasks.some(task=>task.id==='current'),true);
   assert.equal(work.ids.statusAnnouncement.textContent,'Change undone.');assert.equal(work.ids.statusAnnouncement.hidden,false);
   assert.equal(work.documentListeners.keydown,undefined);
@@ -271,7 +284,7 @@ async function verifyReliability() {
   // Validate stable names for completion toggles in both states.
   const button=newPast.ids.overdueList.querySelector('.check-button');assert.equal(button.getAttribute('aria-label'),'Past due entry');button.onclick();
   assert.equal(newPast.ids.taskList.querySelector('.check-button').getAttribute('aria-label'),'Past due entry');
-  console.log('Reliability runtime passed: overdue completion/move/undo, saved dates, edit focus, persistent Undo, live announcements, calendar counting, backup nudges/status/reload, restore cancel, removed single-key shortcut, and past-time reminders.');
+  console.log('Reliability runtime passed: overdue completion/move/undo, saved dates, edit focus, accessible Undo placement, live announcements, calendar counting, backup nudges/status/reload, restore cancel, removed single-key shortcut, and past-time reminders.');
 }
 verifyReliability().catch(error=>{console.error(error);process.exitCode=1;});
 async function verifyReminderCoordination() {
@@ -441,3 +454,51 @@ async function verifyOverdue() {
   console.log('Overdue runtime passed: section placement/wording, no duplicate rows/counts, completion focus/history, edit/reschedule, weekday arrows, skip/restore, timer/focus/visibility refresh, midnight, reload, and open-dialog safety.');
 }
 verifyOverdue().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyNotificationTimeouts() {
+  const task={id:'test',kind:'once',title:'Test',date:'2026-10-28',time:'11:00'};
+  const makeWork=()=>boot(new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[task],completed:{}})]]),clock);
+  function edit(work,title) {
+    work.ids.taskList.querySelector('.edit-task').onclick();work.ids.taskTitle.value=title;work.ids.taskForm.dispatch('submit');
+  }
+  function remove(work) { work.ids.taskList.querySelector('.edit-task').onclick();work.ids.deleteTask.onclick(); }
+  // Plain confirmations and action banners get the full ten seconds, without duplicate displays.
+  const plain=makeWork();edit(plain,'Updated');assert.equal(plain.ids.toast.hidden,false);assert.equal(plain.ids.undoNotice.hidden,true);
+  plain.advance(9999);assert.equal(plain.ids.toast.hidden,false);plain.advance(1);assert.equal(plain.ids.toast.hidden,true);
+  assert.equal(plain.ids.statusAnnouncement.textContent,'Task updated.');assert.equal(plain.ids.statusAnnouncement.hidden,false);
+  const expiry=makeWork();remove(expiry);assert.equal(expiry.ids.undoNotice.hidden,false);assert.equal(expiry.ids.toast.hidden,true);
+  expiry.advance(9999);assert.equal(expiry.ids.undoNotice.hidden,false);expiry.advance(1);assert.equal(expiry.ids.undoNotice.hidden,true);
+  expiry.ids.undoAction.onclick();assert.equal(expiry.state().tasks.length,0); // expired Undo cannot act later
+  const undone=makeWork();remove(undone);undone.advance(9000);undone.ids.undoAction.onclick();assert.equal(undone.state().tasks.length,1);
+  undone.advance(1000);assert.equal(undone.ids.toast.hidden,false);undone.advance(9000);assert.equal(undone.ids.toast.hidden,true);
+  // Replacement, manual dismissal, and a superseding mutation cancel stale timer callbacks.
+  const replaced=makeWork();edit(replaced,'First');replaced.advance(6000);edit(replaced,'Second');replaced.advance(4000);
+  assert.equal(replaced.ids.toast.hidden,false);replaced.advance(6000);assert.equal(replaced.ids.toast.hidden,true);
+  edit(replaced,'Dismiss me');replaced.ids.dismissToast.onclick();assert.equal(replaced.ids.toast.hidden,true);
+  remove(replaced);replaced.ids.dismissUndo.onclick();assert.equal(replaced.ids.undoNotice.hidden,true);
+  replaced.ids.undoAction.onclick();assert.equal(replaced.state().tasks.length,0);replaced.advance(10000);
+  const superseded=makeWork();remove(superseded);superseded.ids.addTask.onclick();superseded.ids.taskTitle.value='Next action';superseded.ids.taskForm.dispatch('submit');
+  assert.equal(superseded.ids.undoNotice.hidden,true);superseded.ids.undoAction.onclick();assert.equal(superseded.state().tasks.length,1);
+  // Hover and keyboard focus pause the remaining time, including movement between banner controls.
+  const hover=makeWork();remove(hover);hover.advance(6000);hover.ids.undoNotice.dispatch('pointerenter');hover.advance(60000);
+  assert.equal(hover.ids.undoNotice.hidden,false);hover.ids.undoNotice.dispatch('pointerleave');hover.advance(3999);assert.equal(hover.ids.undoNotice.hidden,false);
+  hover.advance(1);assert.equal(hover.ids.undoNotice.hidden,true);
+  const focus=makeWork();remove(focus);await new Promise(resolve=>setImmediate(resolve));
+  focus.advance(1000);focus.ids.undoAction.focus();focus.ids.undoNotice.dispatch('focusin');focus.advance(60000);
+  assert.equal(focus.ids.undoNotice.hidden,false);focus.ids.dismissUndo.focus();focus.ids.undoNotice.dispatch('focusout');await new Promise(resolve=>setImmediate(resolve));focus.advance(60000);
+  assert.equal(focus.ids.undoNotice.hidden,false);focus.ids.inlineAdd.focus();focus.ids.undoNotice.dispatch('focusout');await new Promise(resolve=>setImmediate(resolve));
+  focus.advance(8999);assert.equal(focus.ids.undoNotice.hidden,false);focus.advance(1);assert.equal(focus.ids.undoNotice.hidden,true);
+  const toastFocus=makeWork();edit(toastFocus,'Focused confirmation');toastFocus.ids.dismissToast.focus();toastFocus.ids.toast.dispatch('focusin');toastFocus.advance(60000);
+  assert.equal(toastFocus.ids.toast.hidden,false);toastFocus.ids.dismissToast.onclick();assert.equal(toastFocus.ids.toast.hidden,true);
+  // Hidden tabs don't consume the reading time. Reminder alerts never use these timers.
+  const hidden=makeWork();edit(hidden,'Tab switch');hidden.advance(3000);hidden.context.document.hidden=true;
+  hidden.documentListeners.visibilitychange.forEach(callback=>callback());hidden.advance(60000);assert.equal(hidden.ids.toast.hidden,false);
+  hidden.context.document.hidden=false;hidden.documentListeners.visibilitychange.forEach(callback=>callback());hidden.advance(6999);
+  assert.equal(hidden.ids.toast.hidden,false);hidden.advance(1);assert.equal(hidden.ids.toast.hidden,true);
+  const reminders=boot(new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[task,{id:'reminder',kind:'once',title:'Due soon',date:'2026-10-28',time:'10:00',reminders:[15]}],completed:{}})]]),clock);
+  reminders.ids.taskList.querySelectorAll('.task-row').find(row=>row.dataset.id==='test').querySelector('.edit-task').onclick();reminders.ids.deleteTask.onclick();
+  reminders.advance(60000);assert.equal(reminders.ids.undoNotice.hidden,true);assert.equal(reminders.ids.reminderPanel.hidden,false);
+  reminders.tick();assert.equal(reminders.ids.reminderPanel.hidden,false);assert.equal(JSON.parse(reminders.storage.get('day-by-day.reminders.v1')).alerts.length,1);
+  reminders.ids.dismissAllReminders.onclick();assert.equal(reminders.ids.reminderPanel.hidden,true);
+  console.log('Notification timing passed: 10-second boundaries, Undo expiry/use, manual dismissal, newer messages/mutations, hover/focus pauses, hidden tabs, live announcements, and persistent task reminders.');
+}
+verifyNotificationTimeouts().catch(error=>{console.error(error);process.exitCode=1;});

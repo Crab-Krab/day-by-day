@@ -5,7 +5,8 @@
 - Fix disabled Every week controls when editing one-time tasks. Allow conversion with multiple weekdays, preserve original earlier/completed occurrences and details, start future repeats unchecked, and offer Undo.
 - Add Overdue above the checklist for earlier unfinished one-time tasks and today's unfinished tasks after their due time, including routines. Refresh automatically as time passes, keep each task in one section, retain weekday ordering and completion progress, and preserve original-date completion and Move to today for earlier tasks.
 - Add last-backup-export status, backup notices, and optional browser storage protection where supported.
-- Restore focus after task dialogs; keep Undo available near the checklist until the next change without a timed deadline; announce status updates through an always-present live region.
+- Restore focus after task dialogs; show Undo near the checklist; announce status updates through an always-present live region.
+- Dismiss action confirmations and Undo banners after 10 seconds, pausing while hovered, keyboard-focused, or the tab is hidden. Keep task reminders persistent, add Dismiss to plain confirmations, and show each confirmation once.
 - Use stable completion-toggle labels, remove the single-letter N shortcut, improve light-theme calendar contrast, and use system fonts.
 - Simplify one-time scheduling to a single Date field, follow the system theme until explicitly overridden, and localize weekday names consistently with dates.
 - Clarify best-effort reminders, suppress newly entered past-due alerts, and coordinate reminder delivery with Web Locks where supported.
