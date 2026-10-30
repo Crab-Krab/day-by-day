@@ -74,7 +74,7 @@ app.ids.taskTime.value = '10:00';
 app.inputs.find(input=>input.name==='reminders' && input.value==='15').checked = true;
 app.ids.taskForm.dispatch('submit');
 let state = app.state();
-assert.equal(state.version,4); assert.equal(state.tasks[0].time,null);
+assert.equal(state.version,5); assert.equal(state.tasks[0].time,null);
 assert.equal(state.tasks[1].time,'10:00'); assert.deepEqual(state.tasks[1].reminders,[15]);
 assert.equal(app.ids.reminderPanel.hidden,false); assert.match(app.ids.reminderAlerts.textContent,/Timed reminder check/);
 assert.equal(JSON.parse(storage.get('day-by-day.reminders.v1')).alerts.length,1);
@@ -154,14 +154,15 @@ async function verifyDescriptions() {
   notesApp.ids.taskList.querySelector('.edit-task').onclick(); assert.equal(notesApp.ids.taskDescription.value,notes);
   notesApp.ids.taskDescription.value='Updated details'; notesApp.ids.taskForm.dispatch('submit');
   assert.equal(notesApp.state().completed['2026-10-28'].includes(id),true);
-  const reload=boot(notesApp.storage,clock); assert.equal(reload.ids.taskList.querySelector('.description-body').textContent,'Updated details');
+  const reload=boot(notesApp.storage,clock); assert.equal(reload.ids.taskList.querySelector('.description-body').textContent,notes);
   reload.ids.nextWeek.onclick(); assert.equal(reload.ids.taskList.querySelector('.description-body').textContent,'Updated details');
   assert.equal(reload.ids.taskList.querySelector('.check-button').getAttribute('aria-pressed'),'false');
   reload.ids.routinesNav.onclick(); assert.equal(reload.ids.routineList.querySelector('.description-body').textContent,'Updated details');
   reload.ids.routineList.querySelector('.edit-task').onclick(); reload.ids.taskDescription.value=''; reload.ids.taskForm.dispatch('submit');
-  assert.equal(reload.state().tasks[0].description,''); assert.equal(reload.ids.routineList.querySelector('.task-description'),null);
+  assert.equal(reload.state().tasks[0].description,''); assert.equal(reload.ids.routineList.querySelector('.description-body').textContent,'Updated details');
+  reload.ids.todayNav.onclick();reload.ids.nextWeek.onclick();assert.equal(reload.ids.taskList.querySelector('.task-description'),null);reload.ids.routinesNav.onclick();
   reload.ids.addTask.onclick(); assert.equal(reload.ids.taskDescription.value,''); reload.ids.cancelDialog.onclick();
-  reload.ids.restoreFile.files=[{size:200,text:async()=>JSON.stringify({version:4,tasks:[{...reload.state().tasks[0],description:notes}],completed:{}})}];
+  reload.ids.restoreFile.files=[{size:200,text:async()=>JSON.stringify({version:5,tasks:[{...reload.state().tasks[0],description:notes,versions:reload.state().tasks[0].versions.map(version=>({...version,description:notes}))}],completed:{}})}];
   const restored=reload.ids.restoreFile.onchange(); await new Promise(resolve=>setImmediate(resolve));
   assert.equal(reload.ids.restoreDialog.open,true); reload.ids.confirmRestore.onclick();
   await restored; assert.equal(reload.state().tasks[0].description,notes);
@@ -194,7 +195,7 @@ function verifyTimeSorting() {
   findRow('late').querySelector('.edit-task').onclick(); sorted.ids.taskTime.value='17:00'; sorted.ids.taskForm.dispatch('submit');
   assert.equal(findRow('nine-1').querySelector('.move-up').disabled,false);
   findRow('midnight').querySelector('.move-down').onclick();
-  assert.equal(sorted.state().sortMode,'manual'); assert.equal(sorted.ids.sortDay.hidden,false);
+  assert.ok(sorted.state().weekdayOrders[3]); assert.equal(sorted.ids.sortDay.hidden,false);
   assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,6),['nine-1','midnight','nine-2','late','all-1','all-2']);
   findRow('all-1').querySelector('.move-up').onclick();
   assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,6),['nine-1','midnight','nine-2','all-1','late','all-2']);
@@ -203,10 +204,10 @@ function verifyTimeSorting() {
   sorted=boot(storage,clock); assert.equal(sorted.ids.sortDay.hidden,false);
   assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,6),['nine-1','midnight','nine-2','all-1','late','all-2']);
   sorted.ids.routinesNav.onclick();
-  assert.deepEqual(rowIds(sorted.ids.routineList),['nine-1','done-early','midnight','nine-2','all-1','done-late','late','all-2','done-all']);
+  assert.deepEqual(rowIds(sorted.ids.routineList),['midnight','late','done-early','nine-1','nine-2','done-late','all-1','all-2','done-all']);
   sorted.ids.nextWeek.onclick();
-  assert.deepEqual(rowIds(sorted.ids.taskList),['nine-1','done-early','midnight','nine-2','all-1','done-late','late','all-2','done-all']);
-  sorted.ids.sortDay.onclick(); assert.equal(sorted.state().sortMode,'due'); assert.equal(sorted.ids.sortDay.hidden,true);
+  assert.deepEqual(rowIds(sorted.ids.taskList),['done-early','nine-1','midnight','nine-2','all-1','late','done-late','all-2','done-all']);
+  sorted.ids.sortDay.onclick(); assert.equal(sorted.state().weekdayOrders[3],undefined); assert.equal(sorted.ids.sortDay.hidden,true);
   assert.deepEqual(rowIds(sorted.ids.taskList),['midnight','late','done-early','nine-1','nine-2','done-late','all-1','all-2','done-all']);
   sorted=boot(storage,clock); assert.equal(sorted.ids.sortDay.hidden,true);
   assert.deepEqual(rowIds(sorted.ids.taskList).slice(0,6),['midnight','late','nine-1','nine-2','all-1','all-2']);
@@ -222,8 +223,9 @@ function verifyAlphabeticalSorting() {
   sorted.ids.routinesNav.onclick(); assert.deepEqual(ids(sorted.ids.routineList),['a','b','apple','z']);
   sorted.ids.routineList.querySelectorAll('.task-row').find(row=>row.dataset.id==='b').querySelector('.move-up').onclick();
   assert.deepEqual(ids(sorted.ids.routineList),['b','a','apple','z']);
-  sorted=boot(storage,clock); assert.deepEqual(ids(sorted.ids.taskList),['b','a','apple','z']);
-  sorted.ids.sortDay.onclick(); assert.deepEqual(ids(sorted.ids.taskList),['a','b','apple','z']);
+  sorted=boot(storage,clock); assert.deepEqual(ids(sorted.ids.taskList),['a','b','apple','z']);
+  sorted.ids.routinesNav.onclick();assert.deepEqual(ids(sorted.ids.routineList),['b','a','apple','z']);
+  sorted.ids.sortRoutines.onclick();assert.deepEqual(ids(sorted.ids.routineList),['a','b','apple','z']);sorted.ids.todayNav.onclick();
   sorted.ids.taskList.querySelectorAll('.task-row').find(row=>row.dataset.id==='a').querySelector('.edit-task').onclick();
   sorted.ids.taskTitle.value='Task Z'; sorted.ids.taskForm.dispatch('submit');
   assert.deepEqual(ids(sorted.ids.taskList),['b','a','apple','z']);
@@ -292,3 +294,43 @@ async function verifyReminderCoordination() {
   console.log('Reminder coordination passed: shared-tab lock, duplicate suppression, unsupported-origin fallback, and optional storage protection grant/refusal.');
 }
 verifyReminderCoordination().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyWeekdayOrdersAndHistory() {
+  const weekdays=[[1,2,3],[1,2],[1,3]],titles=['A','B','C'];
+  const tasks=titles.map((title,index)=>({id:title.toLowerCase(),title,kind:'weekly',weekdays:weekdays[index],startDate:'2026-10-01',time:`${String(9+index).padStart(2,'0')}:00`,reminders:[],description:'Original notes'}));
+  const store=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{'2026-10-26':['a']}})]]);
+  let work=boot(store,clock);
+  const rows=()=>work.ids.taskList.querySelectorAll('.task-row');
+  const ids=()=>rows().map(row=>row.dataset.id);
+  assert.deepEqual(ids(),['a','c']);rows()[1].querySelector('.move-up').onclick();assert.deepEqual(ids(),['c','a']);
+  assert.deepEqual(work.state().tasks.map(task=>task.id),['a','b','c']);
+  work.ids.weekStrip.children[1].onclick();assert.deepEqual(ids(),['a','b']);rows()[1].querySelector('.move-up').onclick();assert.deepEqual(ids(),['b','a']);
+  work.ids.weekStrip.children[0].onclick();assert.deepEqual(ids(),['b','c','a']); // A is completed on this Monday; pending tasks retain automatic order.
+  work.ids.weekStrip.children[2].onclick();assert.deepEqual(ids(),['c','a']);work.ids.nextWeek.onclick();assert.deepEqual(ids(),['c','a']);
+  work.ids.sortDay.onclick();assert.deepEqual(ids(),['a','c']);work.ids.weekStrip.children[1].onclick();assert.deepEqual(ids(),['b','a']);
+  work=boot(store,clock);assert.deepEqual(ids(),['a','c']);work.ids.weekStrip.children[1].onclick();assert.deepEqual(ids(),['b','a']);
+  work.ids.todayNav.onclick();
+  const a=rows().find(row=>row.dataset.id==='a');a.querySelector('.check-button').onclick();
+  rows().find(row=>row.dataset.id==='a').querySelector('.edit-task').onclick();
+  assert.equal(work.ids.taskEffectiveDate.value,'2026-10-28');
+  work.ids.taskTitle.value='A revised';work.ids.taskDescription.value='Revised notes';work.ids.taskTime.value='15:00';work.ids.taskEffectiveDate.value='2026-10-29';work.ids.taskForm.dispatch('submit');
+  assert.equal(rows().find(row=>row.dataset.id==='a').querySelector('.task-name').textContent,'A');
+  work.ids.nextWeek.onclick();assert.equal(rows().find(row=>row.dataset.id==='a').querySelector('.task-name').textContent,'A revised');
+  assert.equal(rows().find(row=>row.dataset.id==='a').querySelector('.description-body').textContent,'Revised notes');
+  rows().find(row=>row.dataset.id==='a').querySelector('.skip-task').onclick();assert.equal(ids().includes('a'),false);assert.equal(work.ids.skippedSection.hidden,false);
+  work.ids.skippedList.querySelector('.restore-occurrence').onclick();assert.equal(ids().includes('a'),true);
+  rows().find(row=>row.dataset.id==='a').querySelector('.skip-task').onclick();work.ids.nextWeek.onclick();assert.equal(ids().includes('a'),true);
+  work.ids.todayNav.onclick();rows().find(row=>row.dataset.id==='a').querySelector('.edit-task').onclick();
+  work.ids.taskEffectiveDate.value='2026-10-27';work.ids.taskForm.dispatch('submit');assert.match(work.ids.formError.textContent,/on or after today/);
+  work.ids.taskEffectiveDate.value='2026-10-28';work.ids.deleteTask.onclick();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(work.state().tasks.length,3);assert.equal(work.ids.endedRoutines.hidden,false);assert.match(work.ids.endedRoutineList.textContent,/A/);
+  assert.equal(rows().find(row=>row.dataset.id==='a').querySelector('.task-name').textContent,'A'); // completed today remains historical
+  work=boot(store,clock);assert.equal(work.state().completed['2026-10-26'].includes('a'),true);assert.equal(work.state().tasks[0].endedOn,'2026-10-28');
+  assert.equal(work.ids.endedRoutines.hidden,false);work.ids.nextWeek.onclick();assert.equal(ids().includes('a'),false);
+  work.ids.todayNav.onclick();rows().find(row=>row.dataset.id==='a').querySelector('.edit-task').onclick();
+  assert.equal(work.ids.dialogTitle.textContent,'Routine history');assert.equal(work.ids.saveTask.hidden,true);assert.equal(work.ids.taskTitle.disabled,true);assert.equal(work.ids.deleteTask.hidden,true);
+  work.ids.cancelDialog.onclick();
+  const backup=JSON.stringify(work.state());const restored=boot(new Map([['day-by-day.v1',backup]]),clock);
+  assert.equal(restored.ids.storageWarning.hidden,true);assert.equal(restored.ids.endedRoutines.hidden,false);assert.equal(restored.ids.taskList.querySelectorAll('.task-row').some(row=>row.dataset.id==='a'),true);
+  console.log('Weekday/history runtime passed: independent weekdays, future-week reuse, scoped reset, unchanged task array, dated edits, completed snapshots, skip/restore, ending without deletion, archive reload, read-only history, and backup migration.');
+}
+verifyWeekdayOrdersAndHistory().catch(error=>{console.error(error);process.exitCode=1;});

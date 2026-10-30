@@ -9,7 +9,9 @@
 - Simplify one-time scheduling to a single Date field, follow the system theme until explicitly overridden, and localize weekday names consistently with dates.
 - Clarify best-effort reminders, suppress newly entered past-due alerts, and coordinate reminder delivery with Web Locks where supported.
 - Count calendar tasks without sorting and cache counts during rendering.
-- Document the current shared ordering and routine-history limitations pending product decisions.
+- Save custom ordering independently per weekday, reuse it in future weeks, and keep the routine catalog independent. Migrate older shared preferences without losing their starting order.
+- Preserve routine definitions with effective-date revisions and completed-occurrence snapshots. Add End routine, an ended-routine history view, and skip/restore for a single current or future occurrence.
+- Migrate saved data/backups to format 5 while accepting formats 1–5. Older HTML versions cannot read the new format; previously removed history cannot be reconstructed.
 - Include sidebar/calendar alignment fixes, the checklist-header Add action, and the filled Back to today button committed after v1.1.0.
 
 ## 1.1.0 — 2026-10-29

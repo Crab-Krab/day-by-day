@@ -28,12 +28,18 @@ appear in Earlier, unfinished on today's page. Completing one there records its
 completion on the original date. Move to today explicitly changes its date.
 Missed recurring occurrences are not carried into this section.
 
-Use the pencil next to a task to edit or delete it. Deleting a weekly routine
-removes the routine. Undo is available above the checklist without a countdown,
-until the next data change, dismissal, or closing/reloading this tab.
-Routine edits apply to past and future dates. Deleting a routine removes it from
-all dates; completion history is not an independent archive after reloading.
-Export a backup before routine changes when you need a historical copy.
+Use the pencil next to a task to edit it. One-time tasks can be deleted. For a
+routine, select Apply changes / end routine from (today or later). Save changes
+apply from that date onward and replace later planned edits. Earlier days and
+completed occurrences keep their saved details, including name, notes, and time.
+End routine stops new occurrences starting on the chosen date and keeps the
+routine in Ended routines. View history opens its most recent scheduled date.
+Ended routine details are read-only. Task type is fixed after creation; create
+a new task to switch between one-time and repeating.
+Skip this occurrence hides one incomplete occurrence today or in the future.
+Restore occurrence brings it back from Skipped for this date. Other repeats
+are unchanged. Undo is available above the checklist without a countdown, until
+the next data change, dismissal, or closing/reloading this tab.
 
 Add an optional Description when creating or editing a task. Use it for details,
 multiline notes, and web links (starting with https:// or http://), up to 5,000
@@ -50,11 +56,13 @@ the All day group also sorts alphabetically. Numbered titles use natural order
 (Task 2 before Task 10). Custom ordering takes precedence over these defaults.
 Use the small up/down arrows beside the checkbox to move any task in its section,
 regardless of due time. The first move switches to custom ordering, starting from
-the current due-time order. Custom ordering is saved, included in backups, and
-reused across dates and Weekly routines. In custom order, new tasks are added
-at the end and editing a time does not move a task. Select Sort by due time in
-the checklist header to restore automatic sorting. Completed tasks stay in their
-own section in both ordering modes.
+the current due-time order. The custom order is saved for that weekday and reused
+in future weeks; other weekdays are unchanged. New tasks follow ranked tasks in
+due-time order. Sort by due time resets only the selected weekday. The Weekly
+routines catalog has a separate order that never changes daily orders. Completed
+tasks stay in their own section in both ordering modes. Older shared preferences
+are migrated into all seven weekday preferences, which can then be changed
+independently. Ordering preferences and routine history are included in backups.
 
 TASK TIMES AND REMINDERS
 Choose All day for no due time, or Specific time to set a due time.
@@ -101,3 +109,8 @@ removed to avoid accidental activation. Use the Add task button with mouse or ke
 
 The app uses your device's local date. If it stays open overnight, it updates
 to the new day automatically when you were viewing today.
+
+This build writes data/backup format 5 and accepts older formats 1 through 5.
+Back up before updating. Use this updated HTML to read format-5 backups; older
+HTML versions cannot read them. History already removed by an older version
+cannot be reconstructed.

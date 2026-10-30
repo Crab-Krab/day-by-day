@@ -105,6 +105,14 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .overdue-section { margin-top: 24px; }
 .overdue-hint { margin: -8px 28px 12px; font-size: 13px; color: var(--secondary); }
 .move-today { margin-top: 9px; font-size: 13px; text-decoration: underline; }
+.skip-task { margin-top: 8px; font-size: 12px; text-decoration: underline; }
+.skipped-section, .ended-routines { margin-top: 24px; }
+.history-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--line); }
+.history-item>span { min-width: 0; overflow-wrap: anywhere; }
+.history-item button { flex-shrink: 0; }
+.ended-routines { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 14px; }
+.ended-routines summary { cursor: pointer; padding: 16px 24px; color: var(--secondary); }
+.routine-changes { margin-top: 22px; padding: 16px; background: var(--subtle); border: 1px solid var(--line); border-radius: 9px; }
 #overdueList>.task-row:last-child { border-radius: 0 0 14px 14px; }
 .restore-content { padding: 28px; }
 .restore-content h2 { margin-top: 0; font-family: Georgia, serif; font-weight: 400; font-size: 28px; }

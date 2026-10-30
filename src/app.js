@@ -66,7 +66,66 @@
     if (days.length === 1) return `Every ${DAYS[days[0]]}`;
     return `Every ${days.map(day => weekdayLabel(day, 'short')).join(', ')}`;
   }
-  function scheduled(task, date, weekday) { return task.kind === 'once' ? task.date === date : date >= task.startDate && weekdaysOf(task).includes(weekday ?? parseDate(date).getDay()); }
+  function routineFields(task) {
+    return { title: task.title, description: task.description || '', weekdays: [...weekdaysOf(task)], startDate: task.startDate, time: task.time || null, reminders: [...(task.reminders || [])], reminderFrom: task.reminderFrom || 0 };
+  }
+  function routineVersion(task, date, includeSnapshot = true) {
+    if (includeSnapshot && task.snapshots?.[date]) return task.snapshots[date];
+    if (!task.versions) return task;
+    return task.versions.filter(version => version.from <= date).at(-1) || null;
+  }
+  function resolveTask(task, date, includeSnapshot = true) {
+    if (task.kind !== 'weekly') return task;
+    const version = routineVersion(task, date, includeSnapshot);
+    return version ? { ...task, ...version } : null;
+  }
+  function scheduled(task, date, weekday) {
+    if (task.kind === 'once') return task.date === date;
+    if (task.snapshots?.[date]) return true;
+    if ((task.endedOn && date >= task.endedOn) || task.exceptions?.includes(date)) return false;
+    const version = routineVersion(task, date);
+    return Boolean(version && date >= version.startDate && weekdaysOf(version).includes(weekday ?? parseDate(date).getDay()));
+  }
+  function completedSnapshots(task, completed, from) {
+    const snapshots = { ...task.snapshots };
+    for (const [date, ids] of Object.entries(completed)) {
+      if (date >= from && ids.includes(task.id) && !snapshots[date]) snapshots[date] = routineFields(routineVersion(task, date) || task);
+    }
+    return snapshots;
+  }
+  function reviseRoutine(task, changes, from, completed = {}) {
+    const versions = (task.versions || [{ from: '1900-01-01', ...routineFields(task) }]).filter(version => version.from < from);
+    const next = routineFields(changes);
+    return { ...task, ...next, versions: [...versions, { from, ...next }], snapshots: completedSnapshots(task, completed, from) };
+  }
+  function orderByIds(tasks, ids) {
+    const sorted = sortTasksByTime(tasks);
+    if (!ids) return sorted;
+    const ranks = new Map(ids.map((id, index) => [id, index]));
+    return sorted.sort((a, b) => (ranks.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (ranks.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+  }
+  function moveOrderedId(ids, id, neighborId, step) {
+    if (!ids.includes(id) || !ids.includes(neighborId) || id === neighborId) return ids.slice();
+    const next = ids.filter(value => value !== id);
+    next.splice(next.indexOf(neighborId) + (step > 0 ? 1 : 0), 0, id);
+    return next;
+  }
+  function lastRoutineDate(task, before) {
+    let latest = Object.keys(task.snapshots || {}).filter(date => date < before).sort().at(-1) || null;
+    const versions = task.versions || [{ from: '1900-01-01', ...routineFields(task) }];
+    const skipped = new Set(task.exceptions || []);
+    versions.forEach((version, index) => {
+      const until = versions[index + 1]?.from < before ? versions[index + 1].from : before;
+      if (until <= version.from) return;
+      const end = plusDays(parseDate(until), -1), earliest = version.from > version.startDate ? version.from : version.startDate;
+      for (const weekday of version.weekdays) {
+        let candidate = dateKey(plusDays(end, -((end.getDay() - weekday + 7) % 7)));
+        while (candidate >= earliest && skipped.has(candidate)) candidate = dateKey(plusDays(parseDate(candidate), -7));
+        if (candidate >= earliest && (!latest || candidate > latest)) latest = candidate;
+      }
+    });
+    return latest;
+  }
   function overdueTasks(tasks, completed, date) {
     return tasks.filter(task => task.kind === 'once' && task.date < date && !(completed[task.date] || []).includes(task.id))
       .sort((a, b) => a.date.localeCompare(b.date) || taskTimeOrder(a) - taskTimeOrder(b) || a.title.localeCompare(b.title));
@@ -110,11 +169,11 @@
   function dueReminders(tasks, completed, seen, now) {
     const results = [], localToday = parseDate(dateKey(new Date(now)));
     // Include tomorrow for reminders before midnight and yesterday for a delayed check after sleep.
-    for (const task of tasks) {
-      if (!validTime(task.time) || !task.reminders?.length) continue;
+    for (const source of tasks) {
       for (const shift of [-1, 0, 1]) {
         const date = dateKey(plusDays(localToday, shift));
-        if (!scheduled(task, date) || (completed[date] || []).includes(task.id)) continue;
+        const task = resolveTask(source, date);
+        if (!task || !validTime(task.time) || !task.reminders?.length || !scheduled(source, date) || (completed[date] || []).includes(task.id)) continue;
         const dueAt = dueTime(date, task.time);
         if (dueAt <= (task.reminderFrom || 0)) continue;
         if (dueAt < now - 86400000) continue;
@@ -129,42 +188,91 @@
     return results.sort((a, b) => a.dueAt - b.dueAt);
   }
   function validate(value) {
-    if (!value || ![1, 2, 3, 4].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
-    const sortMode = value.sortMode === undefined ? 'due' : value.sortMode;
-    if (!['due', 'manual'].includes(sortMode)) throw new Error('Invalid task sort mode.');
-    const ids = new Set();
-    const tasks = value.tasks.map(t => {
-      if (!t || typeof t.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.id) || ids.has(t.id) || typeof t.title !== 'string' || !t.title.trim() || t.title.length > 200 || !['once', 'weekly'].includes(t.kind)) throw new Error('Invalid task in backup.');
-      ids.add(t.id);
+    if (!value || ![1, 2, 3, 4, 5].includes(value.version) || !Array.isArray(value.tasks) || value.tasks.length > 20000 || !value.completed || typeof value.completed !== 'object' || Array.isArray(value.completed)) throw new Error('Invalid backup format.');
+    if (value.sortMode !== undefined && !['due', 'manual'].includes(value.sortMode)) throw new Error('Invalid task sort mode.');
+    function fields(t, weekly) {
+      if (!t || typeof t.title !== 'string' || !t.title.trim() || t.title.length > 200) throw new Error('Invalid task name.');
       const description = t.description === undefined ? '' : t.description;
-      if (typeof description !== 'string' || description.length > 5000) throw new Error('Invalid task description. Use up to 5,000 characters.');
+      if (typeof description !== 'string' || description.length > 5000) throw new Error('Invalid task description.');
       const time = t.time == null || t.time === '' ? null : t.time;
       if (time !== null && !validTime(time)) throw new Error('Invalid task time.');
       const reminderFrom = t.reminderFrom === undefined ? 0 : t.reminderFrom;
       if (!Number.isFinite(reminderFrom) || reminderFrom < 0) throw new Error('Invalid reminder start.');
       const rawReminders = t.reminders === undefined ? [] : t.reminders;
       if (!Array.isArray(rawReminders) || rawReminders.length > 4 || rawReminders.some(offset => ![5, 15, 30, 60].includes(offset))) throw new Error('Invalid reminder intervals.');
-      const timing = { description, time, reminderFrom, reminders: time === null ? [] : [...new Set(rawReminders)].sort((a, b) => b - a) };
-      if (t.kind === 'once') { if (!validDate(t.date)) throw new Error('Invalid task date.'); return { id: t.id, title: t.title.trim(), kind: t.kind, date: t.date, ...timing }; }
-      // Accept original single-day tasks and backups without changing their IDs or completion history.
-      const days = t.weekdays === undefined ? [t.weekday] : t.weekdays;
-      if (!Array.isArray(days) || days.length < 1 || days.length > 7 || days.some(day => !Number.isInteger(day) || day < 0 || day > 6) || !validDate(t.startDate)) throw new Error('Invalid routine schedule.');
-      const weekdays = [...new Set(days)].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
-      return { id: t.id, title: t.title.trim(), kind: t.kind, weekdays, startDate: t.startDate, ...timing };
+      const result = { title: t.title.trim(), description, time, reminderFrom, reminders: time === null ? [] : [...new Set(rawReminders)].sort((a, b) => b - a) };
+      if (weekly) {
+        const days = t.weekdays === undefined ? [t.weekday] : t.weekdays;
+        if (!Array.isArray(days) || !days.length || days.length > 7 || days.some(day => !Number.isInteger(day) || day < 0 || day > 6) || !validDate(t.startDate)) throw new Error('Invalid routine schedule.');
+        result.weekdays = [...new Set(days)].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+        result.startDate = t.startDate;
+      }
+      return result;
+    }
+    const ids = new Set();
+    const tasks = value.tasks.map(t => {
+      if (!t || typeof t.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.id) || ids.has(t.id) || !['once', 'weekly'].includes(t.kind)) throw new Error('Invalid task in backup.');
+      ids.add(t.id);
+      const task = { id: t.id, kind: t.kind, ...fields(t, t.kind === 'weekly') };
+      if (t.kind === 'once') {
+        if (!validDate(t.date)) throw new Error('Invalid task date.');
+        return { ...task, date: t.date };
+      }
+      const rawVersions = t.versions === undefined ? [{ from: '1900-01-01', ...routineFields(task) }] : t.versions;
+      if (!Array.isArray(rawVersions) || !rawVersions.length || rawVersions.length > 2000) throw new Error('Invalid routine history.');
+      let last = '';
+      task.versions = rawVersions.map(version => {
+        if (!version || !validDate(version.from) || version.from <= last) throw new Error('Invalid routine history dates.');
+        last = version.from;
+        return { from: version.from, ...fields(version, true) };
+      });
+      Object.assign(task, routineFields(task.versions.at(-1)));
+      const snapshots = t.snapshots === undefined ? {} : t.snapshots;
+      if (!snapshots || typeof snapshots !== 'object' || Array.isArray(snapshots) || Object.keys(snapshots).length > 20000) throw new Error('Invalid occurrence history.');
+      task.snapshots = {};
+      for (const [date, snapshot] of Object.entries(snapshots)) {
+        if (!validDate(date)) throw new Error('Invalid occurrence date.');
+        task.snapshots[date] = fields(snapshot, true);
+      }
+      const exceptions = t.exceptions === undefined ? [] : t.exceptions;
+      if (!Array.isArray(exceptions) || exceptions.length > 20000 || exceptions.some(date => !validDate(date))) throw new Error('Invalid skipped occurrences.');
+      task.exceptions = [...new Set(exceptions)].sort();
+      task.endedOn = t.endedOn == null ? null : t.endedOn;
+      if (task.endedOn !== null && !validDate(task.endedOn)) throw new Error('Invalid routine end date.');
+      return task;
     });
     const completed = {};
     for (const [date, entries] of Object.entries(value.completed)) {
       if (!validDate(date) || !Array.isArray(entries) || entries.length > 20000 || entries.some(id => typeof id !== 'string')) throw new Error('Invalid completion history.');
       completed[date] = [...new Set(entries.filter(id => ids.has(id)))];
     }
-    return { version: 4, tasks, completed, sortMode };
+    const byId = new Map(tasks.map(task => [task.id, task]));
+    for (const [date, entries] of Object.entries(completed)) for (const id of entries) {
+      const task = byId.get(id);
+      if (task.kind === 'weekly' && !scheduled(task, date) && !task.snapshots[date]) task.snapshots[date] = routineFields(routineVersion(task, date) || task);
+    }
+    function order(idsToOrder) {
+      if (!Array.isArray(idsToOrder) || idsToOrder.length > 20000 || idsToOrder.some(id => typeof id !== 'string')) throw new Error('Invalid custom order.');
+      return [...new Set(idsToOrder.filter(id => ids.has(id)))];
+    }
+    const rawOrders = value.weekdayOrders === undefined ? {} : value.weekdayOrders;
+    if (!rawOrders || typeof rawOrders !== 'object' || Array.isArray(rawOrders) || Object.keys(rawOrders).some(day => !/^[0-6]$/.test(day))) throw new Error('Invalid weekday ordering.');
+    const weekdayOrders = {};
+    for (const [day, entries] of Object.entries(rawOrders)) weekdayOrders[day] = order(entries);
+    let routineOrder = value.routineOrder == null ? null : order(value.routineOrder).filter(id => byId.get(id).kind === 'weekly');
+    // Preserve older shared custom preferences, then allow each weekday to diverge.
+    if (value.weekdayOrders === undefined && value.sortMode === 'manual') {
+      for (let day = 0; day < 7; day++) weekdayOrders[day] = tasks.map(task => task.id);
+      routineOrder = tasks.filter(task => task.kind === 'weekly').map(task => task.id);
+    }
+    return { version: 5, tasks, completed, weekdayOrders, routineOrder };
   }
-  const empty = () => ({ version: 4, tasks: [], completed: {}, sortMode: 'due' });
+  const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
   let data = empty(), persistent = true;
   function storageError(message) { persistent = false; $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Not saved · back up your tasks'; }
   try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
   catch (_) { storageError('Saved tasks could not be loaded. Changes will last only for this session. Back up your tasks before closing, or restore a valid backup.'); }
-  let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null;
+  let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null, editingReadOnly = false;
   const expandedDescriptions = new Set();
   const calendarCounts = new Map();
   const BACKUP_KEY = 'day-by-day.backup.v1';
@@ -194,8 +302,8 @@
   function icon(name) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-' + name); svg.setAttribute('aria-hidden', 'true'); svg.append(use); return svg; }
   function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
   function fmt(date, options) { return parseDate(date).toLocaleDateString(undefined, options); }
-  function orderedTasks(tasks) { return data.sortMode === 'manual' ? tasks : sortTasksByTime(tasks); }
-  function tasksOn(date) { return orderedTasks(data.tasks.filter(t => scheduled(t, date))); }
+  function orderedTasks(tasks, date = selected) { return orderByIds(tasks, data.weekdayOrders[parseDate(date).getDay()]); }
+  function tasksOn(date) { return orderedTasks(data.tasks.filter(task => scheduled(task, date)).map(task => resolveTask(task, date)), date); }
   function taskCountOn(date) {
     if (!calendarCounts.has(date)) {
       const weekday = parseDate(date).getDay();
@@ -330,6 +438,20 @@
       };
       copy.append(moveToday);
     }
+    if (!routine && task.kind === 'weekly' && !done && occurrenceDate >= today) {
+      const skip = el('button', 'text-button skip-task', 'Skip this occurrence'); skip.type = 'button';
+      skip.setAttribute('aria-label', `Skip ${task.title} on ${fmt(occurrenceDate, { month: 'short', day: 'numeric' })}`);
+      skip.onclick = () => {
+        const source = data.tasks.find(item => item.id === task.id);
+        source.exceptions = [...new Set([...(source.exceptions || []), occurrenceDate])].sort();
+        save(); $('skippedTitle').focus({ preventScroll: true });
+        notify('Occurrence skipped. Future repeats are unchanged.', () => { source.exceptions = source.exceptions.filter(date => date !== occurrenceDate); });
+      };
+      copy.append(skip);
+    }
+    if (routine && task.endedOn) copy.append(el('p', 'task-meta', `Ends before ${fmt(task.endedOn, { month: 'short', day: 'numeric', year: 'numeric' })}`));
+    const nextVersion = routine && task.versions?.find(version => version.from > today);
+    if (nextVersion) copy.append(el('p', 'task-meta', `Changes scheduled from ${fmt(nextVersion.from, { month: 'short', day: 'numeric', year: 'numeric' })}`));
     row.append(copy);
     const actions = el('div', 'task-actions'), ordering = el('div', 'task-order'), position = peers.findIndex(peer => peer.id === task.id);
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
@@ -338,15 +460,19 @@
       const neighbor = peers[position + step]; move.disabled = !neighbor;
       move.onclick = () => {
         if (!neighbor) return;
-        // Start custom ordering from what is currently displayed, not creation order.
-        if (data.sortMode !== 'manual') data.tasks = sortTasksByTime(data.tasks);
-        data.sortMode = 'manual';
-        data.tasks = reorderTasks(data.tasks, task.id, neighbor.id); save();
+        const weekday = parseDate(occurrenceDate).getDay();
+        const visible = routine ? peers.map(item => item.id) : tasksOn(occurrenceDate).map(item => item.id);
+        const existing = routine ? data.routineOrder : data.weekdayOrders[weekday];
+        const base = existing ? [...existing, ...visible.filter(id => !existing.includes(id))] : visible;
+        const order = moveOrderedId(base, task.id, neighbor.id, step);
+        if (routine) data.routineOrder = order;
+        else data.weekdayOrders[weekday] = order;
+        save();
         const container = routine ? $('routineList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
         const control = movedRow?.querySelector(`[data-move="${direction}"]`);
         if (control && !control.disabled) control.focus({ preventScroll: true }); else movedRow?.focus({ preventScroll: true });
-        notify(`Task moved ${direction}.`);
+        notify(routine ? `Routine moved ${direction}. Daily orders are unchanged.` : `Task moved ${direction}. This order repeats on ${DAYS[weekday]}.`);
       };
       ordering.append(move);
     }
@@ -359,9 +485,12 @@
     $('dailyView').hidden = view !== 'day'; $('routinesView').hidden = view !== 'routines';
     $('todayNav').classList.toggle('active', view === 'day'); $('routinesNav').classList.toggle('active', view === 'routines');
     $('todayCount').textContent = tasksOn(today).filter(t => !isDone(t.id, today)).length + overdue.length;
-    $('routineCount').textContent = data.tasks.filter(t => t.kind === 'weekly').length;
+    const activeRoutines = data.tasks.filter(task => task.kind === 'weekly' && (!task.endedOn || task.endedOn > today));
+    $('routineCount').textContent = activeRoutines.length;
     $('viewBreadcrumb').textContent = view === 'day' ? 'My day' : 'Weekly routines';
-    for (const id of ['sortDay', 'sortRoutines']) { $(id).hidden = data.sortMode !== 'manual'; }
+    $('sortDay').hidden = !data.weekdayOrders[parseDate(selected).getDay()];
+    $('sortDay').title = `Restore automatic sorting for ${DAYS[parseDate(selected).getDay()]}`;
+    $('sortRoutines').hidden = !data.routineOrder;
     $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
     $('jumpToday').hidden = selected === today;
@@ -376,8 +505,27 @@
     $('overdueSection').hidden = selected !== today || !overdue.length;
     $('overdueCount').textContent = overdue.length;
     $('overdueList').replaceChildren(...overdue.map(task => taskRow(task, false, [task], task.date)));
-    const routines = orderedTasks(data.tasks.filter(t => t.kind === 'weekly'));
+    const skipped = data.tasks.filter(task => task.kind === 'weekly' && task.exceptions?.includes(selected) && (!task.endedOn || selected < task.endedOn));
+    $('skippedSection').hidden = !skipped.length;
+    $('skippedList').replaceChildren(...skipped.map(task => {
+      const item = el('div', 'history-item'), version = resolveTask(task, selected) || task;
+      item.append(el('span', '', version.title));
+      const restore = el('button', 'text-button restore-occurrence', 'Restore occurrence'); restore.type = 'button';
+      restore.onclick = () => { task.exceptions = task.exceptions.filter(date => date !== selected); save(); focusTask(task.id); notify('Occurrence restored.'); };
+      item.append(restore); return item;
+    }));
+    const routines = orderByIds(activeRoutines.map(task => resolveTask(task, today, false) || resolveTask(task, task.versions?.[0].from || today, false) || task), data.routineOrder);
     $('routineList').replaceChildren(...(routines.length ? routines.map(t => taskRow(t, true, routines)) : [makeEmpty(true)]));
+    const ended = data.tasks.filter(task => task.kind === 'weekly' && task.endedOn && task.endedOn <= today);
+    $('endedRoutines').hidden = !ended.length; $('endedCount').textContent = ended.length;
+    $('endedRoutineList').replaceChildren(...ended.map(task => {
+      const item = el('div', 'history-item');
+      const historical = resolveTask(task, dateKey(plusDays(parseDate(task.endedOn), -1)), false) || task;
+      item.append(el('span', '', `${historical.title} · Ended ${fmt(task.endedOn, { month: 'short', day: 'numeric', year: 'numeric' })}`));
+      const history = el('button', 'text-button', 'View history'); history.type = 'button';
+      history.onclick = () => chooseDate(lastRoutineDate(task, task.endedOn) || task.endedOn);
+      item.append(history); return item;
+    }));
     renderCalendar(); renderWeek();
   }
   const weekdayInputs = [...document.querySelectorAll('input[name="weekdays"]')];
@@ -399,19 +547,26 @@
   function updateHint() {
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
+    $('routineChanges').hidden = !(editingId && weekly);
     const date = $('taskDate').value;
     const days = selectedWeekdays();
-    $('scheduleHint').textContent = validDate(date) ? weekly ? days.length ? `${recurrenceLabel(days)}, starting ${fmt(date, { month: 'short', day: 'numeric', year: 'numeric' })}. Each date has its own checkbox.${editingId ? ' Changes apply to this routine.' : ''}` : 'Select at least one day for this routine.' : `Only on ${fmt(date, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}.` : 'Choose a date for this task.';
+    $('scheduleHint').textContent = validDate(date) ? weekly ? days.length ? `${recurrenceLabel(days)}, starting ${fmt(date, { month: 'short', day: 'numeric', year: 'numeric' })}. Each date has its own checkbox.${editingId ? ' Earlier dates and completed occurrences keep their saved details.' : ''}` : 'Select at least one day for this routine.' : `Only on ${fmt(date, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}.` : 'Choose a date for this task.';
     $('workdaysPreset').setAttribute('aria-pressed', String(days.length === 5 && [1, 2, 3, 4, 5].every(day => days.includes(day))));
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
   function openTask(task = null, kind = 'once') {
+    const source = task ? data.tasks.find(item => item.id === task.id) || task : null;
+    const effective = selected < today ? today : selected;
+    editingReadOnly = Boolean(source?.kind === 'weekly' && source.endedOn && source.endedOn <= today);
+    if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
     dialogCloseMotion?.cancel(); dialogCloseMotion = null; dialogClosing = false; $('taskDialog').classList.toggle('is-closing', false);
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
-    $('deleteTask').textContent = task?.kind === 'weekly' ? 'Delete routine' : 'Delete task';
+    $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
+    [...$('taskForm').elements.kind].forEach(input => { input.disabled = Boolean(task); });
+    $('taskEffectiveDate').value = effective; $('taskEffectiveDate').min = today;
     $('taskTitle').value = task?.title || ''; $('taskDescription').value = task?.description || ''; $('taskForm').elements.kind.value = task?.kind || kind;
     const date = task ? task.kind === 'weekly' ? task.startDate : task.date : selected;
     $('taskDate').value = date;
@@ -419,9 +574,22 @@
     $('taskForm').elements.timing.value = task?.time ? 'timed' : 'allday'; $('taskTime').value = task?.time || '';
     reminderInputs.forEach(input => { input.checked = (task?.reminders || []).includes(Number(input.value)); });
     updateTimingFields();
-    updateHint(); $('taskDialog').showModal();
+    updateHint();
+    for (const id of ['taskTitle', 'taskDescription', 'taskDate', 'taskTime', 'taskEffectiveDate']) $(id).disabled = editingReadOnly || (id === 'taskTime' && !task?.time);
+    weekdayInputs.forEach(input => { input.disabled = editingReadOnly; });
+    reminderInputs.forEach(input => { input.disabled = editingReadOnly || !task?.time; });
+    [...$('taskForm').elements.timing].forEach(input => { input.disabled = editingReadOnly; });
+    $('workdaysPreset').disabled = $('everydayPreset').disabled = editingReadOnly;
+    $('saveTask').hidden = editingReadOnly;
+    $('cancelDialog').textContent = editingReadOnly ? 'Close' : 'Cancel';
+    if (editingReadOnly) {
+      $('dialogTitle').textContent = 'Routine history';
+      $('deleteTask').hidden = true; $('routineChanges').hidden = true;
+      $('scheduleHint').textContent = 'This routine has ended. Saved occurrences and completion history are kept for reference.';
+    }
+    $('taskDialog').showModal();
     playMotion($('taskDialog'), [{ opacity: 0 }, { opacity: 1 }], { duration: 180 });
-    $('taskTitle').focus();
+    (editingReadOnly ? $('cancelDialog') : $('taskTitle')).focus();
   }
   $('taskForm').addEventListener('submit', event => {
     event.preventDefault();
@@ -430,6 +598,7 @@
     const kind = $('taskForm').elements.kind.value;
     const date = $('taskDate').value;
     if (dialogClosing) return;
+    if (editingReadOnly) return;
     if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
     if (description.length > 5000) { $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
     if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
@@ -440,13 +609,17 @@
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     const id = editingId || (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`);
     const previous = data.tasks.find(task => task.id === editingId);
+    const effective = $('taskEffectiveDate').value;
+    if (previous && previous.kind !== kind) { $('formError').textContent = 'Create a new task to change between one-time and repeating.'; return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
     const scheduleChanged = !previous || previous.time !== time || previous.kind !== kind || (previous.kind === 'once' ? previous.date !== date : previous.startDate !== date || JSON.stringify(previous.weekdays) !== JSON.stringify(weekdays));
     const reminderFrom = scheduleChanged ? Date.now() : (previous.reminderFrom || 0);
     const task = { id, title, description, kind, time, reminders, reminderFrom, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
+    const record = kind === 'weekly' ? previous ? reviseRoutine(previous, task, effective, data.completed) : { ...task, versions: [{ from: date, ...routineFields(task) }], snapshots: {}, exceptions: [], endedOn: null } : task;
     dialogFocusTarget = { taskId: id };
     const wasEditing = Boolean(editingId);
-    if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? task : t);
-    else data.tasks.push(task);
+    if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? record : t);
+    else data.tasks.push(record);
     closeTaskDialog();
     if (!wasEditing) {
       let first = parseDate(date);
@@ -458,7 +631,7 @@
       view = 'day';
     }
     save();
-    notify(wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
+    notify(wasEditing && kind === 'weekly' ? `Routine changes apply from ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. History is preserved.` : wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
   });
   $('taskDate').onchange = updateHint;
   [...$('taskForm').elements.kind].forEach(radio => radio.onchange = updateHint);
@@ -467,8 +640,20 @@
   $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
   $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
   $('deleteTask').onclick = () => {
-    if (dialogClosing) return;
+    if (dialogClosing || editingReadOnly) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
+    if (task.kind === 'weekly') {
+      const effective = $('taskEffectiveDate').value;
+      if (!validDate(effective) || effective < today) { $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      const previousEnd = task.endedOn;
+      const previousSnapshots = task.snapshots;
+      task.snapshots = completedSnapshots(task, data.completed, effective);
+      task.endedOn = effective;
+      dialogFocusTarget = { fallback: $('addTask') };
+      closeTaskDialog(); save();
+      notify(`Routine ends before ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. Earlier days and completion history are kept.`, () => { task.endedOn = previousEnd; task.snapshots = previousSnapshots; });
+      return;
+    }
     dialogFocusTarget = { taskId: data.tasks[index + 1]?.id || data.tasks[index - 1]?.id };
     data.tasks.splice(index, 1); closeTaskDialog(); save(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
   };
@@ -478,7 +663,8 @@
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
   $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
-  $('sortDay').onclick = $('sortRoutines').onclick = () => { data.sortMode = 'due'; save(); notify('Sorted by due time. All-day tasks are last.'); };
+  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; save(); notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
+  $('sortRoutines').onclick = () => { data.routineOrder = null; save(); notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function backup() {
@@ -537,8 +723,12 @@
   function persistReminderLog() { try { localStorage.setItem(REMINDER_KEY, JSON.stringify(reminderLog)); } catch (_) { reminderLogStorage = false; } }
   const reminderButton = el('button', 'reminder-center-button'); reminderButton.type = 'button'; reminderButton.title = 'Task reminders'; reminderButton.setAttribute('aria-label', 'Task reminders'); reminderButton.setAttribute('aria-controls', 'reminderPanel'); reminderButton.append(icon('bell'));
   const reminderCount = el('span', 'reminder-count'); reminderCount.hidden = true; reminderButton.append(reminderCount); document.querySelector('.topbar-actions').prepend(reminderButton);
+  function taskForAlert(alert) {
+    const source = data.tasks.find(task => task.id === alert.taskId);
+    return source ? resolveTask(source, alert.date) : null;
+  }
   function keepReminder(alert) {
-    const task = data.tasks.find(task => task.id === alert.taskId);
+    const task = taskForAlert(alert);
     return task && task.time === alert.time && task.reminders.includes(alert.offset) && scheduled(task, alert.date) && !isDone(task.id, alert.date) && alert.dueAt > (task.reminderFrom || 0) && alert.dueAt >= Date.now() - 86400000;
   }
   function renderReminderPanel() {
@@ -550,7 +740,7 @@
     document.title = alerts.length ? `(${alerts.length}) Day by Day — Task reminders` : 'Day by Day — Your daily checklist';
     const container = $('reminderAlerts'); container.replaceChildren();
     for (const alert of alerts.slice().sort((a, b) => a.dueAt - b.dueAt)) {
-      const task = data.tasks.find(task => task.id === alert.taskId), card = el('div', 'reminder-card');
+      const task = taskForAlert(alert), card = el('div', 'reminder-card');
       const heading = el('div', 'reminder-card-heading'); heading.append(el('h3', '', task.title));
       const dismiss = el('button', 'icon-button'); dismiss.type = 'button'; dismiss.setAttribute('aria-label', `Dismiss reminder for ${task.title}`); dismiss.append(icon('close'));
       dismiss.onclick = () => { reminderLog.alerts = reminderLog.alerts.filter(item => item.taskId !== alert.taskId || item.date !== alert.date || item.time !== alert.time); persistReminderLog(); renderReminderPanel(); };
@@ -570,8 +760,8 @@
   function showDesktopReminder(events) {
     if (notificationPermission() !== 'granted' || !events.length) return;
     try {
-      const first = events[0], task = data.tasks.find(task => task.id === first.taskId);
-      const notice = new Notification(events.length > 1 ? `${events.length} task reminders` : task.title, { body: events.length > 1 ? events.slice(0, 3).map(event => data.tasks.find(task => task.id === event.taskId).title).join(' · ') : `Due ${fmt(first.date, { weekday: 'short', month: 'short', day: 'numeric' })} at ${formatTime(first.time)}`, tag: events.length > 1 ? 'day-by-day-reminders' : first.key });
+      const first = events[0], task = taskForAlert(first);
+      const notice = new Notification(events.length > 1 ? `${events.length} task reminders` : task.title, { body: events.length > 1 ? events.slice(0, 3).map(event => taskForAlert(event)?.title || 'Task').join(' · ') : `Due ${fmt(first.date, { weekday: 'short', month: 'short', day: 'numeric' })} at ${formatTime(first.time)}`, tag: events.length > 1 ? 'day-by-day-reminders' : first.key });
       notice.onclick = () => { window.focus(); chooseDate(first.date); reminderPanelOpen = true; renderReminderPanel(); notice.close(); };
     } catch (_) { /* The in-app panel remains available if a local-file notification is refused. */ }
   }
@@ -588,7 +778,7 @@
     }
     for (const [key, at] of Object.entries(reminderLog.seen)) if (at < now - 172800000) delete reminderLog.seen[key];
     reminderLog.alerts = reminderLog.alerts.slice(-100);
-    if (events.length) { reminderPanelOpen = true; $('reminderAnnouncement').textContent = `${events.length} task reminder${events.length === 1 ? '' : 's'}. ${events.slice(0, 3).map(event => data.tasks.find(task => task.id === event.taskId).title).join(', ')}.`; }
+    if (events.length) { reminderPanelOpen = true; $('reminderAnnouncement').textContent = `${events.length} task reminder${events.length === 1 ? '' : 's'}. ${events.slice(0, 3).map(event => taskForAlert(event)?.title || 'Task').join(', ')}.`; }
     if (JSON.stringify(reminderLog) !== before) { persistReminderLog(); renderReminderPanel(); }
     showDesktopReminder(events);
   }
@@ -642,5 +832,5 @@
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
   // Pure date helpers are exposed for focused schedule verification.
-  window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, overdueTasks, reorderTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
+  window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, resolveTask, reviseRoutine, orderByIds, moveOrderedId, overdueTasks, reorderTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
 })();

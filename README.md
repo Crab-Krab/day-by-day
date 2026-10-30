@@ -18,7 +18,8 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
 - Best-effort reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected. Newly entered tasks already past due do not immediately generate old alerts.
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
-- Tasks default to due-time order, earliest first with all-day tasks last. Tasks sharing a due time sort alphabetically by name, ignoring capitalization; all-day tasks also sort alphabetically. Use the up/down arrows to move any task into a saved custom order. **Sort by due time** restores automatic sorting.
+- Tasks default to due-time order, earliest first with all-day tasks last. Equal times and all-day tasks sort alphabetically. Custom orders are saved separately for each weekday and repeat in future weeks. **Sort by due time** resets only that weekday. The Weekly routines catalog has its own independent ordering.
+- Routine edits have a **changes-from date**. Earlier days and completed occurrences retain their saved titles, notes, times, and schedules. **End routine** keeps historical occurrences; **Skip this occurrence** affects one date and can be restored.
 - Light and dark themes with an animated sun/moon button.
 - Subtle heading fades and a gentle task-window animation; reduced-motion settings are respected. The interactive checklist stays stationary to avoid a suspected Edge rendering issue.
 - Automatic local saving and JSON backup/restore, last-export status, and gentle backup nudges after 25 changes or a week with unexported changes.
@@ -33,9 +34,13 @@ Use the same browser and HTML file location to return to your data. File-based s
 
 “Last backup exported” records when a download was initiated, not whether you saved the file successfully. The optional **Request storage protection** control appears only where the browser supports it; permission can be refused and clearing browser data can still remove tasks. Backups remain necessary.
 
-## Current ordering and history behavior
+## Ordering and routine history
 
-Custom task order and the choice between custom/automatic sorting are shared across dates and Weekly routines. Changing a routine edits its definition for every scheduled date, including past dates. Deleting it removes the routine from all dates, and its completion history is not retained as an independent archive after reloading. Export a backup before changes when you need a historical copy. Independent ordering and historical routine versions require separate product decisions.
+Rearranging Monday affects future Mondays and leaves other weekdays alone. Changing the routine catalog order leaves every daily order alone. Old shared custom orders are copied into the seven weekday preferences during migration, preserving the starting order while allowing each weekday to diverge.
+
+When editing a routine, choose **Apply changes / end routine from** (today or later). Saving replaces any changes scheduled from that date onward; earlier definitions and completed occurrences remain available on their calendar dates. **End routine** stops new occurrences on and after the chosen date and lists the routine under **Ended routines**, with a history link. Ended routines can be viewed read-only. Use **Skip this occurrence** on an incomplete current/future occurrence, and **Restore occurrence** in the skipped section to undo a skip.
+
+Task type is fixed after creation; create a new task to switch between one-time and repeating. History removed by older app versions cannot be reconstructed. Back up before updating: this build writes data/backup format 5 and accepts formats 1–5; older HTML versions cannot read format 5.
 
 ## Reminders
 
