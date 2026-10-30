@@ -1,86 +1,82 @@
 # Day by Day
 
-A simple daily checklist that runs locally in your browser. Open **Day-by-Day.html** to use it. No account, installation, server, or internet connection is needed for the app itself.
+A daily checklist with weekly routines, a calendar, and reminders—all in one HTML file. Open it locally in Chrome, Edge, Firefox, or another modern browser. No account, installation, server, or internet connection is needed to use the app.
 
-## Download and use
+**[Download Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/releases/latest/download/Day-by-Day.html)** · [User guide](docs/USAGE.txt) · [Release notes](https://github.com/Crab-Krab/day-by-day/releases)
 
-1. Download [Day-by-Day.html from the latest release](https://github.com/Crab-Krab/day-by-day/releases/latest/download/Day-by-Day.html). For changes not yet released, use the [latest working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html).
-2. Open **Day-by-Day.html** in Chrome, Edge, Firefox, or another modern browser.
+## Get started
 
-Only the HTML file needs to be opened. The other files are for maintaining the app.
+1. Download the HTML file and save it in a folder you plan to keep using.
+2. Double-click it to open it in your browser. You only need this file; source-code downloads are for development.
+3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
 
-## Features
+The app opens to today. Select another day from the week strip or month calendar, and use the pencil beside a task to edit it.
 
-- Opens to today's checklist, with weekday navigation and a month calendar.
-- Shows **Overdue** above today’s checklist: unfinished timed tasks (one-time or recurring) move there after their due time, alongside unfinished one-time tasks from earlier dates. Today’s all-day tasks stay in the checklist. Earlier tasks retain their original completion date, with an explicit Move to today action.
-- One-time tasks or weekly routines on any combination of days, with Mon–Fri and Every day shortcuts.
-- Optional task times, plus an All day option.
-- Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
-- Best-effort reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected. Newly entered tasks already past due do not immediately generate old alerts.
-- A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
-- Tasks default to due-time order, earliest first with all-day tasks last. Equal times and all-day tasks sort alphabetically. Custom orders are saved separately for each weekday and repeat in future weeks. **Sort by due time** resets only that weekday. The Weekly routines catalog has its own independent ordering.
-- Routine edits have a **changes-from date**. Earlier days and completed occurrences retain their saved titles, notes, times, and schedules. **End routine** keeps historical occurrences; **Skip this occurrence** affects one date and can be restored.
-- Light and dark themes with an animated sun/moon button.
-- Subtle heading fades and a gentle task-window animation; reduced-motion settings are respected. The interactive checklist stays stationary to avoid a suspected Edge rendering issue.
-- Automatic local saving and JSON backup/restore, last-export status, and gentle backup nudges after 25 changes or a week with unexported changes.
-- Keyboard focus returns to the saved task. Action confirmations, including the Undo banner, dismiss automatically after 10 seconds. The timer pauses while hovered, keyboard-focused, or the tab is hidden. Undo also ends on the next data change, dismissal, or closing/reloading the tab. Task reminders have no automatic dismissal timer.
-- Follows the system theme until you choose a light/dark preference. Weekday names follow the browser locale; weeks still start Monday.
+## What it does
 
-## Your data
+- **Plan your day:** All-day tasks or specific due times, with optional descriptions, notes, and clickable web links.
+- **Repeat weekly:** Each scheduled date gets its own checkbox. Completing a routine today leaves future occurrences unchecked.
+- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows let you rearrange tasks. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
+- **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
+- **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.
+- **Save locally:** Automatic browser saving, JSON backup/restore, last-export status, and backup notices.
 
-Tasks, completion history, settings, and reminder history stay in the browser you use. They are not uploaded to GitHub. This repository contains the application and its tests, not your saved work checklist.
+Calendar weeks start Monday. Dates and times use your computer's local timezone. Confirmations and Undo banners dismiss after 10 seconds, pausing while hovered, keyboard-focused, or the tab is hidden. The next data change also ends Undo.
 
-Use the same browser and HTML file location to return to your data. File-based storage behavior can vary by browser. Use **Back up tasks** before clearing browser data, changing browsers, moving the file, or replacing your working copy. **Restore backup** transfers a saved copy to another browser or device.
+## Overdue tasks
 
-“Last backup exported” records when a download was initiated, not whether you saved the file successfully. The optional **Request storage protection** control appears only where the browser supports it; permission can be refused and clearing browser data can still remove tasks. Backups remain necessary.
+**Overdue** appears above today's checklist. Unfinished timed tasks—including routines—move there after their due time. Earlier unfinished one-time tasks also appear there; missed routine occurrences from earlier dates do not carry forward. Today's all-day tasks stay in the checklist.
 
-If saved tasks cannot be loaded, **Download original saved data** in the warning exports the unchanged stored text for recovery. The app does not overwrite it or discard individual records. With an empty fallback session, **Back up tasks** exports that recovery file instead of an empty backup. If you create tasks in the unsaved session, Backup exports a separately named session file; the original data remains available through the warning. Recovery/session exports do not reset normal backup status. Restoring a valid backup warns before replacing unreadable stored data.
+Complete an earlier task on its original date, or choose **Move to today** to change its date. Lists refresh as time passes, and each task appears in one section at a time.
 
-## Ordering and routine history
+## Your data and updates
 
-Rearranging Monday affects future Mondays and leaves other weekdays alone. Changing the routine catalog order leaves every daily order alone. Old shared custom orders are copied into the seven weekday preferences during migration, preserving the starting order while allowing each weekday to diverge.
+Your tasks and history stay in your browser; they are not uploaded to GitHub or synced between devices. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the file can make tasks unavailable. Avoid private/incognito windows for saved tasks.
 
-When editing a routine, choose **Apply changes / end routine from** (today or later). Saving replaces any changes scheduled from that date onward; earlier definitions and completed occurrences remain available on their calendar dates. **End routine** stops new occurrences on and after the chosen date and lists the routine under **Ended routines**, with a history link. Ended routines can be viewed read-only. Use **Skip this occurrence** on an incomplete current/future occurrence, and **Restore occurrence** in the skipped section to undo a skip.
+Before updating:
 
-From **Weekly routines**, edits default to today. From a future calendar day, they default to that day. Routine-edit **Undo** restores the entire previous definition, including later scheduled changes that saving replaced.
+1. Use **Back up tasks** in your current copy and check that the JSON file downloaded.
+2. Download the latest HTML and replace your working file in the same location.
+3. Open it in the same browser. Use **Restore backup** if needed; restoring replaces the current tasks and completion history.
 
-To convert a one-time task, edit it and select **Every week**, then choose its weekdays. The routine begins on the chosen starting date or today, whichever is later. Earlier or completed original occurrences keep their saved details; future repeats start unchecked. Undo restores the one-time task. To change a weekly routine into a one-time task, create a separate one-time task and end the routine to preserve its history.
+**Compatibility:** The current app writes saved-data format 5 and accepts formats 1–5. Versions before v1.2.0 cannot read format 5. Previously removed history cannot be reconstructed.
 
-History removed by older app versions cannot be reconstructed. Back up before updating: this build writes data/backup format 5 and accepts formats 1–5; older HTML versions cannot read format 5.
+If tasks fail to load, **Download original saved data** in the warning exports the untouched stored text for recovery. Backup avoids exporting an empty fallback session as a normal backup; unsaved session tasks export separately. See the [user guide](docs/USAGE.txt) for recovery details.
+
+“Last backup exported” means a download was initiated, not that the file was saved successfully. Optional browser storage protection does not replace backups or prevent deliberate data clearing.
 
 ## Reminders
 
-Keep the HTML file open and the computer awake. A closed file cannot send reminders, and sleeping or suspended browser tabs can delay them. The app catches up on missed reminders for tasks due within the previous 24 hours when it resumes. Completing a task suppresses its reminders.
+For timed tasks, select one or more reminders **5, 15, 30, or 60 minutes before due**. Leave them unchecked for no reminder.
 
-In-app reminders work without notification permission. Desktop alerts are optional and depend on browser support, permission, and workplace policies; some browsers refuse them for local files. All times use the computer's local timezone.
+Keep the file open and your computer awake. Reminders are **best effort**: background or suspended tabs can delay them, and a closed app cannot send alerts. On resuming, the app can catch up on reminders for tasks due within the last 24 hours. Newly entered past-due tasks do not immediately generate old alerts.
 
-Supported tabs cooperate through Web Locks to avoid both delivering the same reminder. Where browser/origin restrictions prevent this, delivery falls back to the existing best-effort model. A closed or sleeping app still cannot act as a guaranteed alarm.
+In-app reminders need no notification permission and have no action-confirmation timeout. Desktop alerts depend on browser support and workplace policies. Completing a task suppresses its reminders.
 
-## Making changes
+**Known Edge issue:** The checklist has intermittently stopped accepting clicks or focus. Resizing the window or opening **Add task** may restore it; a long-term resolution has not been confirmed.
 
-The ready-to-use app is **Day-by-Day.html**. The editable source is in **src/**:
+## Development
 
-| File | Purpose |
+Use **Node.js 20 or newer**. There are no packages to install.
+
+| Path | Purpose |
 | --- | --- |
-| `src/index.html` | Page structure and forms |
-| `src/styles.css` | Layout, colors, and responsive styling |
-| `src/app.js` | Tasks, schedules, local saving, ordering, and reminders |
-| `src/theme.js` | Saved light/dark preference |
-| `scripts/build.mjs` | Combines the source into the standalone HTML |
-| `tests/` | Schedule, migration, reminder, persistence, and runtime checks |
+| `src/` | Editable HTML, CSS, app logic, and theme handling |
+| `scripts/build.mjs` | Builds the standalone HTML |
+| `tests/` | Scheduling, history/migration, theme, and runtime checks |
 | `docs/USAGE.txt` | Detailed user guide |
+| `Day-by-Day.html` | Ready-to-use app generated from the source |
 
-Developers need Node.js 20 or newer to rebuild or run checks. There are no packages to install.
+Run checks, then rebuild:
 
 ```sh
-npm test
-npm run build
+node tests/schedule.test.cjs
+node tests/runtime.test.cjs
+node tests/theme.test.cjs
+node tests/history.test.cjs
+node scripts/build.mjs
 ```
 
-Edit the source files, run the checks, rebuild, and include the updated **Day-by-Day.html** in the same commit. Preserve existing browser data when changing the stored task format, and keep the app usable offline without a server.
+Edit `src/`, preserve existing saved data, and commit the rebuilt HTML alongside code changes. Automated checks do not replace testing the local file in real browsers.
 
-## A quick Git/GitHub guide
-
-**Git** keeps a history of changes to files. A **repository** is the project folder and that history. A **commit** is a named checkpoint. **GitHub** stores the repository online so you can return to earlier versions and continue developing the app.
-
-The repository and its downloads are public, so downloading the app does not require signing in. Your saved tasks and descriptions stay in your browser; they are not part of this repository. Downloading the app does not publish a website or sync your tasks.
+For changes not yet released, download the [latest working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html).
