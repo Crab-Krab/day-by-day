@@ -77,6 +77,11 @@
     return ordered;
   }
   function validTime(time) { return typeof time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
+  function descriptionPreview(description) {
+    const lines = description.split('\n'), firstLines = lines.slice(0, 3).join('\n'), characters = Array.from(firstLines);
+    const truncated = lines.length > 3 || characters.length > 240;
+    return { text: truncated ? characters.slice(0, 240).join('').trimEnd() : description, truncated };
+  }
   function descriptionParts(description) {
     const parts = []; let cursor = 0;
     for (const match of description.matchAll(/https?:\/\/[^\s<>"']+/gi)) {
@@ -229,15 +234,31 @@
     heading.append(name, time); copy.append(heading, meta);
     if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
     if (task.description) {
-      const details = el('details', 'task-description'), summary = el('summary', '', 'Notes & links'), body = el('div', 'description-body');
+      const description = el('div', 'task-description'), body = el('div', 'description-body'), preview = descriptionPreview(task.description);
       const expansionKey = `${routine ? 'routine' : selected}:${task.id}`;
-      details.open = expandedDescriptions.has(expansionKey);
-      details.addEventListener('toggle', () => { if (details.open) expandedDescriptions.add(expansionKey); else expandedDescriptions.delete(expansionKey); });
-      for (const part of descriptionParts(task.description)) {
-        if (part.href) { const link = el('a', '', part.text); link.href = part.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; body.append(link); }
-        else body.append(document.createTextNode(part.text));
+      let expanded = expandedDescriptions.has(expansionKey);
+      body.id = `description-${routine ? 'routine' : 'day'}-${task.id}`;
+      const toggle = preview.truncated ? el('button', 'description-toggle') : null;
+      function showDescription() {
+        body.replaceChildren();
+        let remaining = expanded || !preview.truncated ? task.description.length : preview.text.length;
+        for (const part of descriptionParts(task.description)) {
+          const text = part.text.slice(0, remaining); remaining -= text.length;
+          if (!text) break;
+          // A shortened URL still points to its complete original destination.
+          if (part.href) { const link = el('a', '', text); link.href = part.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; body.append(link); }
+          else body.append(document.createTextNode(text));
+        }
+        if (preview.truncated && !expanded) body.append(document.createTextNode('…'));
+        if (toggle) { toggle.textContent = expanded ? 'Show less' : 'Show more'; toggle.setAttribute('aria-expanded', String(expanded)); }
       }
-      details.append(summary, body); copy.append(details);
+      description.append(body);
+      if (toggle) {
+        toggle.type = 'button'; toggle.setAttribute('aria-controls', body.id);
+        toggle.onclick = () => { expanded = !expanded; if (expanded) expandedDescriptions.add(expansionKey); else expandedDescriptions.delete(expansionKey); showDescription(); };
+        description.append(toggle);
+      }
+      showDescription(); copy.append(description);
     }
     row.append(copy);
     const actions = el('div', 'task-actions'), ordering = el('div', 'task-order'), position = peers.findIndex(peer => peer.id === task.id);

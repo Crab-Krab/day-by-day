@@ -29,8 +29,10 @@ removes the routine; Undo is available briefly after deletion.
 
 Add an optional Description when creating or editing a task. Use it for details,
 multiline notes, and web links (starting with https:// or http://), up to 5,000
-characters. Expand Notes & links below the task to read them; web links open in
-a new tab. Descriptions are shared across a routine's scheduled days, saved in
+characters. Descriptions appear directly below each task. Longer notes show a
+preview of up to three lines / 240 characters, with Show more and Show less to
+expand or collapse them. The arrows and checkbox stay at the top of that task.
+Web links open in a new tab. Descriptions are shared across a routine's scheduled days, saved in
 this browser, and included in backups. Clear the Description field to remove it.
 Older tasks and backups load with empty descriptions.
 

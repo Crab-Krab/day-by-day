@@ -14,7 +14,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 - Opens to today's checklist, with weekday navigation and a month calendar.
 - One-time tasks or weekly routines on any combination of days, with Mon–Fri and Every day shortcuts.
 - Optional task times, plus an All day option.
-- Optional descriptions for details, multiline notes, and clickable web links; expand **Notes & links** below a task to read them.
+- Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
 - Reminders 5, 15, 30, or 60 minutes before due; more than one interval can be selected.
 - A separate checkbox for each scheduled date, so completing a routine does not complete its future occurrences.
 - Up/down arrows beside each checkbox to save the task order.

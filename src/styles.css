@@ -153,7 +153,7 @@ h1 span { color: var(--muted); }
 .checklist-header>span { color: var(--secondary); font-size: 13px; }
 .progress-track { height: 4px; background: var(--subtle); margin: 0 28px; border-radius: 4px; overflow: hidden; }
 .progress-track>div { height: 100%; background: #85a970; transition: width .3s; width: 0; }
-.task-row { display: flex; align-items: center; gap: 16px; padding: 22px 28px; border-bottom: 1px solid var(--line); min-height: 98px; }
+.task-row { display: flex; align-items: flex-start; gap: 16px; padding: 22px 28px; border-bottom: 1px solid var(--line); min-height: 98px; }
 .task-row:last-child { border-bottom: 0; }
 .check-button { width: 28px; height: 28px; flex-shrink: 0; border: 1.5px solid var(--field-border); border-radius: 8px; background: var(--field); padding: 2px; display: grid; place-items: center; }
 .check-button:hover { border-color: var(--green); background: var(--hover); }
@@ -161,10 +161,9 @@ h1 span { color: var(--muted); }
 .check-button[aria-pressed=true] { background: var(--green); border-color: var(--green); }
 .task-copy { flex: 1; min-width: 0; }
 .task-description { margin-top: 12px; color: var(--secondary); font-size: 14px; }
-.task-description summary { width: fit-content; cursor: pointer; padding: 4px 0; font-size: 13px; }
-.task-description summary:hover { color: var(--ink); }
-.task-description summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
-.description-body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; margin-top: 7px; }
+.description-toggle { display: block; border: 0; background: transparent; color: var(--secondary); cursor: pointer; padding: 6px 0; margin-top: 3px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.description-toggle:hover { color: var(--ink); }
+.description-body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
 .description-body a { color: var(--active-ink); text-decoration: underline; text-underline-offset: 3px; }
 .description-body a:hover { color: var(--ink); }
 .task-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 10px; margin-bottom: 6px; }

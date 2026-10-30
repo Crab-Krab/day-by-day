@@ -6,8 +6,8 @@ const start = source.indexOf('  function dateKey');
 const end = source.indexOf('  const empty =');
 const context = { Date, Set, Error, URL, DAYS: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
 vm.createContext(context);
-vm.runInContext(source.slice(start, end) + ';this.api = {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts};', context);
-const {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts} = context.api;
+vm.runInContext(source.slice(start, end) + ';this.api = {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts, descriptionPreview};', context);
+const {dateKey, parseDate, validDate, plusDays, monday, scheduled, reorderTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts, descriptionPreview} = context.api;
 assert.equal(dateKey(monday(parseDate('2026-11-01'))), '2026-10-26');
 assert.equal(dateKey(plusDays(parseDate('2026-11-01'), 1)), '2026-11-02');
 assert.equal(dateKey(plusDays(parseDate('2026-03-08'), 1)), '2026-03-09');
@@ -109,3 +109,11 @@ for (const text of ['javascript:alert(1)','data:text/html,test','file:///C:/work
   const parts = descriptionParts(text); assert.equal(parts.some(part=>part.href),false); assert.equal(parts.map(part=>part.text).join(''),text);
 }
 console.log('Descriptions passed: legacy migration, backup preservation, length/type validation, multiline text, safe web links, and prose punctuation.');
+for(const text of ['', 'Short notes', 'One\nTwo\nThree', 'a'.repeat(240)]) {
+  assert.equal(descriptionPreview(text).text,text); assert.equal(descriptionPreview(text).truncated,false);
+}
+assert.equal(descriptionPreview('One\nTwo\nThree\nFour').text,'One\nTwo\nThree');
+assert.equal(descriptionPreview('One\nTwo\nThree\nFour').truncated,true);
+assert.equal(descriptionPreview('a'.repeat(241)).text.length,240); assert.equal(descriptionPreview('a'.repeat(241)).truncated,true);
+assert.equal(descriptionPreview('😀'.repeat(241)).text,'😀'.repeat(240));
+console.log('Preview boundaries passed: short descriptions, three-line limit, character limit, and whole emoji characters.');
