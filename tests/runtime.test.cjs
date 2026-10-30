@@ -60,7 +60,7 @@ function boot(storage, initialClock, options = {}) {
     context.Notification=Notice;context.window.Notification=Notice;context.window.isSecureContext=true;
   }
   vm.createContext(context); vm.runInContext(options.countSorts ? source.replace('function sortTasksByTime(tasks) {','function sortTasksByTime(tasks) { globalThis.sortCalls=(globalThis.sortCalls||0)+1;') : source,context);
-  return {ids,inputs,context,storage,animations,notices,documentListeners,windowListeners,flushTimeouts:()=>timeouts.splice(0).forEach(timer=>{if(!timer.cancelled)timer.fn();}),clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
+  return {ids,inputs,context,storage,animations,notices,documentListeners,windowListeners,flushTimeouts:()=>timeouts.splice(0).forEach(timer=>{if(!timer.cancelled)timer.fn();}),clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),refresh:()=>intervals.find(timer=>timer.ms===30000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
 }
 const clock = new Date(2026,9,28,9,45).getTime();
 const storage = new Map([['day-by-day.v1', JSON.stringify({version:2,tasks:[{id:'existing',title:'Existing routine',kind:'weekly',weekdays:[3],startDate:'2026-10-28'}],completed:{}})]]);
@@ -183,6 +183,8 @@ async function verifyDescriptions() {
 }
 verifyDescriptions().catch(error=>{console.error(error);process.exitCode=1;});
 function verifyTimeSorting() {
+  // Exercise sorting before any task is overdue; overdue grouping is tested below.
+  const clock=new Date(2026,9,28,0,0).getTime();
   const tasks=[['all-1',null],['late','17:00'],['nine-1','09:00'],['midnight','00:00'],['nine-2','09:00'],['all-2',null],['done-late','18:00'],['done-early','08:00'],['done-all',null]].map(([id,time])=>({id,title:id,kind:'weekly',weekdays:[3],startDate:'2026-10-28',time,reminders:[]}));
   const storage=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{'2026-10-28':['done-late','done-early','done-all']}})]]);
   let sorted=boot(storage,clock);
@@ -237,8 +239,8 @@ async function verifyReliability() {
   const stored=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{'2026-10-26':['done']}})]]);
   const work=boot(stored,clock,{countSorts:true});
   assert.equal(work.ids.overdueSection.hidden,false);assert.equal(work.ids.overdueList.querySelectorAll('.task-row').length,1);
-  assert.equal(work.ids.todayCount.textContent,'2');assert.equal(work.context.sortCalls,3);
-  work.ids.nextMonth.onclick();assert.equal(work.context.sortCalls,3);
+  assert.equal(work.ids.todayCount.textContent,'2');assert.equal(work.context.sortCalls,2);
+  work.ids.nextMonth.onclick();assert.equal(work.context.sortCalls,2);
   work.ids.overdueList.querySelector('.check-button').onclick();
   assert.deepEqual(work.state().completed['2026-10-27'],['old']);assert.equal(work.state().tasks[0].date,'2026-10-27');assert.equal(work.ids.overdueSection.hidden,true);
   work.ids.prevWeek.onclick(); assert.equal(work.ids.overdueSection.hidden,true); work.ids.todayNav.onclick();
@@ -267,7 +269,7 @@ async function verifyReliability() {
   const newPast=boot(new Map(),clock);newPast.ids.addTask.onclick();newPast.ids.taskTitle.value='Past due entry';newPast.ids.taskForm.elements.timing.value='timed';newPast.ids.taskTime.value='08:00';newPast.inputs.find(input=>input.name==='reminders'&&input.value==='5').checked=true;newPast.ids.taskForm.dispatch('submit');
   assert.equal(newPast.ids.reminderPanel.hidden,true);
   // Validate stable names for completion toggles in both states.
-  const button=newPast.ids.taskList.querySelector('.check-button');assert.equal(button.getAttribute('aria-label'),'Past due entry');button.onclick();
+  const button=newPast.ids.overdueList.querySelector('.check-button');assert.equal(button.getAttribute('aria-label'),'Past due entry');button.onclick();
   assert.equal(newPast.ids.taskList.querySelector('.check-button').getAttribute('aria-label'),'Past due entry');
   console.log('Reliability runtime passed: overdue completion/move/undo, saved dates, edit focus, persistent Undo, live announcements, calendar counting, backup nudges/status/reload, restore cancel, removed single-key shortcut, and past-time reminders.');
 }
@@ -295,6 +297,7 @@ async function verifyReminderCoordination() {
 }
 verifyReminderCoordination().catch(error=>{console.error(error);process.exitCode=1;});
 async function verifyWeekdayOrdersAndHistory() {
+  const clock=new Date(2026,9,28,8,0).getTime();
   const weekdays=[[1,2,3],[1,2],[1,3]],titles=['A','B','C'];
   const tasks=titles.map((title,index)=>({id:title.toLowerCase(),title,kind:'weekly',weekdays:weekdays[index],startDate:'2026-10-01',time:`${String(9+index).padStart(2,'0')}:00`,reminders:[],description:'Original notes'}));
   const store=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{'2026-10-26':['a']}})]]);
@@ -376,3 +379,65 @@ async function verifyOneTimeConversion() {
   console.log('Conversion runtime passed: enabled frequency controls, weekday presets, past/today/future and completed tasks, notes/time/reminders, IDs/orders/history, reload, fresh future checkboxes, and Undo.');
 }
 verifyOneTimeConversion().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyOverdue() {
+  assert.ok(html.indexOf('id="overdueSection"')<html.indexOf('aria-label="Daily checklist"'));
+  assert.match(html,/id="overdueTitle"[^>]*>Overdue /);assert.equal(html.includes('Earlier, unfinished'),false);
+  const tasks=[
+    {id:'old',title:'Yesterday',kind:'once',date:'2026-10-27'},
+    {id:'once',title:'One-time deadline',kind:'once',date:'2026-10-28',time:'09:00',description:'Keep notes https://example.com'},
+    {id:'routine',title:'Routine deadline',kind:'weekly',weekdays:[3,4],startDate:'2026-10-01',time:'09:30'},
+    {id:'later',title:'Later deadline',kind:'once',date:'2026-10-28',time:'10:00'},
+    {id:'all',title:'All day',kind:'once',date:'2026-10-28'},
+    {id:'done',title:'Completed deadline',kind:'once',date:'2026-10-28',time:'08:00'},
+    {id:'past-routine',title:'Missed yesterday routine',kind:'weekly',weekdays:[2],startDate:'2026-10-01',time:'08:00'},
+    {id:'skipped',title:'Skipped deadline',kind:'weekly',weekdays:[3],startDate:'2026-10-01',time:'08:00',exceptions:['2026-10-28']}
+  ];
+  const store=new Map([['day-by-day.v1',JSON.stringify({version:5,tasks,completed:{'2026-10-28':['done']}})]]);
+  let work=boot(store,clock);
+  const ids=container=>container.querySelectorAll('.task-row').map(row=>row.dataset.id);
+  const row=(container,id)=>container.querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  assert.deepEqual(ids(work.ids.overdueList),['old','once','routine']);assert.equal(work.ids.overdueCount.textContent,'3');
+  assert.deepEqual(ids(work.ids.taskList),['later','all','done']);assert.equal(work.ids.todayCount.textContent,'5');
+  assert.equal(work.ids.taskTotal.textContent,'5');assert.equal(work.ids.completionText.textContent,'1 of 5 complete');
+  // Today's overdue tasks retain weekday ordering controls beside their checkbox.
+  row(work.ids.overdueList,'routine').querySelector('.move-up').onclick();
+  assert.deepEqual(ids(work.ids.overdueList),['old','routine','once']);assert.ok(work.state().weekdayOrders[3]);
+  assert.equal(work.context.document.activeElement,row(work.ids.overdueList,'routine'));
+  row(work.ids.overdueList,'once').querySelector('.check-button').onclick();
+  assert.deepEqual(work.state().completed['2026-10-28'],['done','once']);
+  assert.equal(ids(work.ids.overdueList).includes('once'),false);assert.equal(ids(work.ids.taskList).includes('once'),true);
+  assert.equal(work.context.document.activeElement,row(work.ids.taskList,'once').querySelector('.check-button'));
+  row(work.ids.taskList,'once').querySelector('.check-button').onclick();assert.equal(ids(work.ids.overdueList).includes('once'),true);
+  row(work.ids.overdueList,'once').querySelector('.edit-task').onclick();
+  assert.equal(work.ids.taskDescription.value,'Keep notes https://example.com');
+  work.ids.taskTime.value='13:00';work.ids.taskForm.dispatch('submit');await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(ids(work.ids.overdueList).includes('once'),false);assert.equal(ids(work.ids.taskList).includes('once'),true);
+  row(work.ids.overdueList,'routine').querySelector('.skip-task').onclick();assert.equal(ids(work.ids.overdueList).includes('routine'),false);
+  work.ids.skippedList.querySelector('.restore-occurrence').onclick();assert.equal(ids(work.ids.overdueList).includes('routine'),true);
+  // Crossing a deadline updates the lists without reloading, double counting, or losing control focus.
+  row(work.ids.taskList,'later').querySelector('.check-button').focus();
+  const before=work.ids.taskList.querySelectorAll('.task-row')[0];
+  work.clock(new Date(2026,9,28,10,0).getTime());work.refresh();
+  assert.equal(row(work.ids.taskList,'later')!==undefined,true);assert.equal(work.ids.taskList.querySelectorAll('.task-row')[0],before);
+  work.clock(new Date(2026,9,28,10,0,1).getTime());work.refresh();
+  assert.equal(ids(work.ids.taskList).includes('later'),false);assert.equal(ids(work.ids.overdueList).includes('later'),true);
+  assert.equal(work.context.document.activeElement,row(work.ids.overdueList,'later').querySelector('.check-button'));
+  assert.equal(work.ids.todayCount.textContent,'5');
+  work=boot(store,new Date(2026,9,28,10,1).getTime());assert.equal(ids(work.ids.overdueList).includes('later'),true);
+  work.ids.nextWeek.onclick();assert.equal(work.ids.overdueSection.hidden,true);work.ids.todayNav.onclick();assert.equal(work.ids.overdueSection.hidden,false);
+  // A sleeping tab catches up on focus/visibility; all-day tasks remain in the checklist until the date changes.
+  work.clock(new Date(2026,9,28,14,0).getTime());work.windowListeners.focus.forEach(callback=>callback());
+  assert.equal(ids(work.ids.overdueList).includes('once'),true);assert.equal(ids(work.ids.taskList).includes('all'),true);
+  work.clock(new Date(2026,9,29,0,0).getTime());work.documentListeners.visibilitychange.forEach(callback=>callback());
+  assert.equal(work.ids.dayTitle.textContent,'Thursday.');assert.equal(ids(work.ids.overdueList).includes('all'),true);
+  assert.equal(ids(work.ids.overdueList).includes('routine'),false);assert.equal(ids(work.ids.taskList).includes('routine'),true);
+  // Keep the edit dialog and unsaved text intact if a deadline passes while it is open.
+  const editing=boot(new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[tasks[3]],completed:{}})]]),clock);
+  editing.ids.taskList.querySelector('.edit-task').onclick();editing.ids.taskDescription.value='Unsaved notes';
+  editing.clock(new Date(2026,9,28,10,0,1).getTime());editing.refresh();assert.equal(editing.ids.taskDialog.open,true);assert.equal(editing.ids.taskDescription.value,'Unsaved notes');
+  editing.ids.taskForm.dispatch('submit');assert.equal(editing.state().tasks[0].description,'Unsaved notes');
+  assert.match(editing.ids.taskList.textContent,/remaining tasks are overdue/);assert.equal(editing.ids.progressBar.style.width,'0%');
+  editing.ids.overdueList.querySelector('.check-button').onclick();assert.equal(editing.ids.overdueSection.hidden,true);assert.equal(editing.ids.progressBar.style.width,'100%');
+  console.log('Overdue runtime passed: section placement/wording, no duplicate rows/counts, completion focus/history, edit/reschedule, weekday arrows, skip/restore, timer/focus/visibility refresh, midnight, reload, and open-dialog safety.');
+}
+verifyOverdue().catch(error=>{console.error(error);process.exitCode=1;});

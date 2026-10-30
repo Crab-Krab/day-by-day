@@ -23,10 +23,15 @@ Weekly routines begin on their Starting on date. Each scheduled date gets its
 own checkbox. Completing one occurrence does not check off other occurrences.
 Existing single-day tasks and older backups keep their schedules and history.
 Existing tasks remain All day until you assign a specific time.
-One-time tasks keep their original date. Earlier unfinished one-time tasks also
-appear in Earlier, unfinished on today's page. Completing one there records its
-completion on the original date. Move to today explicitly changes its date.
-Missed recurring occurrences are not carried into this section.
+Overdue appears above the checklist on today's page. Unfinished timed tasks,
+including routines, move there once today's due time has passed. The app checks
+every 30 seconds while open and catches up when you return to the tab. Today's
+all-day tasks stay in the checklist. Tasks appear in one section at a time;
+today's completion progress includes those in Overdue.
+Unfinished one-time tasks from earlier dates also appear in Overdue. Completing
+one there records completion on its original date. Move to today explicitly
+changes its date. Missed recurring occurrences from earlier dates are not carried
+into this section. Today's overdue routines can still be skipped or rearranged.
 
 Use the pencil next to a task to edit it. One-time tasks can be deleted. For a
 routine, select Apply changes / end routine from (today or later). Save changes

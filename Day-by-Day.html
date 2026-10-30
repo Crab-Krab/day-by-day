@@ -111,7 +111,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .backup-notice p { margin: 0 0 9px; }
 .backup-notice>div, .undo-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .undo-notice>span { flex: 1; }
-.overdue-section { margin-top: 24px; }
+.overdue-section { margin-bottom: 24px; }
 .overdue-hint { margin: -8px 28px 12px; font-size: 13px; color: var(--secondary); }
 .move-today { margin-top: 9px; font-size: 13px; text-decoration: underline; }
 .skip-task { margin-top: 8px; font-size: 12px; text-decoration: underline; }
@@ -515,8 +515,8 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       <section id="dailyView" class="content">
         <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="primary-button">Back to today</button></div>
         <section class="week-section" aria-label="Select a day"><div class="week-heading"><span id="weekLabel"></span><div class="arrow-group"><button id="prevWeek" class="icon-button" aria-label="Previous week"><svg><use href="#i-arrow"/></svg></button><button id="nextWeek" class="icon-button" aria-label="Next week"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div><div id="weekStrip" class="week-strip"></div></section>
+        <section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Overdue <span id="overdueCount">0</span></h2></div><p class="overdue-hint">Unfinished tasks past their due time today, plus one-time tasks from earlier dates.</p><div id="overdueList"></div></section>
         <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button><button type="button" id="sortDay" class="sort-button" hidden>Sort by due time</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div id="taskList"></div></section>
-        <section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Earlier, unfinished <span id="overdueCount">0</span></h2></div><p class="overdue-hint">One-time tasks from earlier dates. Complete them here or move them to today.</p><div id="overdueList"></div></section>
         <section id="skippedSection" class="checklist-card skipped-section" aria-labelledby="skippedTitle" hidden><div class="checklist-header"><h2 id="skippedTitle" tabindex="-1">Skipped for this date</h2></div><div id="skippedList"></div></section>
         <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div>
       </section>
@@ -678,9 +678,15 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     });
     return latest;
   }
-  function overdueTasks(tasks, completed, date) {
-    return tasks.filter(task => task.kind === 'once' && task.date < date && !(completed[task.date] || []).includes(task.id))
-      .sort((a, b) => a.date.localeCompare(b.date) || taskTimeOrder(a) - taskTimeOrder(b) || a.title.localeCompare(b.title));
+  function overdueTasks(tasks, completed, date, now = Date.now()) {
+    return tasks.flatMap(source => {
+      if (source.kind === 'once' && source.date < date) {
+        return (completed[source.date] || []).includes(source.id) ? [] : [source];
+      }
+      const task = resolveTask(source, date);
+      if (!task || !scheduled(source, date) || !validTime(task.time) || dueTime(date, task.time) >= now || (completed[date] || []).includes(task.id)) return [];
+      return [{ ...task, date }];
+    }).sort((a, b) => a.date.localeCompare(b.date) || taskTimeOrder(a) - taskTimeOrder(b) || a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true }));
   }
   function reorderTasks(tasks, id, neighborId) {
     const from = tasks.findIndex(task => task.id === id), to = tasks.findIndex(task => task.id === neighborId);
@@ -825,6 +831,8 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
   catch (_) { storageError('Saved tasks could not be loaded. Changes will last only for this session. Back up your tasks before closing, or restore a valid backup.'); }
   let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null, editingReadOnly = false;
+  let renderedOverdueKey = '';
+  function overdueKey(tasks) { return JSON.stringify(tasks.map(task => [task.date, task.id])); }
   const expandedDescriptions = new Set();
   const calendarCounts = new Map();
   const BACKUP_KEY = 'day-by-day.backup.v1';
@@ -923,16 +931,16 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       button.onclick = () => chooseDate(key);
     }
   }
-  function makeEmpty(routines = false) {
+  function makeEmpty(routines = false, remainingOverdue = false) {
     const box = el('div', 'empty-state'), illustration = el('div', 'empty-illustration'); illustration.append(icon(routines ? 'repeat' : 'leaf'));
-    box.append(illustration, el('h3', '', routines ? 'Find your weekly rhythm.' : 'What’s on your list?'), el('p', '', routines ? 'Add the things you do each week.\nThey’ll be ready when the day comes.' : 'No tasks planned for this day.\nStart with one thing you’d like to get done.'));
+    box.append(illustration, el('h3', '', routines ? 'Find your weekly rhythm.' : remainingOverdue ? 'Your remaining tasks are overdue.' : 'What’s on your list?'), el('p', '', routines ? 'Add the things you do each week.\nThey’ll be ready when the day comes.' : remainingOverdue ? 'You can complete them in the Overdue section above.' : 'No tasks planned for this day.\nStart with one thing you’d like to get done.'));
     box.querySelector('p').style.whiteSpace = 'pre-line';
     if (routines) { const add = el('button', 'outline-button', '+ Add a routine'); add.type = 'button'; add.onclick = () => openTask(null, 'weekly'); box.append(add); }
     return box;
   }
-  function taskRow(task, routine = false, peers = [task], occurrenceDate = selected) {
+  function taskRow(task, routine = false, peers = [task], occurrenceDate = selected, inOverdue = false) {
     const done = !routine && isDone(task.id, occurrenceDate);
-    const overdue = !routine && occurrenceDate !== selected;
+    const overdue = !routine && (inOverdue || occurrenceDate !== selected);
     const pastDue = !routine && task.kind === 'once' && occurrenceDate < today && !done;
     const row = el('div', 'task-row' + (done ? ' done' : ''));
     row.dataset.id = task.id; row.tabIndex = -1;
@@ -944,7 +952,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
         completed.has(task.id) ? completed.delete(task.id) : completed.add(task.id);
         data.completed[occurrenceDate] = [...completed];
         save();
-        const updated = [...$(overdue ? 'overdueList' : 'taskList').querySelectorAll('.check-button')].find(b => b.dataset.id === task.id);
+        const updated = [...$('taskList').querySelectorAll('.check-button'), ...$('overdueList').querySelectorAll('.check-button')].find(b => b.dataset.id === task.id);
         (updated || (overdue && !$('overdueSection').hidden ? $('overdueTitle') : $('inlineAdd'))).focus({ preventScroll: true });
       }; check.dataset.id = task.id; row.append(check);
     }
@@ -1020,7 +1028,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
         if (routine) data.routineOrder = order;
         else data.weekdayOrders[weekday] = order;
         save();
-        const container = routine ? $('routineList') : $('taskList');
+        const container = routine ? $('routineList') : overdue ? $('overdueList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
         const control = movedRow?.querySelector(`[data-move="${direction}"]`);
         if (control && !control.disabled) control.focus({ preventScroll: true }); else movedRow?.focus({ preventScroll: true });
@@ -1029,14 +1037,18 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       ordering.append(move);
     }
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
-    if (!overdue) row.prepend(ordering); actions.append(edit); row.append(actions); return row;
+    if (!overdue || occurrenceDate === selected) row.prepend(ordering); actions.append(edit); row.append(actions); return row;
   }
   function render() {
     calendarCounts.clear();
     const overdue = overdueTasks(data.tasks, data.completed, today);
+    renderedOverdueKey = overdueKey(overdue);
+    const overdueTodayIds = new Set(overdue.filter(task => task.date === today).map(task => task.id));
+    const todayTasks = tasksOn(today), overdueToday = todayTasks.filter(task => overdueTodayIds.has(task.id));
+    const overdueEarlier = overdue.filter(task => task.date < today);
     $('dailyView').hidden = view !== 'day'; $('routinesView').hidden = view !== 'routines';
     $('todayNav').classList.toggle('active', view === 'day'); $('routinesNav').classList.toggle('active', view === 'routines');
-    $('todayCount').textContent = tasksOn(today).filter(t => !isDone(t.id, today)).length + overdue.length;
+    $('todayCount').textContent = todayTasks.filter(t => !isDone(t.id, today)).length + overdueEarlier.length;
     const activeRoutines = data.tasks.filter(task => task.kind === 'weekly' && (!task.endedOn || task.endedOn > today));
     $('routineCount').textContent = activeRoutines.length;
     $('viewBreadcrumb').textContent = view === 'day' ? 'My day' : 'Weekly routines';
@@ -1046,17 +1058,19 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
     $('jumpToday').hidden = selected === today;
-    const tasks = tasksOn(selected), pending = tasks.filter(t => !isDone(t.id)), done = tasks.filter(t => isDone(t.id));
+    const tasks = selected === today ? todayTasks : tasksOn(selected);
+    const unfinished = tasks.filter(t => !isDone(t.id));
+    const pending = unfinished.filter(task => selected !== today || !overdueTodayIds.has(task.id)), done = tasks.filter(t => isDone(t.id));
     $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : ''; $('completionText').hidden = !tasks.length;
     $('progressBar').style.width = `${tasks.length ? done.length / tasks.length * 100 : 0}%`;
-    $('daySubtitle').textContent = tasks.length && !pending.length ? 'All done for this day. Enjoy a little breathing room.' : 'A fresh day. A little space to get things done.';
+    $('daySubtitle').textContent = tasks.length && !unfinished.length && (selected !== today || !overdueEarlier.length) ? 'All done for this day. Enjoy a little breathing room.' : 'A fresh day. A little space to get things done.';
     const list = $('taskList'); list.replaceChildren();
-    if (!tasks.length) list.append(makeEmpty());
+    if (!tasks.length || (!pending.length && !done.length)) list.append(makeEmpty(false, selected === today && overdueToday.length > 0));
     pending.forEach(task => list.append(taskRow(task, false, pending)));
     if (done.length) { list.append(el('div', 'section-label', `COMPLETED · ${done.length}`)); done.forEach(task => list.append(taskRow(task, false, done))); }
     $('overdueSection').hidden = selected !== today || !overdue.length;
     $('overdueCount').textContent = overdue.length;
-    $('overdueList').replaceChildren(...overdue.map(task => taskRow(task, false, [task], task.date)));
+    $('overdueList').replaceChildren(...overdueEarlier.map(task => taskRow(task, false, [task], task.date, true)), ...overdueToday.map(task => taskRow(task, false, overdueToday, today, true)));
     const skipped = data.tasks.filter(task => task.kind === 'weekly' && task.exceptions?.includes(selected) && (!task.endedOn || selected < task.endedOn));
     $('skippedSection').hidden = !skipped.length;
     $('skippedList').replaceChildren(...skipped.map(task => {
@@ -1381,7 +1395,26 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       } catch (_) { /* Ignore invalid optional status. */ }
     }
   });
-  function refreshToday() { const now = dateKey(new Date()); if (now === today) return; const followedToday = selected === today; today = now; if (followedToday) { selected = now; month = parseDate(now); } render(); }
+  function refreshToday() {
+    const now = dateKey(new Date());
+    const changedDate = now !== today;
+    if (!changedDate && overdueKey(overdueTasks(data.tasks, data.completed, today)) === renderedOverdueKey) return;
+    const focused = document.activeElement;
+    let focusedRow = focused;
+    while (focusedRow && !focusedRow.dataset?.id) focusedRow = focusedRow.parentNode;
+    const focusedId = focusedRow?.dataset.id;
+    const focusClass = ['check-button', 'edit-task', 'move-up', 'move-down', 'description-toggle', 'skip-task', 'move-today'].find(name => focused?.className?.split(' ').includes(name));
+    const followedToday = selected === today;
+    today = now;
+    if (changedDate && followedToday) { selected = now; month = parseDate(now); }
+    render();
+    if (focusedId && !$('taskDialog').open) {
+      for (const container of [view === 'routines' ? $('routineList') : $('taskList'), $('overdueList')]) {
+        const row = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === focusedId);
+        if (row) { (focusClass && row.querySelector('.' + focusClass) || row).focus({ preventScroll: true }); break; }
+      }
+    }
+  }
   setInterval(refreshToday, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshToday(); }); window.addEventListener('focus', refreshToday);
   setInterval(checkReminders, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); }); window.addEventListener('focus', () => { checkReminders(); updateNotificationStatus(); renderBackupStatus(); });
   // Compact screens keep the calendar and backup controls within reach.

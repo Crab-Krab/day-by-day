@@ -12,7 +12,7 @@ Only the HTML file needs to be opened. The other files are for maintaining the a
 ## Features
 
 - Opens to today's checklist, with weekday navigation and a month calendar.
-- Shows earlier unfinished one-time tasks on today’s page, with completion against the original date or an explicit Move to today action.
+- Shows **Overdue** above today’s checklist: unfinished timed tasks (one-time or recurring) move there after their due time, alongside unfinished one-time tasks from earlier dates. Today’s all-day tasks stay in the checklist. Earlier tasks retain their original completion date, with an explicit Move to today action.
 - One-time tasks or weekly routines on any combination of days, with Mon–Fri and Every day shortcuts.
 - Optional task times, plus an All day option.
 - Optional descriptions for details, multiline notes, and clickable web links, shown directly below each task. Longer descriptions have **Show more / Show less** controls; the arrows and checkbox stay anchored at the top of the task.
