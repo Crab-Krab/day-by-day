@@ -34,11 +34,15 @@ Use the same browser and HTML file location to return to your data. File-based s
 
 “Last backup exported” records when a download was initiated, not whether you saved the file successfully. The optional **Request storage protection** control appears only where the browser supports it; permission can be refused and clearing browser data can still remove tasks. Backups remain necessary.
 
+If saved tasks cannot be loaded, **Download original saved data** in the warning exports the unchanged stored text for recovery. The app does not overwrite it or discard individual records. With an empty fallback session, **Back up tasks** exports that recovery file instead of an empty backup. If you create tasks in the unsaved session, Backup exports a separately named session file; the original data remains available through the warning. Recovery/session exports do not reset normal backup status. Restoring a valid backup warns before replacing unreadable stored data.
+
 ## Ordering and routine history
 
 Rearranging Monday affects future Mondays and leaves other weekdays alone. Changing the routine catalog order leaves every daily order alone. Old shared custom orders are copied into the seven weekday preferences during migration, preserving the starting order while allowing each weekday to diverge.
 
 When editing a routine, choose **Apply changes / end routine from** (today or later). Saving replaces any changes scheduled from that date onward; earlier definitions and completed occurrences remain available on their calendar dates. **End routine** stops new occurrences on and after the chosen date and lists the routine under **Ended routines**, with a history link. Ended routines can be viewed read-only. Use **Skip this occurrence** on an incomplete current/future occurrence, and **Restore occurrence** in the skipped section to undo a skip.
+
+From **Weekly routines**, edits default to today. From a future calendar day, they default to that day. Routine-edit **Undo** restores the entire previous definition, including later scheduled changes that saving replaced.
 
 To convert a one-time task, edit it and select **Every week**, then choose its weekdays. The routine begins on the chosen starting date or today, whichever is later. Earlier or completed original occurrences keep their saved details; future repeats start unchecked. Undo restores the one-time task. To change a weekly routine into a one-time task, create a separate one-time task and end the routine to preserve its history.
 

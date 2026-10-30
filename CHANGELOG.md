@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fix routine edits from Weekly routines defaulting to the last browsed future date; use today there while keeping the selected date for calendar edits. Routine-edit Undo restores replaced future revisions and original details.
+- Preserve and export unreadable original saved data from the load warning; prevent empty fallback sessions from being exported as normal backups. Keep unsaved-session exports distinct, retain original data if restore cannot save, and warn before replacing unreadable data.
+- Include occurrence dates in stable completion-toggle labels, re-announce repeated status messages, and restore visible focus by opening today after Move to today. Avoid hidden checklist controls when restoring focus from the routine catalog.
+- Add regression coverage for failed-load recovery and restore failures, routine-edit dates/Undo, repeated announcements, dated labels, and Move to today focus.
+
 ## 1.2.0 — 2026-10-30
 
 - Fix disabled Every week controls when editing one-time tasks. Allow conversion with multiple weekdays, preserve original earlier/completed occurrences and details, start future repeats unchecked, and offer Undo.

@@ -25,7 +25,9 @@
   }
   let dialogClosing = false, dialogCloseMotion = null, dialogCycle = 0, dialogFocusTarget = null;
   function focusTask(id) {
-    for (const container of [view === 'routines' ? $('routineList') : $('taskList'), $('overdueList')]) {
+    const containers = [view === 'routines' ? $('routineList') : $('taskList')];
+    if (view === 'day' && selected === today && !$('overdueSection').hidden) containers.push($('overdueList'));
+    for (const container of containers) {
       const row = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === id);
       if (row) { row.querySelector('.edit-task')?.focus({ preventScroll: true }); return true; }
     }
@@ -281,10 +283,20 @@
     return { version: 5, tasks, completed, weekdayOrders, routineOrder };
   }
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
-  let data = empty(), persistent = true;
-  function storageError(message) { persistent = false; $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Not saved · back up your tasks'; }
-  try { const saved = localStorage.getItem(KEY); if (saved) data = validate(JSON.parse(saved)); }
-  catch (_) { storageError('Saved tasks could not be loaded. Changes will last only for this session. Back up your tasks before closing, or restore a valid backup.'); }
+  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null;
+  function storageError(message) {
+    persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
+    $('downloadOriginalData').hidden = originalSavedData === null;
+    $('saveStatus').textContent = loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
+  }
+  try {
+    originalSavedData = localStorage.getItem(KEY);
+    if (originalSavedData) data = validate(JSON.parse(originalSavedData));
+    originalSavedData = null;
+  } catch (_) {
+    loadFailed = true;
+    storageError(originalSavedData === null ? 'Saved tasks could not be accessed. Changes will last only for this session. Browser storage may be unavailable.' : 'Saved tasks could not be loaded. Your original saved data has been kept untouched. Download it for recovery before restoring a backup. Changes will last only for this session.');
+  }
   let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null, editingReadOnly = false;
   let renderedOverdueKey = '';
   function overdueKey(tasks) { return JSON.stringify(tasks.map(task => [task.date, task.id])); }
@@ -303,7 +315,7 @@
       const granted = await navigator.storage.persist();
       $('storageProtectionStatus').textContent = granted ? 'Browser storage protection granted. Export backups too; clearing browser data can still remove tasks.' : 'The browser did not grant storage protection. Export backups to keep a separate copy.';
     } catch (_) { $('storageProtectionStatus').textContent = 'Storage protection is unavailable for this file or browser. Export backups to keep a separate copy.'; }
-    $('statusAnnouncement').textContent = $('storageProtectionStatus').textContent;
+    announceStatus($('storageProtectionStatus').textContent);
   };
   function renderBackupStatus() {
     const text = backupStatus.lastExported ? `Last backup exported ${new Date(backupStatus.lastExported).toLocaleDateString()}` : 'No backup exported in this browser';
@@ -313,7 +325,16 @@
     $('backupNoticeText').textContent = `${text}. You have changes to back up.`;
     localNote.textContent = `${persistent ? 'Saved in this browser' : 'Not saved in this browser'} · ${text}`;
   }
-  let undoAction;
+  let undoAction, announcementTimer, pendingAnnouncement = null;
+  function announceStatus(message) {
+    const status = $('statusAnnouncement');
+    const repeat = status.textContent === message || pendingAnnouncement === message;
+    clearTimeout(announcementTimer); pendingAnnouncement = null;
+    if (repeat) {
+      status.textContent = ''; pendingAnnouncement = message;
+      announcementTimer = setTimeout(() => { status.textContent = message; pendingAnnouncement = null; }, 50);
+    } else status.textContent = message;
+  }
   function timedNotice(node, onHide = () => {}) {
     const duration = 10000;
     let timer, started = null, remaining = duration, hovered = false, generation = 0;
@@ -380,7 +401,7 @@
   }
   function notify(message, undo) {
     toastNotice.hide();
-    $('statusAnnouncement').textContent = undo ? `${message} Undo is available above the checklist for 10 seconds. The timer pauses while the message is hovered or focused, or the tab is hidden.` : message;
+    announceStatus(undo ? `${message} Undo is available above the checklist for 10 seconds. The timer pauses while the message is hovered or focused, or the tab is hidden.` : message);
     if (undo) {
       undoAction = undo; $('undoMessage').textContent = message; undoNotice.show();
     } else {
@@ -440,7 +461,7 @@
     row.dataset.id = task.id; row.tabIndex = -1;
     if (routine) { const badge = el('div', 'routine-icon'); badge.append(icon('repeat')); row.append(badge); }
     else {
-      const check = el('button', 'check-button'); check.type = 'button'; check.setAttribute('aria-label', task.title); check.setAttribute('aria-pressed', String(done)); if (done) check.append(icon('check'));
+      const check = el('button', 'check-button'); check.type = 'button'; check.setAttribute('aria-label', `${task.title}, ${fmt(occurrenceDate, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`); check.setAttribute('aria-pressed', String(done)); if (done) check.append(icon('check'));
       check.onclick = () => {
         const completed = new Set(data.completed[occurrenceDate] || []);
         completed.has(task.id) ? completed.delete(task.id) : completed.add(task.id);
@@ -487,6 +508,7 @@
       moveToday.onclick = () => {
         const previous = task.date;
         data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: today, reminderFrom: Date.now() } : item);
+        selected = today; month = parseDate(today); view = 'day';
         save(); focusTask(task.id);
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
@@ -619,7 +641,7 @@
   }
   function openTask(task = null, kind = 'once') {
     const source = task ? data.tasks.find(item => item.id === task.id) || task : null;
-    const effective = selected < today ? today : selected;
+    const effective = view === 'routines' || selected < today ? today : selected;
     editingReadOnly = Boolean(source?.kind === 'weekly' && source.endedOn && source.endedOn <= today);
     if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
@@ -698,7 +720,9 @@
     save();
     if (converted) {
       notify('One-time task converted to a weekly routine.', () => { data.tasks = data.tasks.map(item => item.id === id ? previous : item); selected = previous.date; month = parseDate(selected); view = 'day'; });
-    } else notify(wasEditing && kind === 'weekly' ? `Routine changes apply from ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. History is preserved.` : wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
+    } else if (previous?.kind === 'weekly') {
+      notify(`Routine changes apply from ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. History is preserved.`, () => { data.tasks = data.tasks.map(item => item.id === id ? previous : item); });
+    } else notify(wasEditing ? 'Task updated.' : kind === 'weekly' ? 'Your weekly routine is ready.' : 'Task added to your day.');
   });
   $('taskDate').onchange = updateHint;
   [...$('taskForm').elements.kind].forEach(radio => radio.onchange = updateHint);
@@ -734,8 +758,28 @@
   $('sortRoutines').onclick = () => { data.routineOrder = null; save(); notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
+  function downloadData(text, name) {
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob), link = el('a');
+    link.href = url; link.download = name;
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function downloadOriginalData() {
+    if (originalSavedData === null) { notify('The original saved data could not be accessed. No recovery file was exported.'); return; }
+    downloadData(originalSavedData, `day-by-day-recovery-${today}.json`);
+    notify('Original saved data exported unchanged for recovery. This is not a validated backup and does not include session changes.');
+  }
+  $('downloadOriginalData').onclick = downloadOriginalData;
   function backup() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob), link = el('a'); link.href = url; link.download = `day-by-day-backup-${today}.json`; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Never label the empty fallback session as a backup of unreadable saved tasks.
+    if (loadFailed) {
+      if (!data.tasks.length) { downloadOriginalData(); return; }
+      downloadData(JSON.stringify(data, null, 2), `day-by-day-session-${today}.json`);
+      notify(originalSavedData !== null ? 'Unsaved session exported. Original saved data is separate; use Download original saved data in the warning to recover it.' : 'Unsaved session exported. Browser storage is still unavailable.');
+      return;
+    }
+    downloadData(JSON.stringify(data, null, 2), `day-by-day-backup-${today}.json`);
     backupStatus = { lastExported: Date.now(), changes: 0, firstChangeAt: 0, snoozedUntil: 0 };
     persistBackupStatus(); renderBackupStatus();
     notify('Backup export started. Check that the file was saved.');
@@ -744,13 +788,14 @@
   $('backupLater').onclick = () => { backupStatus.snoozedUntil = Date.now() + 86400000; persistBackupStatus(); renderBackupStatus(); };
   $('undoAction').onclick = () => {
     const action = undoAction; undoNotice.hide();
-    if (action) { action(); save(); notify('Change undone.'); $('inlineAdd').focus({ preventScroll: true }); }
+    if (action) { action(); save(); notify('Change undone.'); (view === 'routines' ? $('addTask') : $('inlineAdd')).focus({ preventScroll: true }); }
   };
   $('dismissUndo').onclick = () => { undoNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   $('dismissToast').onclick = () => { toastNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   let restoreDecision = null, restoreFocusTarget = null;
   function confirmRestore() {
     restoreFocusTarget = document.activeElement;
+    $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
     $('restoreDialog').showModal(); $('cancelRestore').focus();
     return new Promise(resolve => { restoreDecision = resolve; });
   }
@@ -768,9 +813,14 @@
     try {
       if (file.size > 10000000) throw new Error('This file is too large. Choose a Day by Day backup under 10 MB.');
       const next = validate(JSON.parse(await file.text()));
-      if (data.tasks.length && !await confirmRestore()) return;
+      if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore()) return;
       undoNotice.hide();
-      data = next; persistent = true; $('storageWarning').hidden = true; $('saveStatus').textContent = 'Saved in this browser'; save(); notify('Backup restored.');
+      data = next; persistent = true; save();
+      if (persistent) {
+        loadFailed = false; originalSavedData = null;
+        $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
+        notify('Backup restored.');
+      } else notify('Backup loaded for this session, but browser storage could not save it.');
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
   };
@@ -868,11 +918,14 @@
     if (event.key === KEY) {
       try {
         data = event.newValue ? validate(JSON.parse(event.newValue)) : empty();
+        loadFailed = false; originalSavedData = null; persistent = true;
+        $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
         undoNotice.hide();
         render();
         checkReminders();
       } catch (_) {
-        storageError('Tasks changed in another tab but could not be read. Back up your tasks before closing.');
+        loadFailed = true; originalSavedData = event.newValue;
+        storageError('Tasks changed in another tab but could not be read. Download the original saved data for recovery. Changes will last only for this session.');
       }
     }
     if (event.key === REMINDER_KEY) {

@@ -7,7 +7,12 @@ const source = fs.readFileSync('src/app.js', 'utf8');
 function boot(storage, initialClock, options = {}) {
   let clock = initialClock, uid = 0;
   class Clock extends Date { constructor(...args) { super(...(args.length ? args : [clock])); } static now() { return clock; } }
-  const intervals = [], timeouts = new Map(), ids = {}, extras = {}, inputs = [], animations = [], notices = [];
+  const intervals = [], timeouts = new Map(), ids = {}, extras = {}, inputs = [], animations = [], notices = [], downloads = [], blobURLs = new Map();
+  let blobId = 0;
+  class DownloadURL extends URL {
+    static createObjectURL(blob) { const url=`blob:runtime-${++blobId}`;blobURLs.set(url,blob);return url; }
+    static revokeObjectURL(url) { blobURLs.delete(url); }
+  }
   let timerId = 0;
   class Node {
     constructor(tag = 'div') { this.tagName = tag.toUpperCase(); this.children = []; this.dataset = {}; this.style = {}; this.attrs = {}; this.listeners = {}; this.className = ''; this._text = ''; this.value = ''; this.checked = false; this.hidden = false; this.disabled = false; this.open = false; }
@@ -31,7 +36,7 @@ function boot(storage, initialClock, options = {}) {
     getBoundingClientRect() { return {top:0,left:0,width:1}; }
     showModal() { this.open = true; }
     close() { this.open = false; }
-    click() { this.onclick?.(); }
+    click() { if(this.tagName==='A'&&this.download)downloads.push({name:this.download,blob:blobURLs.get(this.href)});this.onclick?.(); }
     remove() { this.detached=true; if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); }
     reset() { for (const input of inputs) { input.value = input.initialValue || ''; input.checked = input.initialChecked || false; } }
   }
@@ -55,8 +60,8 @@ function boot(storage, initialClock, options = {}) {
   }
   const documentListeners={},windowListeners={};
   const document = {title:'',hidden:false,body:new Node('body'),getElementById(id){if(!ids[id])throw Error('Missing element '+id);return ids[id];},createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag),createTextNode:text=>Object.assign(new Node('text'),{_text:String(text)}),querySelector(selector){return extras[selector] ||= new Node(selector==='main'?'main':'div');},querySelectorAll(selector){const name=selector.match(/name="(.*?)"/)?.[1];return inputs.filter(input=>input.name===name);},addEventListener:(name,callback)=>{(documentListeners[name] ||= []).push(callback);}};
-  const localStorage = {getItem:key=>storage.get(key) ?? null,setItem:(key,value)=>storage.set(key,String(value))};
-  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL};
+  const localStorage = {getItem:key=>{if(options.storageReadFails&&key==='day-by-day.v1')throw Error('Storage unavailable');return storage.get(key)??null;},setItem:(key,value)=>{if(options.storageWriteFails&&key==='day-by-day.v1')throw Error('Storage full');storage.set(key,String(value));}};
+  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL:DownloadURL};
   if(options.navigator)context.navigator=options.navigator;
   if(options.secure)context.window.isSecureContext=true;
   if(options.notifications) {
@@ -73,7 +78,7 @@ function boot(storage, initialClock, options = {}) {
     }
     clock=until;
   }
-  return {ids,inputs,context,storage,animations,notices,documentListeners,windowListeners,advance,flushTimeouts:()=>{const pending=[...timeouts.values()];timeouts.clear();pending.forEach(timer=>timer.fn());},clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),refresh:()=>intervals.find(timer=>timer.ms===30000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
+  return {ids,inputs,context,storage,animations,notices,downloads,documentListeners,windowListeners,advance,flushTimeouts:()=>{const pending=[...timeouts.values()];timeouts.clear();pending.forEach(timer=>timer.fn());},clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),refresh:()=>intervals.find(timer=>timer.ms===30000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
 }
 const clock = new Date(2026,9,28,9,45).getTime();
 const storage = new Map([['day-by-day.v1', JSON.stringify({version:2,tasks:[{id:'existing',title:'Existing routine',kind:'weekly',weekdays:[3],startDate:'2026-10-28'}],completed:{}})]]);
@@ -172,7 +177,7 @@ async function verifyDescriptions() {
   assert.equal(reload.ids.taskList.querySelector('.check-button').getAttribute('aria-pressed'),'false');
   reload.ids.routinesNav.onclick(); assert.equal(reload.ids.routineList.querySelector('.description-body').textContent,'Updated details');
   reload.ids.routineList.querySelector('.edit-task').onclick(); reload.ids.taskDescription.value=''; reload.ids.taskForm.dispatch('submit');
-  assert.equal(reload.state().tasks[0].description,''); assert.equal(reload.ids.routineList.querySelector('.description-body').textContent,'Updated details');
+  assert.equal(reload.state().tasks[0].description,''); assert.equal(reload.ids.routineList.querySelector('.description-body'),null);
   reload.ids.todayNav.onclick();reload.ids.nextWeek.onclick();assert.equal(reload.ids.taskList.querySelector('.task-description'),null);reload.ids.routinesNav.onclick();
   reload.ids.addTask.onclick(); assert.equal(reload.ids.taskDescription.value,''); reload.ids.cancelDialog.onclick();
   reload.ids.restoreFile.files=[{size:200,text:async()=>JSON.stringify({version:5,tasks:[{...reload.state().tasks[0],description:notes,versions:reload.state().tasks[0].versions.map(version=>({...version,description:notes}))}],completed:{}})}];
@@ -282,8 +287,8 @@ async function verifyReliability() {
   const newPast=boot(new Map(),clock);newPast.ids.addTask.onclick();newPast.ids.taskTitle.value='Past due entry';newPast.ids.taskForm.elements.timing.value='timed';newPast.ids.taskTime.value='08:00';newPast.inputs.find(input=>input.name==='reminders'&&input.value==='5').checked=true;newPast.ids.taskForm.dispatch('submit');
   assert.equal(newPast.ids.reminderPanel.hidden,true);
   // Validate stable names for completion toggles in both states.
-  const button=newPast.ids.overdueList.querySelector('.check-button');assert.equal(button.getAttribute('aria-label'),'Past due entry');button.onclick();
-  assert.equal(newPast.ids.taskList.querySelector('.check-button').getAttribute('aria-label'),'Past due entry');
+  const button=newPast.ids.overdueList.querySelector('.check-button'),label=button.getAttribute('aria-label');assert.match(label,/^Past due entry, /);assert.match(label,/2026/);button.onclick();
+  assert.equal(newPast.ids.taskList.querySelector('.check-button').getAttribute('aria-label'),label);
   console.log('Reliability runtime passed: overdue completion/move/undo, saved dates, edit focus, accessible Undo placement, live announcements, calendar counting, backup nudges/status/reload, restore cancel, removed single-key shortcut, and past-time reminders.');
 }
 verifyReliability().catch(error=>{console.error(error);process.exitCode=1;});
@@ -502,3 +507,103 @@ async function verifyNotificationTimeouts() {
   console.log('Notification timing passed: 10-second boundaries, Undo expiry/use, manual dismissal, newer messages/mutations, hover/focus pauses, hidden tabs, live announcements, and persistent task reminders.');
 }
 verifyNotificationTimeouts().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyLoadRecovery() {
+  const key='day-by-day.v1';
+  const valid={version:5,tasks:[{id:'kept',kind:'once',title:'Saved work',date:'2026-10-28'}],completed:{}};
+  const invalids=[' {"version":5,\n broken JSON ',JSON.stringify({...valid,tasks:[...valid.tasks,{id:'bad',kind:'once',title:'Invalid time',date:'2026-10-28',time:'25:00'}]})];
+  for(const raw of invalids) {
+    const storage=new Map([[key,raw]]),work=boot(storage,clock);
+    assert.equal(work.ids.storageWarning.hidden,false);assert.equal(work.ids.downloadOriginalData.hidden,false);
+    assert.match(work.ids.storageWarningText.textContent,/kept untouched/);assert.equal(work.ids.taskList.querySelector('.task-row'),null);
+    work.ids.downloadOriginalData.onclick();assert.equal(await work.downloads[0].blob.text(),raw);
+    assert.match(work.downloads[0].name,/^day-by-day-recovery-/);assert.equal(storage.get(key),raw);
+    work.ids.backupBtn.onclick();assert.equal(await work.downloads[1].blob.text(),raw);assert.equal(storage.has('day-by-day.backup.v1'),false);
+    // Session edits remain exportable without overwriting or mislabelling the original data.
+    work.ids.addTask.onclick();work.ids.taskTitle.value='Unsaved session task';work.ids.taskForm.dispatch('submit');
+    assert.equal(storage.get(key),raw);work.ids.backupBtn.onclick();
+    const session=work.downloads.at(-1);assert.match(session.name,/^day-by-day-session-/);
+    assert.equal(JSON.parse(await session.blob.text()).tasks[0].title,'Unsaved session task');
+    assert.equal(JSON.parse(storage.get('day-by-day.backup.v1')).lastExported,0);
+    work.ids.downloadOriginalData.onclick();assert.equal(await work.downloads.at(-1).blob.text(),raw);
+    const reopened=boot(storage,clock);assert.equal(reopened.ids.downloadOriginalData.hidden,false);assert.equal(storage.get(key),raw);
+  }
+  const raw=invalids[0],storage=new Map([[key,raw]]),options={storageWriteFails:true},work=boot(storage,clock,options);
+  async function restore(accept) {
+    work.ids.restoreFile.files=[{size:100,text:async()=>JSON.stringify(valid)}];
+    const pending=work.ids.restoreFile.onchange();await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(work.ids.restoreDialog.open,true);assert.match(work.ids.restoreMessage.textContent,/original saved data/);
+    work.ids[accept?'confirmRestore':'cancelRestore'].onclick();await pending;
+  }
+  await restore(false);assert.equal(storage.get(key),raw);
+  await restore(true);assert.equal(storage.get(key),raw);assert.equal(work.ids.storageWarning.hidden,false);assert.equal(work.ids.downloadOriginalData.hidden,false);
+  work.ids.downloadOriginalData.onclick();assert.equal(await work.downloads.at(-1).blob.text(),raw);
+  options.storageWriteFails=false;await restore(true);assert.equal(work.state().tasks[0].title,'Saved work');
+  assert.equal(work.ids.storageWarning.hidden,true);assert.equal(work.ids.downloadOriginalData.hidden,true);
+  work.ids.backupBtn.onclick();assert.match(work.downloads.at(-1).name,/^day-by-day-backup-/);assert.equal(JSON.parse(await work.downloads.at(-1).blob.text()).tasks[0].id,'kept');
+  const blocked=boot(new Map(),clock,{storageReadFails:true});assert.equal(blocked.ids.storageWarning.hidden,false);assert.equal(blocked.ids.downloadOriginalData.hidden,true);
+  blocked.ids.backupBtn.onclick();assert.equal(blocked.downloads.length,0);assert.match(blocked.ids.toastMessage.textContent,/could not be accessed/);
+  blocked.ids.addTask.onclick();blocked.ids.taskTitle.value='Offline session';blocked.ids.taskForm.dispatch('submit');blocked.ids.backupBtn.onclick();
+  assert.match(blocked.downloads.at(-1).name,/^day-by-day-session-/);
+  // A normal quota error exports the valid session instead of switching to raw recovery.
+  const quota=boot(new Map([[key,JSON.stringify(valid)]]),clock,{storageWriteFails:true});quota.ids.taskList.querySelector('.check-button').onclick();quota.ids.backupBtn.onclick();
+  assert.equal(quota.ids.downloadOriginalData.hidden,true);assert.equal(JSON.parse(await quota.downloads.at(-1).blob.text()).completed['2026-10-28'][0],'kept');
+  // Invalid cross-tab updates can be recovered; a later valid update clears recovery mode.
+  storage.set(key,raw);work.windowListeners.storage.forEach(callback=>callback({key,newValue:raw}));
+  assert.equal(work.ids.downloadOriginalData.hidden,false);work.ids.downloadOriginalData.onclick();assert.equal(await work.downloads.at(-1).blob.text(),raw);
+  storage.set(key,JSON.stringify(valid));work.windowListeners.storage.forEach(callback=>callback({key,newValue:JSON.stringify(valid)}));
+  assert.equal(work.ids.storageWarning.hidden,true);assert.equal(work.ids.downloadOriginalData.hidden,true);
+  console.log('Load recovery passed: unchanged raw exports for malformed/invalid records, no empty fallback backups, separate session exports, protected originals, restore cancel/write failure/success, denied storage, quota errors, and cross-tab recovery.');
+}
+verifyLoadRecovery().catch(error=>{console.error(error);process.exitCode=1;});
+async function verifyRoutineEditFixes() {
+  const fields={title:'Original routine',description:'Original details',weekdays:[3],startDate:'2026-10-01',time:'11:00',reminders:[15],reminderFrom:0};
+  const later={...fields,title:'Later planned routine',description:'Keep this future plan',time:'16:00'};
+  const task={id:'routine',kind:'weekly',...later,versions:[{from:'2026-10-01',...fields},{from:'2026-11-05',...later}],snapshots:{'2026-10-21':fields},exceptions:['2026-11-11'],endedOn:null};
+  const saved={version:5,tasks:[task],completed:{'2026-10-21':['routine']},weekdayOrders:{3:['routine']},routineOrder:['routine']};
+  const storage=new Map([['day-by-day.v1',JSON.stringify(saved)]]),work=boot(storage,clock);
+  const original=JSON.parse(JSON.stringify(work.context.window.DayByDay.validate(saved))).tasks[0];
+  work.ids.nextWeek.onclick();work.ids.routinesNav.onclick();work.ids.routineList.querySelector('.edit-task').onclick();
+  assert.equal(work.ids.taskEffectiveDate.value,'2026-10-28');assert.equal(work.ids.taskTitle.value,'Original routine');
+  work.ids.taskTitle.value='Edited from catalog';work.ids.taskDescription.value='Changed today';work.ids.taskTime.value='12:00';work.ids.taskForm.dispatch('submit');
+  assert.deepEqual(work.state().tasks[0].versions.map(version=>version.from),['2026-10-01','2026-10-28']);
+  assert.equal(work.state().tasks[0].snapshots['2026-10-21'].title,'Original routine');assert.equal(work.ids.undoNotice.hidden,false);
+  work.ids.undoAction.onclick();assert.deepEqual(work.state().tasks[0],original);assert.deepEqual(work.state().completed,saved.completed);
+  assert.equal(work.context.document.activeElement,work.ids.addTask);
+  // A deliberate future-day edit still defaults to that selected date.
+  work.ids.weekStrip.children[2].onclick();work.ids.taskList.querySelector('.edit-task').onclick();
+  assert.equal(work.ids.taskEffectiveDate.value,'2026-11-04');work.ids.taskTitle.value='Edit from future day';work.ids.taskForm.dispatch('submit');
+  assert.equal(work.state().tasks[0].versions.at(-1).from,'2026-11-04');work.ids.undoAction.onclick();assert.deepEqual(work.state().tasks[0],original);
+  await new Promise(resolve=>setImmediate(resolve));
+  const reopened=boot(storage,clock);reopened.ids.routinesNav.onclick();assert.equal(reopened.ids.routineList.querySelector('.task-name').textContent,'Original routine');
+  assert.deepEqual(reopened.state().tasks[0],original);
+  console.log('Routine edit fixes passed: catalog defaults to today after future browsing, deliberate future-date edits, full Undo including future revisions/snapshots/exceptions/completions, visible catalog focus, and reload.');
+}
+verifyRoutineEditFixes().catch(error=>{console.error(error);process.exitCode=1;});
+function verifyAnnouncementAndFocusFixes() {
+  const key='day-by-day.v1';
+  const tasks=['A','B','C','D'].map(title=>({id:title,title,kind:'once',date:'2026-10-28'}));
+  const work=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]),clock);
+  const row=()=>work.ids.taskList.querySelectorAll('.task-row').find(item=>item.dataset.id==='D');
+  row().querySelector('.move-up').onclick();const message=work.ids.statusAnnouncement.textContent;assert.match(message,/moved up/);
+  row().querySelector('.move-up').onclick();assert.equal(work.ids.statusAnnouncement.textContent,'');work.advance(49);assert.equal(work.ids.statusAnnouncement.textContent,'');
+  work.advance(1);assert.equal(work.ids.statusAnnouncement.textContent,message);
+  row().querySelector('.move-up').onclick();assert.equal(work.ids.statusAnnouncement.textContent,'');
+  row().querySelector('.move-down').onclick();const latest=work.ids.statusAnnouncement.textContent;assert.match(latest,/moved down/);work.advance(100);assert.equal(work.ids.statusAnnouncement.textContent,latest);
+  for(const time of [null,'08:00']) {
+    const old={id:'moved',title:'Same title',kind:'once',date:'2026-10-27',time};
+    const other={...old,id:'older',date:'2026-10-26'};
+    const moving=boot(new Map([[key,JSON.stringify({version:5,tasks:[old,other],completed:{}})]]),clock);
+    const labels=moving.ids.overdueList.querySelectorAll('.check-button').map(button=>button.getAttribute('aria-label'));
+    assert.equal(new Set(labels).size,2);assert.ok(labels.every(label=>label.includes('2026')));
+    moving.ids.weekStrip.children[1].onclick();moving.ids.taskList.querySelector('.move-today').onclick();
+    assert.equal(moving.ids.dayTitle.textContent,'Wednesday.');assert.equal(moving.state().tasks[0].date,'2026-10-28');
+    const container=time?moving.ids.overdueList:moving.ids.taskList;
+    const moved=container.querySelectorAll('.task-row').find(item=>item.dataset.id==='moved');
+    assert.equal(moving.context.document.activeElement,moved.querySelector('.edit-task'));
+    const label=moved.querySelector('.check-button').getAttribute('aria-label');moved.querySelector('.check-button').onclick();
+    const completed=moving.ids.taskList.querySelectorAll('.task-row').find(item=>item.dataset.id==='moved');
+    assert.equal(completed.querySelector('.check-button').getAttribute('aria-label'),label);
+  }
+  console.log('Announcement/focus fixes passed: repeated messages re-announce, newer messages cancel pending announcements, same-name occurrence labels differ, stable completion labels, and Move to today focuses visible timed/all-day tasks.');
+}
+verifyAnnouncementAndFocusFixes();

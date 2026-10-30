@@ -234,6 +234,8 @@ h1 span { color: var(--muted); }
 .routine-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--subtle); color: var(--secondary); }
 .routine-icon svg { width: 20px; height: 20px; }
 .warning { margin: 20px 48px 0; padding: 16px; background: #fff2df; color: #815218; border-radius: 8px; font-size: 14px; }
+.warning p { margin: 0; }
+.warning button { margin-top: 12px; }
 [data-theme=dark] .warning { background: #423722; color: #f1d3a1; }
 dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; max-width: 540px; max-height: calc(100dvh - 32px); width: calc(100% - 32px); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #10231940; }
 dialog::backdrop { background: #17291f66; }

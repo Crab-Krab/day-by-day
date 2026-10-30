@@ -37,6 +37,9 @@ Use the pencil next to a task to edit it. One-time tasks can be deleted. For a
 routine, select Apply changes / end routine from (today or later). Save changes
 apply from that date onward and replace later planned edits. Earlier days and
 completed occurrences keep their saved details, including name, notes, and time.
+Editing from Weekly routines defaults to today, regardless of the last date
+browsed. Editing from a future calendar day defaults to that day. Routine-edit
+Undo restores the previous definition, including replaced later scheduled edits.
 End routine stops new occurrences starting on the chosen date and keeps the
 routine in Ended routines. View history opens its most recent scheduled date.
 Ended routine details are read-only. To convert a one-time task, edit it, select
@@ -115,6 +118,14 @@ A gentle backup notice appears after 25 changes or a week with unexported change
 Remind me tomorrow postpones that notice for a day. Backup status stays in this
 browser and is separate from exported tasks. Storage protection can be requested
 where supported; it does not replace backups or prevent deliberate data clearing.
+
+If saved tasks cannot be loaded, Download original saved data in the warning
+exports the original stored text unchanged for recovery. The app does not
+overwrite it or silently drop invalid tasks. Backup exports this recovery file
+instead of an empty fallback session. If you add unsaved session tasks, Backup
+exports a separate session file; recover the original using the warning button.
+These exports do not mark the original tasks as successfully backed up. Restore
+warns before replacing unreadable data; cancel keeps the original untouched.
 
 The one-time task form uses one Date input. The single-letter N shortcut has been
 removed to avoid accidental activation. Use the Add task button with mouse or keyboard.
