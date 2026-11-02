@@ -1,6 +1,7 @@
 'use strict';
 (() => {
   const KEY = 'day-by-day.v1';
+  let fileStore = null;
   const $ = id => document.getElementById(id);
   const DAYS = Array.from({ length: 7 }, (_, day) => weekdayLabel(day));
   const activeMotion = new WeakMap();
@@ -285,9 +286,10 @@
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
   let data = empty(), persistent = true, loadFailed = false, originalSavedData = null;
   function storageError(message) {
+    if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
     persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
     $('downloadOriginalData').hidden = originalSavedData === null;
-    $('saveStatus').textContent = loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
+    $('saveStatus').textContent = fileStore?.isConnected() ? 'Browser copy unavailable' : loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
   }
   try {
     originalSavedData = localStorage.getItem(KEY);
@@ -395,6 +397,7 @@
     backupStatus.changes++;
     if (!backupStatus.firstChangeAt) backupStatus.firstChangeAt = Date.now();
     persistBackupStatus();
+    fileStore?.changed();
     render();
     renderBackupStatus();
     checkReminders();
@@ -796,6 +799,7 @@
   function confirmRestore() {
     restoreFocusTarget = document.activeElement;
     $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
+    if (fileStore?.isConnected()) $('restoreMessage').textContent += ' Restored tasks will also be automatically saved to your connected JSON file.';
     $('restoreDialog').showModal(); $('cancelRestore').focus();
     return new Promise(resolve => { restoreDecision = resolve; });
   }
@@ -820,7 +824,7 @@
         loadFailed = false; originalSavedData = null;
         $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
         notify('Backup restored.');
-      } else notify('Backup loaded for this session, but browser storage could not save it.');
+      } else notify(fileStore?.isConnected() ? 'Backup loaded. Check the task-file status above for the automatic save.' : 'Backup loaded for this session, but browser storage could not save it.');
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
   };
@@ -916,6 +920,9 @@
   // Keep separate tabs in step and refresh the current date after midnight or sleep.
   window.addEventListener('storage', event => {
     if (event.key === KEY) {
+      // A connected file is authoritative. Another tab's browser cache must not
+      // replace pending edits or silently redirect this file's contents.
+      if (fileStore?.ownsCache()) return;
       try {
         data = event.newValue ? validate(JSON.parse(event.newValue)) : empty();
         loadFailed = false; originalSavedData = null; persistent = true;
@@ -967,9 +974,22 @@
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
   const footer = document.querySelector('.main-footer'); const mobileBackup = el('button', 'text-button', 'Back up'); mobileBackup.style.display = 'none'; mobileBackup.onclick = backup; const mobileRestore = el('button', 'text-button', 'Restore'); mobileRestore.style.display = 'none'; mobileRestore.onclick = () => $('restoreFile').click(); footer.append(mobileBackup, mobileRestore);
-  const localNote = el('div', 'mobile-storage', 'Saved in this browser · Tasks stay on this device'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
+  const localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
+  fileStore = window.createTaskFileStorage({
+    getData: () => data, validate, backup, hasRecovery: () => loadFailed,
+    applyData(next) {
+      data = validate(next); undoNotice.hide();
+      persistent = true; loadFailed = false; originalSavedData = null;
+      $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true;
+      $('saveStatus').textContent = 'Saved in this browser';
+      try { localStorage.setItem(KEY, JSON.stringify(data)); }
+      catch (_) { storageError('The browser copy could not be saved.'); }
+      render(); checkReminders(); renderBackupStatus();
+    }
+  });
+  void fileStore.init();
   // Pure date helpers are exposed for focused schedule verification.
   window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, resolveTask, reviseRoutine, orderByIds, moveOrderedId, overdueTasks, reorderTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
 })();

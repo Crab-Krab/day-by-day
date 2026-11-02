@@ -2,7 +2,7 @@
 
 A daily checklist with weekly routines, a calendar, and reminders-all in one HTML file. Open it locally in Chrome, Edge, Firefox, or another modern browser. No account, installation, server, or internet connection is needed to use the app.
 
-**[Download Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/releases/latest/download/Day-by-Day.html)** · [User guide](docs/USAGE.txt) · [Release notes](https://github.com/Crab-Krab/day-by-day/releases)
+**[Download Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html)** · [User guide](docs/USAGE.txt) · [File autosave setup](docs/FILE-AUTOSAVE.md) · [Release notes](https://github.com/Crab-Krab/day-by-day/releases)
 
 ## Get started
 
@@ -19,7 +19,7 @@ The app opens to today. Select another day from the week strip or month calendar
 - **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows let you rearrange tasks. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
 - **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
 - **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.
-- **Save locally:** Automatic browser saving, JSON backup/restore, last-export status, and backup notices.
+- **Save locally:** Automatic saving to a selected JSON file in desktop Chrome/Edge, remembered-file reopening, browser saving, and separate JSON backups.
 
 Calendar weeks start Monday. Dates and times use your computer's local timezone. Confirmations and Undo banners dismiss after 10 seconds, pausing while hovered, keyboard-focused, or the tab is hidden. The next data change also ends Undo.
 
@@ -31,13 +31,17 @@ Complete an earlier task on its original date, or choose **Move to today** to ch
 
 ## Your data and updates
 
-Your tasks and history stay in your browser; they are not uploaded to GitHub or synced between devices. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the file can make tasks unavailable. Avoid private/incognito windows for saved tasks.
+Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Set up autosave** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, choose **Open task file** instead.
+
+The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
+
+Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows.
 
 Before updating:
 
 1. Use **Back up tasks** in your current copy and check that the JSON file downloaded.
 2. Download the latest HTML and replace your working file in the same location.
-3. Open it in the same browser. Use **Restore backup** if needed; restoring replaces the current tasks and completion history.
+3. Open it in the same browser. Use **Open task file** to reconnect your autosave JSON if needed. **Restore backup** replaces current tasks and completion history, including the connected autosave file.
 
 **Compatibility:** The current app writes saved-data format 5 and accepts formats 1–5. Versions before v1.2.0 cannot read format 5. Previously removed history cannot be reconstructed.
 
@@ -74,6 +78,7 @@ node tests/schedule.test.cjs
 node tests/runtime.test.cjs
 node tests/theme.test.cjs
 node tests/history.test.cjs
+node tests/file-storage.test.cjs
 node scripts/build.mjs
 ```
 

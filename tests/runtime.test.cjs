@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const html = fs.readFileSync('src/index.html', 'utf8');
-const source = fs.readFileSync('src/app.js', 'utf8');
+const source = fs.readFileSync('src/file-storage.js', 'utf8') + '\n' + fs.readFileSync('src/app.js', 'utf8');
 // A small in-memory DOM exercises application events without a browser, network, or user data.
 function boot(storage, initialClock, options = {}) {
   let clock = initialClock, uid = 0;
@@ -63,6 +63,8 @@ function boot(storage, initialClock, options = {}) {
   const localStorage = {getItem:key=>{if(options.storageReadFails&&key==='day-by-day.v1')throw Error('Storage unavailable');return storage.get(key)??null;},setItem:(key,value)=>{if(options.storageWriteFails&&key==='day-by-day.v1')throw Error('Storage full');storage.set(key,String(value));}};
   const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL:DownloadURL};
   if(options.navigator)context.navigator=options.navigator;
+  if(options.fileWindow)Object.assign(context.window,options.fileWindow);
+  if(options.indexedDB)context.indexedDB=options.indexedDB;
   if(options.secure)context.window.isSecureContext=true;
   if(options.notifications) {
     class Notice { static permission='granted'; constructor(title,settings){notices.push({title,settings});} close(){} }

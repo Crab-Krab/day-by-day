@@ -134,6 +134,16 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .sidebar-note p { font-size: 13px; line-height: 1.8; margin: 0; }
 .sidebar-note p span { color: var(--muted); }
 .storage-area { margin-top: auto; border-top: 1px solid var(--line); padding-top: 22px; }
+.task-file-panel { margin: 20px 36px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, transparent); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.task-file-copy { flex: 1 1 280px; min-width: 0; }
+.task-file-copy strong { font-size: 14px; overflow-wrap: anywhere; }
+.task-file-copy p { margin: 5px 0 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
+.task-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.task-file-actions button { font-size: 12px; }
+.task-file-panel[data-state="error"] { border-color: #b97835; }
+.task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--green); }
+#fileChoiceDialog .restore-actions { flex-wrap: wrap; }
+@media (max-width: 700px) { .task-file-panel { margin: 14px 16px 0; padding: 14px; } .task-file-copy { flex-basis: 100%; } }
 .saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
 .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }
 .storage-area p { font-size: 12px; color: var(--secondary); margin: 8px 0 13px; }
@@ -488,6 +498,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
 })();
 </script>
   
+  
 </head>
 <body>
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4M20 7H8a4 4 0 0 0-4 4m4 10-4-4 4-4m-4 4h12a4 4 0 0 0 4-4"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol><symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l5-1L20 8a2.8 2.8 0 0 0-4-4L5 15l-1 5Z"/></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M19 4c-9-2-15 4-12 10s14 4 12-10ZM5 21 15 10"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol></svg>
@@ -511,6 +522,10 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     </aside>
     <main>
       <header class="topbar"><div class="breadcrumb"><span class="breadcrumb-prefix">YOUR EVERYDAY SPACE</span><span class="breadcrumb-divider">/</span><b id="viewBreadcrumb">My day</b></div><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span>Add task</span></button></div></header>
+      <section id="taskFilePanel" class="task-file-panel" aria-label="Task file">
+        <div class="task-file-copy"><strong id="taskFileStatus" role="status" aria-live="polite">Keep your tasks in a file</strong><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p></div>
+        <div class="task-file-actions"><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Set up autosave</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div>
+      </section>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
       <aside id="backupNotice" class="backup-notice" hidden><p id="backupNoticeText"></p><div><button type="button" id="backupNow" class="outline-button">Back up now</button><button type="button" id="backupLater" class="text-button">Remind me tomorrow</button></div></aside>
       <div id="undoNotice" class="undo-notice" role="group" aria-label="Undo last change" hidden><span id="undoMessage"></span><button type="button" id="undoAction" class="outline-button">Undo</button><button type="button" id="dismissUndo" class="text-button">Dismiss</button></div>
@@ -541,13 +556,247 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     </form>
   </dialog>
   <dialog id="restoreDialog" aria-labelledby="restoreTitle"><div class="restore-content"><h2 id="restoreTitle">Restore backup?</h2><p id="restoreMessage">This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.</p><div class="restore-actions"><button type="button" id="cancelRestore" class="outline-button">Cancel</button><button type="button" id="confirmRestore" class="primary-button">Restore backup</button></div></div></dialog>
+  <dialog id="fileChoiceDialog" aria-labelledby="fileChoiceTitle"><div class="restore-content"><h2 id="fileChoiceTitle">Choose which tasks to keep</h2><p id="fileChoiceMessage"></p><p>The other copy will be replaced. Download your current tasks first if you need both.</p><button type="button" id="fileChoiceBackup" class="text-button">Download current tasks</button><div class="restore-actions"><button type="button" id="fileChoiceCancel" class="outline-button">Cancel</button><button type="button" id="fileChoiceCurrent" class="outline-button">Use current tasks</button><button type="button" id="fileChoiceDisk" class="primary-button">Use file tasks</button></div></div></dialog>
   <div id="toast" class="toast" hidden><span id="toastMessage"></span><button type="button" id="dismissToast" aria-label="Dismiss notification">Dismiss</button></div>
   <div id="statusAnnouncement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
   <section id="reminderPanel" class="reminder-panel" aria-label="Task reminders" hidden><div class="reminder-panel-heading"><h2><svg><use href="#i-bell"/></svg>Task reminders</h2><button type="button" class="text-button" id="dismissAllReminders">Dismiss all</button></div><div id="reminderAlerts"></div><p class="reminder-panel-note">Best-effort reminders while this file is open.</p></section>
   <div id="reminderAnnouncement" class="sr-only" role="status" aria-live="polite"></div>
 <script>'use strict';
+// File contents are the durable store. IndexedDB remembers only the connection
+// and the last synchronized state; losing browser data never deletes the file.
+window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery }) {
+  const $ = id => document.getElementById(id);
+  const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
+  const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
+  let handle = null, rawBaseline = null, baseline = null, dirty = false, writing = null;
+  let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
+  let dbPromise = null;
+  const snapshot = () => JSON.stringify(validate(getData()));
+  const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
+  function status(title, detail, state = 'idle') {
+    $('taskFileStatus').textContent = title;
+    $('taskFileDetail').textContent = detail;
+    $('taskFilePanel').dataset.state = state;
+    $('reconnectTaskFile').hidden = !handle || !paused;
+    $('disconnectTaskFile').hidden = !handle;
+    $('createTaskFile').hidden = Boolean(handle);
+    $('openTaskFile').textContent = handle && !paused ? 'Change file' : 'Open task file';
+    refreshControls();
+  }
+  function refreshControls() { for (const id of ['reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
+  function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
+  function idleStatus() { status('Keep your tasks in a file', 'Set up autosave once, or open your existing JSON task file. The file stays on your computer when browser data is cleared.'); }
+  function setBusy(value) {
+    busy = value;
+    document.querySelector('.app-shell').inert = value;
+    refreshControls();
+  }
+  function db() {
+    if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
+      if (typeof indexedDB === 'undefined') { reject(new Error('Connection storage unavailable')); return; }
+      const request = indexedDB.open('day-by-day.files.v1', 1);
+      const timer = setTimeout(() => reject(new Error('Connection storage timed out')), 4000);
+      request.onupgradeneeded = () => request.result.createObjectStore('connections');
+      request.onerror = () => { clearTimeout(timer); reject(request.error); };
+      request.onblocked = () => { clearTimeout(timer); reject(new Error('Connection storage blocked')); };
+      request.onsuccess = () => { clearTimeout(timer); const database = request.result; database.onversionchange = () => database.close(); resolve(database); };
+    });
+    return dbPromise;
+  }
+  async function connection(action, value) {
+    const database = await db();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction('connections', action === 'get' ? 'readonly' : 'readwrite');
+      const store = tx.objectStore('connections');
+      const request = action === 'get' ? store.get('active') : action === 'put' ? store.put(value, 'active') : store.delete('active');
+      const timer = setTimeout(() => { try { tx.abort(); } catch (_) {} reject(new Error('Connection storage timed out')); }, 4000);
+      tx.oncomplete = () => { clearTimeout(timer); resolve(request.result); };
+      tx.onerror = tx.onabort = () => { clearTimeout(timer); reject(tx.error || new Error('Connection storage unavailable')); };
+    });
+  }
+  async function remember() {
+    try { await connection('put', { handle, baseline }); remembered = true; }
+    catch (_) { remembered = false; }
+  }
+  async function readFile(target, allowEmpty = false) {
+    const file = await target.getFile();
+    if (file.size > 10000000) throw new Error('Choose a Day by Day JSON file smaller than 10 MB.');
+    const raw = await file.text();
+    if (!raw.trim() && allowEmpty) return { raw, canonical: null, data: null };
+    let data;
+    try { data = validate(JSON.parse(raw)); }
+    catch (_) { throw new Error('This file is not a valid Day by Day task file. It has not been overwritten.'); }
+    return { raw, data, canonical: JSON.stringify(data) };
+  }
+  function choose(message) {
+    $('fileChoiceMessage').textContent = message;
+    $('fileChoiceDialog').showModal();
+    return new Promise(resolve => { choiceResolve = resolve; });
+  }
+  function finishChoice(value) {
+    $('fileChoiceDialog').close();
+    const resolve = choiceResolve; choiceResolve = null; resolve?.(value);
+  }
+  $('fileChoiceCancel').onclick = () => finishChoice('cancel');
+  $('fileChoiceCurrent').onclick = () => finishChoice('current');
+  $('fileChoiceDisk').onclick = () => finishChoice('disk');
+  $('fileChoiceBackup').onclick = backup;
+  $('fileChoiceDialog').addEventListener('cancel', event => { event.preventDefault(); finishChoice('cancel'); });
+
+  function fail(error) {
+    paused = Boolean(handle);
+    const message = error?.name === 'NotAllowedError' ? 'File access needs your permission again. Reconnect to continue saving.'
+      : error?.name === 'NotFoundError' ? 'The task file was moved or removed. Open it at its new location, or disconnect and set up a new file.'
+      : error?.message || 'The file could not be saved. Reconnect and try again.';
+    status(dirty ? 'Changes not saved to file' : 'Task file needs attention', message + ' Your current tasks remain available here; Back up tasks can save a separate copy.', 'error');
+  }
+  async function withFileLock(callback) {
+    if (typeof navigator !== 'undefined' && navigator.locks?.request) return navigator.locks.request('day-by-day.task-file.write', callback);
+    return callback();
+  }
+  async function writeSnapshot(text) {
+    if (new Blob([text]).size > 10000000) throw new Error('These tasks exceed the 10 MB task-file limit. Export a backup and reduce the task data before saving.');
+    await withFileLock(async () => {
+      // Exclusive mode and the second read protect against another writer between
+      // our last read and acquiring the writable stream. Never silently overwrite.
+      const stream = await handle.createWritable({ mode: 'exclusive' });
+      try {
+        const current = await (await handle.getFile()).text();
+        if (current !== rawBaseline) throw new Error('This file changed elsewhere. Reconnect to choose which tasks to keep.');
+        await stream.write(text);
+        await stream.close();
+      } catch (error) { try { await stream.abort(); } catch (_) {} throw error; }
+    });
+    rawBaseline = text;
+    baseline = snapshotFromText(text);
+  }
+  function snapshotFromText(text) { return JSON.stringify(validate(JSON.parse(text))); }
+  async function flush() {
+    if (writing) return writing;
+    if (!handle || paused || busy || !dirty) return;
+    // Defer the body one microtask so `writing` is assigned before any UI update.
+    writing = Promise.resolve().then(async () => {
+      try {
+        while (dirty && !paused) {
+          const text = snapshot();
+          status('Saving to ' + handle.name + '…', 'Keep this tab open until Saved appears.', 'saving');
+          await writeSnapshot(JSON.stringify(JSON.parse(text), null, 2) + '\n');
+          dirty = snapshot() !== text;
+          await remember();
+        }
+      } catch (error) { dirty = true; fail(error); }
+    });
+    await writing;
+    writing = null;
+    if (!paused && !dirty) savedStatus();
+    else refreshControls();
+  }
+  function changed() {
+    if (!handle) return;
+    dirty = true;
+    if (paused) status('Changes not saved to file', 'Reconnect your task file to save these changes. Back up tasks can also save a separate copy.', 'error');
+    else void flush();
+  }
+  async function attach(target, { creating = false, automatic = false, knownBaseline = null } = {}) {
+    const disk = await readFile(target, creating);
+    const current = snapshot();
+    const currentHasTasks = getData().tasks.length > 0 || Object.keys(getData().completed).length > 0;
+    let decision = creating ? 'current' : 'disk';
+    // An unchanged cached copy may safely follow the file. A pending browser copy
+    // requires an explicit decision. Missing cache after cleanup is not a deletion.
+    const cacheUnchanged = automatic && knownBaseline !== null && current === knownBaseline;
+    const pendingCache = automatic && knownBaseline !== null && current !== knownBaseline;
+    if (disk.canonical !== null && (hasRecovery() || (disk.canonical !== current &&
+        (creating || (!cacheUnchanged && (currentHasTasks || pendingCache)))))) {
+      decision = await choose('“' + target.name + '” and the tasks currently shown are different. ' + (automatic ? 'There may be changes that did not finish saving last time.' : 'Choose the copy you want to continue with.'));
+      if (decision === 'cancel') return false;
+    }
+    handle = target; rawBaseline = disk.raw; baseline = disk.canonical;
+    paused = false; dirty = decision === 'current' && current !== disk.canonical;
+    if (decision === 'disk') applyData(disk.data);
+    await remember();
+    return true;
+  }
+  async function pick(creating) {
+    if (busy || writing || !supported) return;
+    setBusy(true);
+    const oldHandle = handle;
+    try {
+      // Invoke the picker synchronously in the click's activation, before any await.
+      const target = creating
+        ? await window.showSaveFilePicker({ id: 'day-by-day-tasks', suggestedName: 'Day-by-Day-data.json', types: fileTypes })
+        : (await window.showOpenFilePicker({ id: 'day-by-day-tasks', multiple: false, types: fileTypes }))[0];
+      if (await target.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Allow editing access to enable automatic saving.');
+      const attached = await attach(target, { creating });
+      if (!attached && oldHandle) { paused = true; status('Task file paused', 'Your current tasks have been kept. Reconnect to continue saving.', 'error'); }
+    } catch (error) {
+      if (error.name !== 'AbortError') fail(error);
+    } finally {
+      setBusy(false);
+      if (handle && !paused) { if (dirty) await flush(); else savedStatus(); }
+    }
+  }
+  async function reconnect() {
+    if (!handle || busy || writing) return;
+    setBusy(true);
+    try {
+      if (await handle.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Allow editing access to resume automatic saving.');
+      await attach(handle, { automatic: true, knownBaseline: baseline });
+    } catch (error) { fail(error); }
+    finally {
+      setBusy(false);
+      if (!paused) { if (dirty) await flush(); else savedStatus(); }
+    }
+  }
+  async function disconnect() {
+    if (busy || writing) return;
+    if (dirty && !window.confirm('Some changes are not saved to the task file. Disconnect anyway? Your current tasks stay here; use Back up tasks to keep a separate copy.')) return;
+    setBusy(true);
+    try { await connection('delete'); }
+    catch (_) { setBusy(false); status('Could not forget this connection', 'The browser could not remove the saved connection. Try again before closing.', 'error'); return; }
+    handle = null; baseline = null; rawBaseline = null; dirty = false; paused = false;
+    setBusy(false); idleStatus();
+  }
+  async function init() {
+    if (!supported) {
+      status('File autosave needs Chrome or Edge', 'Open this HTML file in a current desktop Chrome or Edge browser. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
+      initialized = true; return;
+    }
+    setBusy(true);
+    status('Looking for your task file…', 'Checking the connection saved in this browser.');
+    let failed = false;
+    try {
+      const record = await connection('get');
+      if (record?.handle) {
+        handle = record.handle; baseline = record.baseline ?? null; paused = true;
+        if (await handle.queryPermission({ mode: 'readwrite' }) === 'granted') {
+          await attach(handle, { automatic: true, knownBaseline: baseline });
+        }
+      }
+    } catch (error) { if (handle) { fail(error); failed = true; } else remembered = false; }
+    finally {
+      setBusy(false); initialized = true;
+      if (handle && !paused) { if (dirty) await flush(); else savedStatus(); }
+      else if (handle && !failed) status('Reconnect ' + handle.name, 'Your task file is remembered. Click Reconnect task file and allow access to load it and resume saving.', 'error');
+      else if (!handle) idleStatus();
+    }
+  }
+  $('createTaskFile').onclick = () => pick(true);
+  $('openTaskFile').onclick = () => pick(false);
+  $('reconnectTaskFile').onclick = reconnect;
+  $('disconnectTaskFile').onclick = disconnect;
+  window.addEventListener('beforeunload', event => {
+    if (dirty || writing || busy) { event.preventDefault(); event.returnValue = ''; }
+  });
+  // Do not poll or write on unload: writes happen immediately after each edit.
+  return { init, changed, flush, ownsCache: () => Boolean(handle) || !initialized,
+    isConnected: () => Boolean(handle), isPending: () => dirty || Boolean(writing) };
+};
+
+'use strict';
 (() => {
   const KEY = 'day-by-day.v1';
+  let fileStore = null;
   const $ = id => document.getElementById(id);
   const DAYS = Array.from({ length: 7 }, (_, day) => weekdayLabel(day));
   const activeMotion = new WeakMap();
@@ -832,9 +1081,10 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
   let data = empty(), persistent = true, loadFailed = false, originalSavedData = null;
   function storageError(message) {
+    if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
     persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
     $('downloadOriginalData').hidden = originalSavedData === null;
-    $('saveStatus').textContent = loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
+    $('saveStatus').textContent = fileStore?.isConnected() ? 'Browser copy unavailable' : loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
   }
   try {
     originalSavedData = localStorage.getItem(KEY);
@@ -942,6 +1192,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
     backupStatus.changes++;
     if (!backupStatus.firstChangeAt) backupStatus.firstChangeAt = Date.now();
     persistBackupStatus();
+    fileStore?.changed();
     render();
     renderBackupStatus();
     checkReminders();
@@ -1343,6 +1594,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   function confirmRestore() {
     restoreFocusTarget = document.activeElement;
     $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
+    if (fileStore?.isConnected()) $('restoreMessage').textContent += ' Restored tasks will also be automatically saved to your connected JSON file.';
     $('restoreDialog').showModal(); $('cancelRestore').focus();
     return new Promise(resolve => { restoreDecision = resolve; });
   }
@@ -1367,7 +1619,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
         loadFailed = false; originalSavedData = null;
         $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
         notify('Backup restored.');
-      } else notify('Backup loaded for this session, but browser storage could not save it.');
+      } else notify(fileStore?.isConnected() ? 'Backup loaded. Check the task-file status above for the automatic save.' : 'Backup loaded for this session, but browser storage could not save it.');
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
   };
@@ -1463,6 +1715,9 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   // Keep separate tabs in step and refresh the current date after midnight or sleep.
   window.addEventListener('storage', event => {
     if (event.key === KEY) {
+      // A connected file is authoritative. Another tab's browser cache must not
+      // replace pending edits or silently redirect this file's contents.
+      if (fileStore?.ownsCache()) return;
       try {
         data = event.newValue ? validate(JSON.parse(event.newValue)) : empty();
         loadFailed = false; originalSavedData = null; persistent = true;
@@ -1514,9 +1769,22 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
   const footer = document.querySelector('.main-footer'); const mobileBackup = el('button', 'text-button', 'Back up'); mobileBackup.style.display = 'none'; mobileBackup.onclick = backup; const mobileRestore = el('button', 'text-button', 'Restore'); mobileRestore.style.display = 'none'; mobileRestore.onclick = () => $('restoreFile').click(); footer.append(mobileBackup, mobileRestore);
-  const localNote = el('div', 'mobile-storage', 'Saved in this browser · Tasks stay on this device'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
+  const localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
+  fileStore = window.createTaskFileStorage({
+    getData: () => data, validate, backup, hasRecovery: () => loadFailed,
+    applyData(next) {
+      data = validate(next); undoNotice.hide();
+      persistent = true; loadFailed = false; originalSavedData = null;
+      $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true;
+      $('saveStatus').textContent = 'Saved in this browser';
+      try { localStorage.setItem(KEY, JSON.stringify(data)); }
+      catch (_) { storageError('The browser copy could not be saved.'); }
+      render(); checkReminders(); renderBackupStatus();
+    }
+  });
+  void fileStore.init();
   // Pure date helpers are exposed for focused schedule verification.
   window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, resolveTask, reviseRoutine, orderByIds, moveOrderedId, overdueTasks, reorderTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
 })();

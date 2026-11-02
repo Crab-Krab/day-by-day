@@ -3,6 +3,23 @@ DAY BY DAY
 Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
 The downloaded file works without an internet connection or account.
 
+AUTOMATIC FILE SAVING (CHROME / EDGE)
+Choose Set up autosave to create Day-by-Day-data.json in a permanent local folder.
+Allow editing access. Each task change saves automatically; wait for Saved to
+Day-by-Day-data.json before closing or signing out. If you already have a task
+JSON or backup, use Open task file instead; it becomes the live autosave file.
+
+The app automatically reopens the remembered file when browser access survives.
+If permission expires, click Reconnect task file. If daily browser cleanup clears
+the connection, click Open task file and select the same JSON again. The actual
+JSON stays on disk, but an HTML file cannot rediscover it without your selection.
+
+When current tasks and file tasks differ, choose which copy to keep or cancel.
+Use Back up tasks to keep a separate copy first. Disconnect forgets the connection
+without deleting the JSON. Avoid editing one JSON in multiple app windows.
+Firefox and restricted browsers retain browser saving and manual backup/restore.
+See docs/FILE-AUTOSAVE.md in the repository for full setup and recovery details.
+
 Use the sun/moon button beside Add task to switch between light and dark.
 The first visit follows your system theme. Your choice is remembered in this browser.
 Weekday names follow the browser locale; weeks still start Monday.

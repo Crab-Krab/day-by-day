@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.3.0 — 2026-11-01
+
+- Add automatic saving to a selected local JSON file in desktop Chrome/Edge. Remember the file in IndexedDB and reopen it automatically when permission survives; provide reconnect/open actions after permission expiry or browser cleanup.
+- Serialize writes, show saving/saved/error status, warn before closing with pending changes, and retain existing JSON on failed writes. Validate files and detect external changes before committing writes.
+- Ask before replacing differing browser/file copies, including pending edits recovered after reopening. Preserve browser-only operation and manual backups in unsupported browsers.
+- Add file-persistence and integration tests for cleanup, blocked storage, permissions, save failures, concurrent edits, corruption, reopening, and the real task form/completion paths. No task schema change.
+
 ## 1.2.1 — 2026-10-30
 
 - Fix routine edits from Weekly routines defaulting to the last browsed future date; use today there while keeping the selected date for calendar edits. Routine-edit Undo restores replaced future revisions and original details.
