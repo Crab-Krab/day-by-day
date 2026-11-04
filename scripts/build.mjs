@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => fs.readFileSync(path.join(root, 'src', file), 'utf8');
 let html = read('index.html');
+const license = fs.readFileSync(path.join(root, 'LICENSE'), 'utf8').trim();
+html = html.replace('<!doctype html>', () => '<!doctype html>\n<!--\n' + license + '\n-->');
 html = html.replace('<link rel="stylesheet" href="styles.css">', () => '<style>' + read('styles.css') + '</style>');
 html = html.replace('<script src="theme.js"></script>', () => '<script>' + read('theme.js').replace(/<\/script/gi, '<\\/script') + '</script>');
 html = html.replace('<script src="app.js" defer></script>', '');

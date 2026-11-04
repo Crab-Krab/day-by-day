@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.3.1 — 2026-11-04
+
+- License Day by Day under MIT, with a repository LICENSE file, package metadata, and documentation.
+- Embed the full license and copyright notice in each standalone HTML build and include LICENSE.txt with release downloads.
+- Licensing and packaging update only; task behavior and saved-data format are unchanged.
+
 ## 1.3.0 — 2026-11-01
 
 - Add automatic saving to a selected local JSON file in desktop Chrome/Edge. Remember the file in IndexedDB and reopen it automatically when permission survives; provide reconnect/open actions after permission expiry or browser cleanup.

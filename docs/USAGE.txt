@@ -1,5 +1,9 @@
 DAY BY DAY
 
+Licensed under the MIT License. Copyright (c) 2026 Crab-Krab.
+The full license is embedded in Day-by-Day.html and provided as LICENSE.txt
+with the release downloads. Preserve that notice when redistributing copies.
+
 Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
 The downloaded file works without an internet connection or account.
 

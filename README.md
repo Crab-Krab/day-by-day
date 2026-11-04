@@ -85,3 +85,7 @@ node scripts/build.mjs
 Edit `src/`, preserve existing saved data, and commit the rebuilt HTML alongside code changes. Automated checks do not replace testing the local file in real browsers.
 
 For changes not yet released, download the [latest working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html).
+
+## License
+
+Day by Day is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Crab-Krab. The full license is also embedded in the standalone HTML so it stays with downloaded copies. Preserve the copyright and license notice when redistributing the app.
