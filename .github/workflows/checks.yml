@@ -26,3 +26,7 @@ jobs:
           git diff --exit-code -- Day-by-Day.html SHA256SUMS.txt
       - name: Verify checksums
         run: sha256sum -c SHA256SUMS.txt
+      - name: Check release files can be prepared
+        run: |
+          node scripts/release-files.mjs
+          (cd release && sha256sum -c SHA256SUMS.txt)

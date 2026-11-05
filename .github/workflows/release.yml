@@ -1,0 +1,73 @@
+name: Release
+
+# Publishes a GitHub release from main. Start it from the Actions tab
+# (Release, then Run workflow), or ask Claude to start it.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, such as 1.4.1. It must match package.json."
+        required: true
+        type: string
+      dry_run:
+        description: "Check everything without publishing"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+# Never run two releases at once.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Check the version is ready to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          [[ "$GITHUB_REF" == "refs/heads/main" ]] || fail "Run this from main."
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "Use a version like 1.4.1."
+          [[ "$(node -p "require('./package.json').version")" == "$VERSION" ]] || fail "package.json does not say $VERSION."
+          [[ -f "docs/releases/v$VERSION.md" ]] || fail "docs/releases/v$VERSION.md is missing."
+          grep -q "^## $VERSION " CHANGELOG.md || fail "CHANGELOG.md has no $VERSION section."
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then fail "Tag v$VERSION already exists."; fi
+          if gh release view "v$VERSION" > /dev/null 2>&1; then fail "Release v$VERSION already exists."; fi
+      - name: Run tests
+        run: npm test
+      - name: Check the committed HTML and checksums match the source
+        run: |
+          node scripts/build.mjs
+          git diff --exit-code -- Day-by-Day.html SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+      - name: Prepare release files
+        run: |
+          set -euo pipefail
+          node scripts/release-files.mjs
+          (cd release && sha256sum -c SHA256SUMS.txt)
+          # Release notes that quote a checksum must quote this build's.
+          notes="docs/releases/v$VERSION.md"
+          if grep -q "SHA-256" "$notes" && ! grep -q "$(sha256sum Day-by-Day.html | cut -d' ' -f1)" "$notes"; then
+            echo "::error::$notes quotes a different SHA-256 for Day-by-Day.html."; exit 1
+          fi
+      - name: Publish the release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v$VERSION" release/* --target "$GITHUB_SHA" --title "Day by Day v$VERSION" --notes-file "docs/releases/v$VERSION.md"
+      - name: Report a dry run
+        if: ${{ inputs.dry_run }}
+        run: echo "Dry run passed. Nothing was published. Run again with dry_run off to publish v$VERSION."
