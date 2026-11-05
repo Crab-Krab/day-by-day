@@ -263,7 +263,10 @@
     const byId = new Map(tasks.map(task => [task.id, task]));
     for (const [date, entries] of Object.entries(completed)) for (const id of entries) {
       const task = byId.get(id);
-      if (task.kind === 'weekly' && !scheduled(task, date) && !task.snapshots[date]) task.snapshots[date] = routineFields(routineVersion(task, date) || task);
+      if (task.kind !== 'weekly') continue;
+      // Older versions could record a day as both done and skipped, and showed it as done. Keep it done.
+      if (task.exceptions.includes(date)) task.exceptions = task.exceptions.filter(day => day !== date);
+      if (!scheduled(task, date) && !task.snapshots[date]) task.snapshots[date] = routineFields(routineVersion(task, date) || task);
     }
     function order(idsToOrder) {
       if (!Array.isArray(idsToOrder) || idsToOrder.length > 20000 || idsToOrder.some(id => typeof id !== 'string')) throw new Error('Invalid custom order.');
@@ -297,6 +300,15 @@
     loadFailed = true;
     storageError(originalSavedData === null ? 'Saved tasks could not be accessed. Changes will last only for this session. Browser storage may be unavailable.' : 'Saved tasks could not be loaded. Your original saved data has been kept untouched. Download it for recovery before restoring a backup. Changes will last only for this session.');
   }
+  // Task files and backups over 10 MB are refused when opened, so the app never keeps data past that size.
+  const SIZE_LIMIT = 10000000;
+  function savedBytes(value) {
+    const text = JSON.stringify(value, null, 2) + '\n';
+    return typeof Blob === 'function' ? new Blob([text]).size : text.length;
+  }
+  // The last accepted data, used to undo a change that fails the checks in save().
+  let lastGood = JSON.stringify(data), lastGoodBytes = savedBytes(data);
+  function rememberGood() { lastGood = JSON.stringify(data); lastGoodBytes = savedBytes(data); }
   let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null, editingReadOnly = false;
   let renderedOverdueKey = '';
   function overdueKey(tasks) { return JSON.stringify(tasks.map(task => [task.date, task.id])); }
@@ -391,11 +403,11 @@
     while (data.tasks.some(task => task.id === id));
     return id;
   }
-  function writeBrowserCopy(replaceUnreadable) {
+  function writeBrowserCopy(replaceUnreadable, text = JSON.stringify(data)) {
     // Saved data that could not be read stays untouched for recovery until the user restores over it.
     if (loadFailed && !replaceUnreadable) { browserUnsaved = true; return; }
     try {
-      localStorage.setItem(KEY, JSON.stringify(data));
+      localStorage.setItem(KEY, text);
       browserUnsaved = false;
       // Retry after every failure, so a temporary problem such as a full disk clears itself.
       if (!persistent && !loadFailed) { $('storageWarning').hidden = true; $('saveStatus').textContent = 'Saved in this browser'; }
@@ -408,7 +420,22 @@
   function save({ replaceUnreadable = false } = {}) {
     // A new data change supersedes the previous one-step Undo.
     undoNotice.hide();
-    writeBrowserCopy(replaceUnreadable);
+    // Check the whole task list before keeping a change, so the app never saves data it would refuse to open.
+    let problem = null, bytes = 0;
+    try {
+      bytes = savedBytes(validate(data));
+      // A change that shrinks oversized data is still allowed, so you can delete your way back under the limit.
+      if (bytes > SIZE_LIMIT && bytes >= lastGoodBytes) problem = 'Your tasks would be larger than the 10 MB limit, and a backup that size could not be restored.';
+    } catch (error) { problem = error.message; }
+    if (problem) {
+      data = JSON.parse(lastGood); render();
+      const message = `Change not saved. ${problem} Delete unused tasks or history first.`;
+      if ($('taskDialog').open) $('formError').textContent = message;
+      notify(message);
+      return false;
+    }
+    lastGood = JSON.stringify(data); lastGoodBytes = bytes;
+    writeBrowserCopy(replaceUnreadable, lastGood);
     backupStatus.changes++;
     if (!backupStatus.firstChangeAt) backupStatus.firstChangeAt = Date.now();
     persistBackupStatus();
@@ -416,6 +443,7 @@
     render();
     renderBackupStatus();
     checkReminders();
+    return true;
   }
   function notify(message, undo) {
     toastNotice.hide();
@@ -484,7 +512,7 @@
         const completed = new Set(data.completed[occurrenceDate] || []);
         completed.has(task.id) ? completed.delete(task.id) : completed.add(task.id);
         data.completed[occurrenceDate] = [...completed];
-        save();
+        if (!save()) return;
         const updated = [...$('taskList').querySelectorAll('.check-button'), ...$('overdueList').querySelectorAll('.check-button')].find(b => b.dataset.id === task.id);
         (updated || (overdue && !$('overdueSection').hidden ? $('overdueTitle') : $('inlineAdd'))).focus({ preventScroll: true });
       }; check.dataset.id = task.id; row.append(check);
@@ -527,7 +555,7 @@
         const previous = task.date;
         data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: today, reminderFrom: Date.now() } : item);
         selected = today; month = parseDate(today); view = 'day';
-        save(); focusTask(task.id);
+        if (!save()) return; focusTask(task.id);
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
       copy.append(moveToday);
@@ -559,7 +587,7 @@
           data.tasks = data.tasks.map(item => item.id === original.id ? { ...item, snapshots, exceptions: [...new Set([...(item.exceptions || []), currentDate])].sort() } : item);
           data.tasks.push(deferred);
         }
-        save();
+        if (!save()) return;
         ($('overdueList').querySelector('.move-tomorrow') || $('overdueList').querySelector('.check-button') || $('inlineAdd')).focus({ preventScroll: true });
         notify(original.kind === 'once' ? 'Task moved to tomorrow. Due time and reminders kept.' : 'Occurrence moved to tomorrow as a one-time task. Future repeats are unchanged.', () => {
           data.tasks = data.tasks.filter(item => original.kind === 'once' || item.id !== deferredId).map(item => item.id === original.id ? original : item);
@@ -574,7 +602,7 @@
         const source = data.tasks.find(item => item.id === task.id);
         if ((source.exceptions || []).length >= 20000) { notify('This routine has reached its limit of 20,000 skipped dates. Create a new routine and end this one.'); return; }
         source.exceptions = [...new Set([...(source.exceptions || []), occurrenceDate])].sort();
-        save(); $('skippedTitle').focus({ preventScroll: true });
+        if (!save()) return; $('skippedTitle').focus({ preventScroll: true });
         notify('Occurrence skipped. Future repeats are unchanged.', () => { source.exceptions = source.exceptions.filter(date => date !== occurrenceDate); });
       };
       copy.append(skip);
@@ -597,7 +625,7 @@
         const order = moveOrderedId(base, task.id, neighbor.id, step);
         if (routine) data.routineOrder = order;
         else data.weekdayOrders[weekday] = order;
-        save();
+        if (!save()) return;
         const container = routine ? $('routineList') : overdue ? $('overdueList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
         const control = movedRow?.querySelector(`[data-move="${direction}"]`);
@@ -650,7 +678,7 @@
       if (moved) { item.append(el('span', '', `${version.title} · Moved to ${fmt(moved.date, { weekday: 'short', month: 'short', day: 'numeric' })}`)); return item; }
       item.append(el('span', '', version.title));
       const restore = el('button', 'text-button restore-occurrence', 'Restore occurrence'); restore.type = 'button';
-      restore.onclick = () => { task.exceptions = task.exceptions.filter(date => date !== selected); save(); focusTask(task.id); notify('Occurrence restored.'); };
+      restore.onclick = () => { task.exceptions = task.exceptions.filter(date => date !== selected); if (!save()) return; focusTask(task.id); notify('Occurrence restored.'); };
       item.append(restore); return item;
     }));
     const routines = orderByIds(activeRoutines.map(task => resolveTask(task, today, false) || resolveTask(task, task.versions?.[0].from || today, false) || task), data.routineOrder);
@@ -756,9 +784,11 @@
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
     if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
-    const alertsChanged = !previous || previous.time !== time || previous.kind !== kind || JSON.stringify(previous.reminders || []) !== JSON.stringify(reminders) || (previous.kind === 'once' ? previous.date !== date : previous.startDate !== date || JSON.stringify(previous.weekdays) !== JSON.stringify(weekdays));
-    const reminderFrom = alertsChanged ? Date.now() : (previous.reminderFrom || 0);
+    const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
+    const alertsChanged = !before || before.time !== time || before.kind !== kind || JSON.stringify(before.reminders || []) !== JSON.stringify(reminders) || (before.kind === 'once' ? before.date !== date : before.startDate !== date || JSON.stringify(before.weekdays) !== JSON.stringify(weekdays));
+    const reminderFrom = alertsChanged ? Date.now() : (before.reminderFrom || 0);
     const task = { id, title, description, kind, time, reminders, reminderFrom, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date, ...(previous?.movedFrom ? { movedFrom: previous.movedFrom } : {}) }) };
     const converted = previous?.kind === 'once' && kind === 'weekly';
     const begins = converted && date < today ? today : date;
@@ -768,7 +798,7 @@
     const wasEditing = Boolean(editingId);
     if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? record : t);
     else data.tasks.push(record);
-    closeTaskDialog();
+    const shownBefore = { selected, month, view };
     if (!wasEditing || converted) {
       let first = parseDate(begins);
       if (kind === 'weekly') {
@@ -778,7 +808,9 @@
       month = first;
       view = 'day';
     }
-    save();
+    // A change that fails the save checks keeps the dialog open with its reason.
+    if (!save()) { ({ selected, month, view } = shownBefore); render(); return; }
+    closeTaskDialog();
     if (converted) {
       notify('One-time task converted to a weekly routine.', () => { data.tasks = data.tasks.map(item => item.id === id ? previous : item); selected = previous.date; month = parseDate(selected); view = 'day'; });
     } else if (previous?.kind === 'weekly') {
@@ -802,12 +834,13 @@
       task.snapshots = completedSnapshots(task, data.completed, effective);
       task.endedOn = effective;
       dialogFocusTarget = { fallback: $('addTask') };
-      closeTaskDialog(); save();
+      if (!save()) return;
+      closeTaskDialog();
       notify(`Routine ends before ${fmt(effective, { month: 'short', day: 'numeric', year: 'numeric' })}. Earlier days and completion history are kept.`, () => { task.endedOn = previousEnd; task.snapshots = previousSnapshots; });
       return;
     }
     dialogFocusTarget = { taskId: data.tasks[index + 1]?.id || data.tasks[index - 1]?.id };
-    data.tasks.splice(index, 1); closeTaskDialog(); save(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
+    data.tasks.splice(index, 1); if (!save()) return; closeTaskDialog(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
   $('taskDialog').addEventListener('cancel', event => { event.preventDefault(); closeTaskDialog(); });
@@ -815,8 +848,8 @@
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
   $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
-  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; save(); notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
-  $('sortRoutines').onclick = () => { data.routineOrder = null; save(); notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
+  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; if (!save()) return; notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
+  $('sortRoutines').onclick = () => { data.routineOrder = null; if (!save()) return; notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function downloadData(text, name) {
@@ -849,7 +882,7 @@
   $('backupLater').onclick = () => { backupStatus.snoozedUntil = Date.now() + 86400000; persistBackupStatus(); renderBackupStatus(); };
   $('undoAction').onclick = () => {
     const action = undoAction; undoNotice.hide();
-    if (action) { action(); save(); notify('Change undone.'); (view === 'routines' ? $('addTask') : $('inlineAdd')).focus({ preventScroll: true }); }
+    if (action) { action(); if (!save()) return; notify('Change undone.'); (view === 'routines' ? $('addTask') : $('inlineAdd')).focus({ preventScroll: true }); }
   };
   $('dismissUndo').onclick = () => { undoNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   $('dismissToast').onclick = () => { toastNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
@@ -877,7 +910,9 @@
       const next = validate(JSON.parse(await file.text()));
       if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore()) return;
       undoNotice.hide();
-      data = next; persistent = true; save({ replaceUnreadable: true });
+      data = next;
+      // A rejected backup leaves current tasks, and any unreadable original, untouched.
+      if (!save({ replaceUnreadable: true })) return;
       if (persistent) {
         loadFailed = false; originalSavedData = null;
         $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
@@ -975,6 +1010,40 @@
       }).catch(() => deliverReminders()).finally(() => { reminderCheckPending = false; });
     } else deliverReminders();
   }
+  function loadOtherTab(value) {
+    data = value ? validate(JSON.parse(value)) : empty();
+    loadFailed = false; originalSavedData = null; persistent = true; browserUnsaved = false; rememberGood();
+    $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
+    undoNotice.hide();
+    render();
+    checkReminders();
+  }
+  // Another tab saved while this tab still has changes the browser could not save.
+  // Ask which copy to keep instead of silently replacing this tab's changes.
+  let otherTabValue = null;
+  function chooseTab(value) {
+    otherTabValue = value;
+    if (!$('tabChoiceDialog').open) { $('tabChoiceDialog').showModal(); $('tabChoiceKeep').focus(); }
+  }
+  $('tabChoiceKeep').onclick = () => {
+    $('tabChoiceDialog').close();
+    // The other tab already replaced any unreadable original in storage, so this tab may write again.
+    loadFailed = false;
+    writeBrowserCopy(false);
+    if (!browserUnsaved && originalSavedData !== null) {
+      $('storageWarning').hidden = false; $('downloadOriginalData').hidden = false;
+      $('storageWarningText').textContent = 'Your tasks are saved in this browser. The earlier saved data that could not be loaded is no longer stored, but you can still download it here.';
+    }
+    render(); renderBackupStatus();
+    notify(browserUnsaved ? "Kept this tab's tasks, but the browser still could not save them. Use Back up tasks to keep a copy." : "Kept this tab's tasks and saved them in this browser.");
+  };
+  $('tabChoiceOther').onclick = () => {
+    $('tabChoiceDialog').close();
+    try { loadOtherTab(otherTabValue); notify("Loaded the other tab's tasks."); }
+    catch (_) { notify("The other tab's tasks could not be read. This tab's tasks were kept."); }
+  };
+  $('tabChoiceBackup').onclick = backup;
+  $('tabChoiceDialog').addEventListener('cancel', event => event.preventDefault());
   // Keep separate tabs in step and refresh the current date after midnight or sleep.
   window.addEventListener('storage', event => {
     if (event.key === KEY) {
@@ -982,12 +1051,9 @@
       // replace pending edits or silently redirect this file's contents.
       if (fileStore?.ownsCache()) return;
       try {
-        data = event.newValue ? validate(JSON.parse(event.newValue)) : empty();
-        loadFailed = false; originalSavedData = null; persistent = true;
-        $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
-        undoNotice.hide();
-        render();
-        checkReminders();
+        if (event.newValue) validate(JSON.parse(event.newValue));
+        if (browserUnsaved) { chooseTab(event.newValue); return; }
+        loadOtherTab(event.newValue);
       } catch (_) {
         loadFailed = true; originalSavedData = event.newValue;
         storageError('Tasks changed in another tab but could not be read. Download the original saved data for recovery. Changes will last only for this session.');
@@ -1042,7 +1108,8 @@
       persistent = true; loadFailed = false; originalSavedData = null;
       $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true;
       $('saveStatus').textContent = 'Saved in this browser';
-      try { localStorage.setItem(KEY, JSON.stringify(data)); }
+      rememberGood();
+      try { localStorage.setItem(KEY, lastGood); browserUnsaved = false; }
       catch (_) { storageError('The browser copy could not be saved.'); }
       render(); checkReminders(); renderBackupStatus();
     }

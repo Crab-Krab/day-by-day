@@ -61,7 +61,7 @@ function boot(storage, initialClock, options = {}) {
   const documentListeners={},windowListeners={};
   const document = {title:'',hidden:false,body:new Node('body'),getElementById(id){if(!ids[id])throw Error('Missing element '+id);return ids[id];},createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag),createTextNode:text=>Object.assign(new Node('text'),{_text:String(text)}),querySelector(selector){return extras[selector] ||= new Node(selector==='main'?'main':'div');},querySelectorAll(selector){const name=selector.match(/name="(.*?)"/)?.[1];return inputs.filter(input=>input.name===name);},addEventListener:(name,callback)=>{(documentListeners[name] ||= []).push(callback);}};
   const localStorage = {getItem:key=>{if(options.storageReadFails&&key==='day-by-day.v1')throw Error('Storage unavailable');return storage.get(key)??null;},setItem:(key,value)=>{if(options.storageWriteFails&&key==='day-by-day.v1')throw Error('Storage full');storage.set(key,String(value));}};
-  const context = {Date:Clock,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL:DownloadURL};
+  const context = {Date:Clock,Blob,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL:DownloadURL};
   if(options.navigator)context.navigator=options.navigator;
   if(options.fileWindow)Object.assign(context.window,options.fileWindow);
   if(options.indexedDB)context.indexedDB=options.indexedDB;
@@ -728,3 +728,62 @@ function verifyReviewFixes() {
   console.log('Review fixes passed: browser-save retry and close warning, Skip over saved details, moved-occurrence labels without duplicate Restore, quiet reminders added after the due time, and save-time data limits.');
 }
 verifyReviewFixes();
+async function verifySecondReviewFixes() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime();
+  const store=(tasks,completed={})=>new Map([[key,JSON.stringify({version:5,tasks,completed})]]);
+  const row=(app,id,list='taskList')=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  // A. Older data could mark a day both done and skipped. It loads as done, and plain skips stay skipped.
+  const snap={title:'Saved details',weekdays:[3],startDate:'2026-10-01',time:null,reminders:[]};
+  let app=boot(store([{id:'gym',kind:'weekly',title:'Gym',weekdays:[3],startDate:'2026-10-01',snapshots:{'2026-11-04':snap},exceptions:['2026-10-28','2026-11-04']}],{'2026-11-04':['gym']}),wed);
+  assert.equal(row(app,'gym').querySelector('.check-button').getAttribute('aria-pressed'),'true');assert.equal(app.ids.completionText.textContent,'1 of 1 complete');
+  assert.deepEqual(Array.from(app.context.window.DayByDay.validate(app.state()).tasks[0].exceptions),['2026-10-28']);
+  // B. Reminder edits compare with the routine as set up on the edited date, not a later scheduled change.
+  const at11=new Date(2026,10,4,11).getTime(),created=new Date(2026,10,1,8).getTime();
+  const base={title:'Standup',weekdays:[3],startDate:'2026-10-01',time:'09:00',reminderFrom:created};
+  const routine={id:'r',kind:'weekly',...base,reminders:[15],versions:[{from:'1900-01-01',...base,reminders:[]},{from:'2026-11-11',...base,reminders:[15]}]};
+  app=boot(store([routine]),at11);
+  row(app,'r','overdueList').querySelector('.edit-task').onclick();
+  app.inputs.find(input=>input.name==='reminders'&&input.value==='15').checked=true;app.ids.taskForm.dispatch('submit');app.tick();
+  assert.equal(app.ids.reminderPanel.hidden,true);assert.equal(app.state().tasks[0].versions.find(version=>version.from==='2026-11-04').reminderFrom,at11);
+  app=boot(store([routine]),at11);row(app,'r','overdueList').querySelector('.edit-task').onclick();app.ids.taskTitle.value='Standup, renamed';app.ids.taskForm.dispatch('submit');
+  assert.equal(app.state().tasks[0].versions.find(version=>version.from==='2026-11-04').reminderFrom,created); // a rename keeps reminder timing
+  // C. A change that would push saved tasks past 10 MB is not kept, and the dialog explains why.
+  const limit=10000000,validate=app.context.window.DayByDay.validate;
+  const bulky=Array.from({length:2000},(_,index)=>({id:`big${index}`,kind:'once',date:'2099-01-01',title:`Task ${index}`,description:'x'.repeat(4990)}));
+  const bytes=count=>Buffer.byteLength(JSON.stringify(validate({version:5,tasks:bulky.slice(0,count),completed:{}}),null,2)+'\n');
+  let low=1800,high=2000;while(low<high){const middle=Math.ceil((low+high)/2);if(bytes(middle)<=limit)low=middle;else high=middle-1;}
+  app=boot(store(bulky.slice(0,low)),wed);const kept=app.storage.get(key);
+  app.ids.addTask.onclick();app.ids.taskTitle.value='One too large';app.ids.taskDescription.value='y'.repeat(5000);app.ids.taskForm.dispatch('submit');
+  assert.equal(app.storage.get(key),kept);assert.equal(app.ids.taskDialog.open,true);assert.match(app.ids.formError.textContent,/10 MB limit/);assert.equal(app.ids.dayTitle.textContent,'Wednesday.');
+  // Data that is already too large can still shrink, so deleting is never blocked.
+  app=boot(store(bulky.slice(0,low+10).map(task=>({...task,date:'2026-11-04'}))),wed);assert.ok(bytes(low+10)>limit);
+  row(app,'big0').querySelector('.edit-task').onclick();app.ids.deleteTask.onclick();
+  assert.equal(app.state().tasks.length,low+9);assert.equal(app.state().tasks.some(task=>task.id==='big0'),false);
+  // A rejected backup leaves both the current tasks and an unreadable original untouched.
+  const unreadable='{not json';app=boot(new Map([[key,unreadable]]),wed);
+  const ids=Array.from({length:2000},(_,index)=>'c'+index),completed={};
+  for(let day=0;day<600;day++)completed[new Date(2020,0,1+day,12).toISOString().slice(0,10)]=ids;
+  const text=JSON.stringify({version:5,tasks:ids.map(id=>({id,kind:'once',date:'2020-01-01',title:id})),completed});
+  assert.ok(Buffer.byteLength(text)<limit);
+  app.ids.restoreFile.files=[{size:Buffer.byteLength(text),text:async()=>text}];
+  const pending=app.ids.restoreFile.onchange();await new Promise(resolve=>setImmediate(resolve));app.ids.confirmRestore.onclick();await pending;
+  assert.match(app.ids.toastMessage.textContent,/Change not saved/);assert.equal(app.storage.get(key),unreadable);assert.equal(app.ids.downloadOriginalData.hidden,false);
+  app.ids.addTask.onclick();app.ids.taskTitle.value='Ordinary edit';app.ids.taskForm.dispatch('submit');assert.equal(app.storage.get(key),unreadable);
+  // D. Another tab's save never silently replaces this tab's unsaved changes. The app asks which copy to keep.
+  const options={storageWriteFails:true},plain={id:'a',kind:'once',title:'Mine',date:'2026-11-04'};
+  const other=JSON.stringify({version:5,tasks:[plain,{id:'b',kind:'once',title:'From other tab',date:'2026-11-04'}],completed:{}});
+  const warns=target=>{let prevented=false;for(const fn of target.windowListeners.beforeunload||[])fn({preventDefault(){prevented=true;}});return prevented;};
+  const otherTabSaves=target=>{for(const fn of target.windowListeners.storage||[])fn({key,newValue:other});};
+  app=boot(store([plain]),wed,options);row(app,'a').querySelector('.check-button').onclick();otherTabSaves(app);
+  assert.equal(app.ids.tabChoiceDialog.open,true);assert.equal(row(app,'a').querySelector('.check-button').getAttribute('aria-pressed'),'true');assert.equal(row(app,'b'),undefined);assert.equal(app.ids.storageWarning.hidden,false);
+  app.ids.tabChoiceDialog.dispatch('cancel');assert.equal(app.ids.tabChoiceDialog.open,true); // Escape cannot skip the choice
+  options.storageWriteFails=false;app.ids.tabChoiceKeep.onclick();
+  assert.equal(app.ids.tabChoiceDialog.open,false);assert.deepEqual(app.state().completed['2026-11-04'],['a']);assert.equal(app.state().tasks.length,1);assert.equal(warns(app),false);
+  options.storageWriteFails=true;app=boot(store([plain]),wed,options);row(app,'a').querySelector('.check-button').onclick();otherTabSaves(app);
+  app.ids.tabChoiceOther.onclick();
+  assert.equal(app.ids.tabChoiceDialog.open,false);assert.ok(row(app,'b'));assert.equal(row(app,'a').querySelector('.check-button').getAttribute('aria-pressed'),'false');assert.equal(app.ids.storageWarning.hidden,true);assert.equal(warns(app),false);
+  options.storageWriteFails=false;app=boot(store([plain]),wed,options);otherTabSaves(app);
+  assert.equal(app.ids.tabChoiceDialog.open,false);assert.ok(row(app,'b')); // with nothing unsaved, tabs stay in step automatically
+  console.log('Second review fixes passed: done-and-skipped history, reminder edits against the effective routine version, 10 MB save limit with shrinking allowed, protected originals after a rejected restore, and asking which tab copy to keep.');
+}
+verifySecondReviewFixes().catch(error=>{console.error(error);process.exitCode=1;});

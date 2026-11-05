@@ -37,7 +37,7 @@ Your tasks and history stay on your computer; they are not uploaded to GitHub or
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 
-Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows. If the browser cannot save a change, the app keeps retrying with each later change and asks before you close the tab with unsaved changes.
+Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows. If the browser cannot save a change, the app keeps retrying with each later change and asks before you close the tab with unsaved changes. If another tab saves different tasks meanwhile, the app asks which copy to keep.
 
 Before updating:
 

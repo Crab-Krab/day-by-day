@@ -167,7 +167,15 @@ warns before replacing unreadable data; cancel keeps the original untouched.
 If the browser cannot save a change, a warning appears and the app tries again
 with every later change. The warning clears once a save succeeds. Until then,
 closing the tab asks for confirmation, unless a connected task file already holds
-your changes. Use Back up tasks to keep a copy if the warning stays.
+your changes. Use Back up tasks to keep a copy if the warning stays. If another
+tab saves different tasks during that time, the app asks which copy to keep:
+this tab's tasks or the other tab's. Download this tab's tasks first if you want
+both.
+
+Task files and backups larger than 10 MB cannot be opened. If a change would make
+your tasks larger than that, the app does not keep the change and explains why.
+Deleting tasks is always allowed, so you can bring oversized data back under the
+limit.
 
 The one-time task form uses one Date input. The single-letter N shortcut has been
 removed to avoid accidental activation. Use the Add task button with mouse or keyboard.
