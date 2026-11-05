@@ -11,3 +11,4 @@ day-by-day-backup-*.json
 day-by-day-recovery-*.json
 day-by-day-session-*.json
 Day-by-Day-data.json
+release/
