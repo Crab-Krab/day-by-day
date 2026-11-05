@@ -1,8 +1,8 @@
 # Day by Day
 
-A daily checklist with weekly routines, a calendar, and reminders-all in one HTML file. Open it locally in Chrome, Edge, Firefox, or another modern browser. No account, installation, server, or internet connection is needed to use the app.
+A daily checklist with weekly routines, a calendar, and reminders, all in one HTML file. Open it locally in Chrome, Edge, Firefox, or another modern browser. No account, installation, server, or internet connection is needed to use the app.
 
-**[Download Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html)** · [User guide](docs/USAGE.txt) · [File autosave setup](docs/FILE-AUTOSAVE.md) · [Release notes](https://github.com/Crab-Krab/day-by-day/releases)
+**[Download Day-by-Day.html](https://github.com/Crab-Krab/day-by-day/releases/latest/download/Day-by-Day.html)** · [User guide](docs/USAGE.txt) · [File autosave setup](docs/FILE-AUTOSAVE.md) · [Release notes](https://github.com/Crab-Krab/day-by-day/releases)
 
 ## Get started
 
@@ -29,7 +29,7 @@ Calendar weeks start Monday. Dates and times use your computer's local timezone.
 
 Complete an earlier task on its original date, or choose **Move to today** to change its date. Lists refresh as time passes, and each task appears in one section at a time.
 
-An unfinished timed task that becomes overdue **today** offers **Move to tomorrow**. It keeps its due time, notes, and reminder settings, disappears from today's list, and appears unchecked tomorrow. You stay on today's page and can Undo the move. For weekly routines, only today's occurrence moves as a separate one-time task; future repeats keep their schedule. If the routine already repeats tomorrow, both occurrences remain independently checkable.
+An unfinished timed task that becomes overdue **today** offers **Move to tomorrow**. It keeps its due time, notes, and reminder settings, disappears from today's list, and appears unchecked tomorrow. You stay on today's page and can Undo the move. For weekly routines, only today's occurrence moves as a separate one-time task; future repeats keep their schedule. If the routine already repeats tomorrow, both occurrences remain independently checkable. The moved task shows **Moved from** its original date, and the original date offers no Restore that would put it on both days.
 
 ## Your data and updates
 
@@ -37,7 +37,7 @@ Your tasks and history stay on your computer; they are not uploaded to GitHub or
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 
-Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows.
+Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows. If the browser cannot save a change, the app keeps retrying with each later change and asks before you close the tab with unsaved changes. If another tab saves different tasks meanwhile, the app asks which copy to keep.
 
 Before updating:
 
@@ -68,25 +68,24 @@ Use **Node.js 20 or newer**. There are no packages to install.
 | Path | Purpose |
 | --- | --- |
 | `src/` | Editable HTML, CSS, app logic, and theme handling |
-| `scripts/build.mjs` | Builds the standalone HTML |
-| `tests/` | Scheduling, history/migration, theme, and runtime checks |
+| `scripts/build.mjs` | Builds the standalone HTML and its checksums |
+| `tests/` | Scheduling, history/migration, theme, runtime, and file-storage checks |
+| `.github/workflows/` | Automated checks on every push and pull request |
 | `docs/USAGE.txt` | Detailed user guide |
 | `Day-by-Day.html` | Ready-to-use app generated from the source |
 
 Run checks, then rebuild:
 
 ```sh
-node tests/schedule.test.cjs
-node tests/runtime.test.cjs
-node tests/theme.test.cjs
-node tests/history.test.cjs
-node tests/file-storage.test.cjs
-node scripts/build.mjs
+npm test
+npm run build
 ```
 
-Edit `src/`, preserve existing saved data, and commit the rebuilt HTML alongside code changes. Automated checks do not replace testing the local file in real browsers.
+The build writes `Day-by-Day.html` and refreshes `SHA256SUMS.txt`. It stops with an error if `src/index.html` no longer contains a tag it needs to inline. Edit `src/`, preserve existing saved data, and commit the rebuilt HTML and checksums alongside code changes.
 
-For changes not yet released, download the [latest working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html).
+GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers.
+
+The main download link always serves the latest release. To try changes that are not released yet, download the [unreleased working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html) from `main`.
 
 ## License
 

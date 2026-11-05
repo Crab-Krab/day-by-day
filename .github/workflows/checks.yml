@@ -1,0 +1,28 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Run tests
+        run: npm test
+      - name: Check the committed HTML and checksums match the source
+        run: |
+          node scripts/build.mjs
+          git diff --exit-code -- Day-by-Day.html SHA256SUMS.txt
+      - name: Verify checksums
+        run: sha256sum -c SHA256SUMS.txt

@@ -30,7 +30,7 @@ An interrupted save can leave pending changes in browser storage. On reopening, 
 
 Avoid using multiple copies of the app to edit the same JSON simultaneously. Writes are serialized within a tab, and the app checks for external changes before committing a write. A conflicting window pauses rather than silently replacing newer file contents. This is not a multi-user synchronization system.
 
-**Change file** opens another existing task file. **Disconnect** removes the remembered browser connection without deleting the JSON. To create a new file after disconnecting, choose **Set up autosave**. Keep occasional separate backups; autosaving also saves deliberate deletions and restores.
+**Change file** opens another existing task file. **Disconnect** removes the remembered browser connection without deleting the JSON. If the browser cannot forget the connection, the app still disconnects for this visit and says the file may reopen next time. To create a new file after disconnecting, choose **Set up autosave**. Keep occasional separate backups; autosaving also saves deliberate deletions and restores.
 
 Firefox and unsupported browsers continue to offer browser saving and manual backup/restore, but cannot use this direct-file autosave feature. If a browser copy cannot be saved, file autosaving can still work. The app explains when it cannot remember the connection for the next visit.
 

@@ -104,8 +104,8 @@ async function main() {
   const denied=boot();await denied.controller.init();denied.file.permission='denied';await denied.click('createTaskFile');assert.equal(denied.file.writes,0);assert.match(denied.nodes.taskFileDetail.textContent,/Allow editing/);
   app.file.missing=true;app.change(sample('Keep after removal'));await app.controller.flush();assert.match(app.nodes.taskFileDetail.textContent,/moved or removed/);delete app.file.missing;
   // Disconnect removes only the browser connection, never the real file.
-  const saved=blocked.file.raw;await blocked.click('disconnectTaskFile'); // denied database forget is reported honestly
-  assert.match(blocked.title(),/Could not forget/);assert.equal(blocked.file.raw,saved);
+  const saved=blocked.file.raw;await blocked.click('disconnectTaskFile'); // denied database forget still releases the file and says it may reopen
+  assert.match(blocked.title(),/Disconnected for this visit/);assert.match(blocked.nodes.taskFileDetail.textContent,/may reopen/);assert.equal(blocked.controller.isConnected(),false);assert.equal(blocked.file.raw,saved);
   app.window.confirm=()=>true;await app.click('disconnectTaskFile');assert.equal(app.controller.isConnected(),false);assert.equal(app.store.value,undefined);
   // Two pages writing one file: same-origin lock serializes the read/check/write;
   // a stale page stops rather than overwriting the winner's data.

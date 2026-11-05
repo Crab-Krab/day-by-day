@@ -189,10 +189,14 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (busy || writing) return;
     if (dirty && !window.confirm('Some changes are not saved to the task file. Disconnect anyway? Your current tasks stay here; use Back up tasks to keep a separate copy.')) return;
     setBusy(true);
-    try { await connection('delete'); }
-    catch (_) { setBusy(false); status('Could not forget this connection', 'The browser could not remove the saved connection. Try again before closing.', 'error'); return; }
+    // Always let go of the file in this tab, even when the browser cannot forget it.
+    let forgotten = true;
+    try { await connection('delete'); } catch (_) { forgotten = false; }
+    const name = handle.name;
     handle = null; baseline = null; rawBaseline = null; dirty = false; paused = false;
-    setBusy(false); idleStatus();
+    setBusy(false);
+    if (forgotten) idleStatus();
+    else status('Disconnected for this visit', 'The browser could not forget the connection, so it may reopen ' + name + ' next time. Choose Disconnect again then. The JSON file itself is unchanged.', 'error');
   }
   async function init() {
     if (!supported) {
