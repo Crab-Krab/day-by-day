@@ -775,10 +775,14 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (busy || writing) return;
     if (dirty && !window.confirm('Some changes are not saved to the task file. Disconnect anyway? Your current tasks stay here; use Back up tasks to keep a separate copy.')) return;
     setBusy(true);
-    try { await connection('delete'); }
-    catch (_) { setBusy(false); status('Could not forget this connection', 'The browser could not remove the saved connection. Try again before closing.', 'error'); return; }
+    // Always let go of the file in this tab, even when the browser cannot forget it.
+    let forgotten = true;
+    try { await connection('delete'); } catch (_) { forgotten = false; }
+    const name = handle.name;
     handle = null; baseline = null; rawBaseline = null; dirty = false; paused = false;
-    setBusy(false); idleStatus();
+    setBusy(false);
+    if (forgotten) idleStatus();
+    else status('Disconnected for this visit', 'The browser could not forget the connection, so it may reopen ' + name + ' next time. Choose Disconnect again then. The JSON file itself is unchanged.', 'error');
   }
   async function init() {
     if (!supported) {
@@ -909,8 +913,10 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   function scheduled(task, date, weekday) {
     if (task.kind === 'once') return task.date === date;
+    // Skipping wins over saved details, so Skip works on an edited, unchecked occurrence.
+    if (task.exceptions?.includes(date)) return false;
     if (task.snapshots?.[date]) return true;
-    if ((task.endedOn && date >= task.endedOn) || task.exceptions?.includes(date)) return false;
+    if (task.endedOn && date >= task.endedOn) return false;
     const version = routineVersion(task, date);
     return Boolean(version && date >= version.startDate && weekdaysOf(version).includes(weekday ?? parseDate(date).getDay()));
   }
@@ -963,13 +969,6 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       if (!task || !scheduled(source, date) || !validTime(task.time) || dueTime(date, task.time) >= now || (completed[date] || []).includes(task.id)) return [];
       return [{ ...task, date }];
     }).sort((a, b) => a.date.localeCompare(b.date) || taskTimeOrder(a) - taskTimeOrder(b) || a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true }));
-  }
-  function reorderTasks(tasks, id, neighborId) {
-    const from = tasks.findIndex(task => task.id === id), to = tasks.findIndex(task => task.id === neighborId);
-    if (from < 0 || to < 0 || from === to) return tasks;
-    const ordered = tasks.slice();
-    [ordered[from], ordered[to]] = [ordered[to], ordered[from]];
-    return ordered;
   }
   function validTime(time) { return typeof time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
   function taskTimeOrder(task) { return validTime(task.time) ? Number(task.time.slice(0, 2)) * 60 + Number(task.time.slice(3)) : 1440; }
@@ -1050,7 +1049,10 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       const task = { id: t.id, kind: t.kind, ...fields(t, t.kind === 'weekly') };
       if (t.kind === 'once') {
         if (!validDate(t.date)) throw new Error('Invalid task date.');
-        return { ...task, date: t.date };
+        if (t.movedFrom == null) return { ...task, date: t.date };
+        // A routine occurrence moved to another day remembers where it came from.
+        if (typeof t.movedFrom !== 'object' || typeof t.movedFrom.taskId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(t.movedFrom.taskId) || !validDate(t.movedFrom.date)) throw new Error('Invalid moved task.');
+        return { ...task, date: t.date, movedFrom: { taskId: t.movedFrom.taskId, date: t.movedFrom.date } };
       }
       const rawVersions = t.versions === undefined ? [{ from: '1900-01-01', ...routineFields(task) }] : t.versions;
       if (!Array.isArray(rawVersions) || !rawVersions.length || rawVersions.length > 2000) throw new Error('Invalid routine history.');
@@ -1102,7 +1104,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     return { version: 5, tasks, completed, weekdayOrders, routineOrder };
   }
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
-  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null;
+  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null, browserUnsaved = false, localNote = null;
   function storageError(message) {
     if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
     persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
@@ -1143,7 +1145,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const oldChanges = backupStatus.firstChangeAt && Date.now() - backupStatus.firstChangeAt >= 7 * 86400000;
     $('backupNotice').hidden = !data.tasks.length || backupStatus.snoozedUntil > Date.now() || !(backupStatus.changes >= 25 || (backupStatus.changes > 0 && oldChanges));
     $('backupNoticeText').textContent = `${text}. You have changes to back up.`;
-    localNote.textContent = `${persistent ? 'Saved in this browser' : 'Not saved in this browser'} · ${text}`;
+    if (localNote) localNote.textContent = `${persistent ? 'Saved in this browser' : 'Not saved in this browser'} · ${text}`;
   }
   let undoAction, announcementTimer, pendingAnnouncement = null;
   function announceStatus(message) {
@@ -1211,13 +1213,24 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     while (data.tasks.some(task => task.id === id));
     return id;
   }
-  function save() {
+  function writeBrowserCopy(replaceUnreadable) {
+    // Saved data that could not be read stays untouched for recovery until the user restores over it.
+    if (loadFailed && !replaceUnreadable) { browserUnsaved = true; return; }
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+      browserUnsaved = false;
+      // Retry after every failure, so a temporary problem such as a full disk clears itself.
+      if (!persistent && !loadFailed) { $('storageWarning').hidden = true; $('saveStatus').textContent = 'Saved in this browser'; }
+      persistent = true;
+    } catch (_) {
+      browserUnsaved = true;
+      storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.');
+    }
+  }
+  function save({ replaceUnreadable = false } = {}) {
     // A new data change supersedes the previous one-step Undo.
     undoNotice.hide();
-    if (persistent) {
-      try { localStorage.setItem(KEY, JSON.stringify(data)); }
-      catch (_) { storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.'); }
-    }
+    writeBrowserCopy(replaceUnreadable);
     backupStatus.changes++;
     if (!backupStatus.firstChangeAt) backupStatus.firstChangeAt = Date.now();
     persistBackupStatus();
@@ -1299,7 +1312,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       }; check.dataset.id = task.id; row.append(check);
     }
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
-    meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
+    meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : task.movedFrom ? `Moved from ${fmt(task.movedFrom.date, { weekday: 'short', month: 'short', day: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
     heading.append(name, time); copy.append(heading, meta);
     if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
@@ -1363,7 +1376,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
           // A separate one-time record keeps this occurrence independent even
           // when tomorrow already has its own scheduled routine occurrence.
           deferredId = newTaskId();
-          const deferred = { id: deferredId, kind: 'once', date: tomorrow, title: occurrence.title, description: occurrence.description || '', time: occurrence.time || null, reminders: [...(occurrence.reminders || [])], reminderFrom: Date.now() };
+          const deferred = { id: deferredId, kind: 'once', date: tomorrow, title: occurrence.title, description: occurrence.description || '', time: occurrence.time || null, reminders: [...(occurrence.reminders || [])], reminderFrom: Date.now(), movedFrom: { taskId: original.id, date: currentDate } };
           const snapshots = { ...original.snapshots }; delete snapshots[currentDate];
           data.tasks = data.tasks.map(item => item.id === original.id ? { ...item, snapshots, exceptions: [...new Set([...(item.exceptions || []), currentDate])].sort() } : item);
           data.tasks.push(deferred);
@@ -1381,6 +1394,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       skip.setAttribute('aria-label', `Skip ${task.title} on ${fmt(occurrenceDate, { month: 'short', day: 'numeric' })}`);
       skip.onclick = () => {
         const source = data.tasks.find(item => item.id === task.id);
+        if ((source.exceptions || []).length >= 20000) { notify('This routine has reached its limit of 20,000 skipped dates. Create a new routine and end this one.'); return; }
         source.exceptions = [...new Set([...(source.exceptions || []), occurrenceDate])].sort();
         save(); $('skippedTitle').focus({ preventScroll: true });
         notify('Occurrence skipped. Future repeats are unchanged.', () => { source.exceptions = source.exceptions.filter(date => date !== occurrenceDate); });
@@ -1453,6 +1467,9 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('skippedSection').hidden = !skipped.length;
     $('skippedList').replaceChildren(...skipped.map(task => {
       const item = el('div', 'history-item'), version = resolveTask(task, selected) || task;
+      // Restoring a moved occurrence would leave the task on both days.
+      const moved = data.tasks.find(item => item.movedFrom?.taskId === task.id && item.movedFrom.date === selected);
+      if (moved) { item.append(el('span', '', `${version.title} · Moved to ${fmt(moved.date, { weekday: 'short', month: 'short', day: 'numeric' })}`)); return item; }
       item.append(el('span', '', version.title));
       const restore = el('button', 'text-button restore-occurrence', 'Restore occurrence'); restore.type = 'button';
       restore.onclick = () => { task.exceptions = task.exceptions.filter(date => date !== selected); save(); focusTask(task.id); notify('Occurrence restored.'); };
@@ -1554,17 +1571,21 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
     if (time !== null && !validTime(time)) { $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
-    const id = editingId || newTaskId();
     const previous = data.tasks.find(task => task.id === editingId);
+    // Keep saved data within the limits the app accepts when it loads.
+    if (!previous && data.tasks.length >= 20000) { $('formError').textContent = 'You have reached the 20,000-task limit. Delete unused tasks before adding more.'; return; }
+    const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
     if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
-    const scheduleChanged = !previous || previous.time !== time || previous.kind !== kind || (previous.kind === 'once' ? previous.date !== date : previous.startDate !== date || JSON.stringify(previous.weekdays) !== JSON.stringify(weekdays));
-    const reminderFrom = scheduleChanged ? Date.now() : (previous.reminderFrom || 0);
-    const task = { id, title, description, kind, time, reminders, reminderFrom, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date }) };
+    // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
+    const alertsChanged = !previous || previous.time !== time || previous.kind !== kind || JSON.stringify(previous.reminders || []) !== JSON.stringify(reminders) || (previous.kind === 'once' ? previous.date !== date : previous.startDate !== date || JSON.stringify(previous.weekdays) !== JSON.stringify(weekdays));
+    const reminderFrom = alertsChanged ? Date.now() : (previous.reminderFrom || 0);
+    const task = { id, title, description, kind, time, reminders, reminderFrom, ...(kind === 'weekly' ? { weekdays, startDate: date } : { date, ...(previous?.movedFrom ? { movedFrom: previous.movedFrom } : {}) }) };
     const converted = previous?.kind === 'once' && kind === 'weekly';
     const begins = converted && date < today ? today : date;
     const record = kind === 'weekly' ? previous?.kind === 'weekly' ? reviseRoutine(previous, task, effective, data.completed) : createRoutine(task, previous, begins, data.completed) : task;
+    if (record.versions?.length > 2000) { $('formError').textContent = 'This routine has reached its limit of 2,000 dated changes. Create a new routine and end this one.'; return; }
     dialogFocusTarget = { taskId: id };
     const wasEditing = Boolean(editingId);
     if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? record : t);
@@ -1678,7 +1699,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       const next = validate(JSON.parse(await file.text()));
       if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore()) return;
       undoNotice.hide();
-      data = next; persistent = true; save();
+      data = next; persistent = true; save({ replaceUnreadable: true });
       if (persistent) {
         loadFailed = false; originalSavedData = null;
         $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
@@ -1833,7 +1854,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
   const footer = document.querySelector('.main-footer'); const mobileBackup = el('button', 'text-button', 'Back up'); mobileBackup.style.display = 'none'; mobileBackup.onclick = backup; const mobileRestore = el('button', 'text-button', 'Restore'); mobileRestore.style.display = 'none'; mobileRestore.onclick = () => $('restoreFile').click(); footer.append(mobileBackup, mobileRestore);
-  const localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
+  localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
   fileStore = window.createTaskFileStorage({
@@ -1849,8 +1870,12 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     }
   });
   void fileStore.init();
+  // The file store warns about its own pending writes. Warn here when changes reached neither copy.
+  window.addEventListener('beforeunload', event => {
+    if (browserUnsaved && !(fileStore.isConnected() && !fileStore.isPending())) { event.preventDefault(); event.returnValue = ''; }
+  });
   // Pure date helpers are exposed for focused schedule verification.
-  window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, resolveTask, reviseRoutine, orderByIds, moveOrderedId, overdueTasks, reorderTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
+  window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, resolveTask, reviseRoutine, orderByIds, moveOrderedId, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });
 })();
 </script>
 </body>

@@ -667,3 +667,64 @@ function verifyMoveToTomorrow() {
   console.log('Move to tomorrow passed: overdue-only action, details/reminders, one-time and routine occurrences, independent future repeats, snapshot handling, Undo, stale clicks, reload, focus, and calendar boundaries.');
 }
 verifyMoveToTomorrow();
+function verifyReviewFixes() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,19).getTime();
+  const store=(tasks,completed={})=>new Map([[key,JSON.stringify({version:5,tasks,completed})]]);
+  const row=(app,id,list='taskList')=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const day=index=>{const d=new Date(1950,0,1+index,12);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+  // Browser saving retries after a failure, and closing warns while changes reached no saved copy.
+  const once={id:'plain',kind:'once',title:'Plain task',date:'2026-11-04'},options={storageWriteFails:true};
+  let app=boot(store([once]),wed,options);
+  const warns=()=>{let prevented=false;for(const fn of app.windowListeners.beforeunload||[])fn({preventDefault(){prevented=true;}});return prevented;};
+  assert.equal(warns(),false);
+  row(app,'plain').querySelector('.check-button').onclick();
+  assert.equal(app.ids.storageWarning.hidden,false);assert.equal(app.state().completed['2026-11-04'],undefined);assert.equal(warns(),true);
+  options.storageWriteFails=false;row(app,'plain').querySelector('.check-button').onclick();row(app,'plain').querySelector('.check-button').onclick();
+  assert.deepEqual(app.state().completed['2026-11-04'],['plain']);assert.equal(app.ids.storageWarning.hidden,true);assert.equal(app.ids.saveStatus.textContent,'Saved in this browser');assert.equal(warns(),false);
+  // Skip works on an unchecked occurrence that kept saved details from an earlier edit, and Restore brings those details back.
+  const snap={title:'Saved details',weekdays:[3],startDate:'2026-10-01',time:null,reminders:[]};
+  app=boot(store([{id:'gym',kind:'weekly',title:'Gym',weekdays:[3],startDate:'2026-10-01',snapshots:{'2026-11-04':snap}}]),wed);
+  assert.equal(row(app,'gym').querySelector('.task-name').textContent,'Saved details');
+  row(app,'gym').querySelector('.skip-task').onclick();
+  assert.equal(row(app,'gym'),undefined);assert.equal(app.ids.skippedSection.hidden,false);assert.match(app.ids.skippedList.textContent,/Saved details/);
+  app.ids.skippedList.querySelector('.restore-occurrence').onclick();assert.equal(row(app,'gym').querySelector('.task-name').textContent,'Saved details');
+  // A moved routine occurrence is labeled, and its original date offers no Restore that would duplicate it.
+  const routine={id:'routine',kind:'weekly',title:'Evening run',weekdays:[3,4],startDate:'2026-10-01',time:'18:30',reminders:[]};
+  app=boot(store([routine]),wed);row(app,'routine','overdueList').querySelector('.move-tomorrow').onclick();
+  let copy=app.state().tasks.find(task=>task.id!=='routine');
+  assert.deepEqual(copy.movedFrom,{taskId:'routine',date:'2026-11-04'});
+  assert.equal(app.ids.skippedSection.hidden,false);assert.equal(app.ids.skippedList.querySelector('.restore-occurrence'),null);assert.match(app.ids.skippedList.textContent,/Moved to/);
+  app=boot(app.storage,new Date(2026,10,5,9).getTime());
+  assert.match(row(app,copy.id).querySelector('.task-meta').textContent,/Moved from/);assert.equal(row(app,'routine').querySelector('.task-meta').textContent.includes('Moved'),false);
+  row(app,copy.id).querySelector('.edit-task').onclick();app.ids.taskTitle.value='Evening run, renamed';app.ids.taskForm.dispatch('submit');
+  assert.deepEqual(app.state().tasks.find(task=>task.id===copy.id).movedFrom,{taskId:'routine',date:'2026-11-04'});
+  app=boot(app.storage,wed);
+  const validate=app.context.window.DayByDay.validate;
+  assert.equal(validate(app.state()).tasks.length,2);
+  assert.throws(()=>validate({version:5,tasks:[{...once,movedFrom:{taskId:'routine',date:'not-a-date'}}],completed:{}}),/moved/);
+  // Deleting the moved copy brings back Restore for the original date.
+  app=boot(store([routine]),wed);row(app,'routine','overdueList').querySelector('.move-tomorrow').onclick();
+  copy=app.state().tasks.find(task=>task.id!=='routine');app=boot(app.storage,wed);
+  app.ids.weekStrip.children[3].onclick();row(app,copy.id).querySelector('.edit-task').onclick();app.ids.deleteTask.onclick();
+  app.ids.jumpToday.onclick();assert.ok(app.ids.skippedList.querySelector('.restore-occurrence'));
+  // Adding a reminder to a task that is already overdue sends no old alert.
+  const at11=new Date(2026,10,4,11).getTime();
+  app=boot(store([{id:'late',kind:'once',title:'Morning call',date:'2026-11-04',time:'09:00',reminders:[],reminderFrom:new Date(2026,10,4,8).getTime()}]),at11);
+  row(app,'late','overdueList').querySelector('.edit-task').onclick();
+  app.inputs.find(input=>input.name==='reminders'&&input.value==='15').checked=true;app.ids.taskForm.dispatch('submit');
+  assert.deepEqual(app.state().tasks[0].reminders,[15]);assert.equal(app.state().tasks[0].reminderFrom,at11);
+  app.tick();assert.equal(app.ids.reminderPanel.hidden,true);assert.equal(JSON.parse(app.storage.get('day-by-day.reminders.v1')||'{"alerts":[]}').alerts.length,0);
+  // Saving stays within the limits that loading accepts.
+  const many=Array.from({length:20000},(_,index)=>({id:`t${index}`,kind:'once',title:`Task ${index}`,date:day(index)}));
+  app=boot(store(many),wed);app.ids.addTask.onclick();app.ids.taskTitle.value='One too many';app.ids.taskForm.dispatch('submit');
+  assert.match(app.ids.formError.textContent,/20,000-task limit/);assert.equal(app.state().tasks.length,20000);
+  const versions=Array.from({length:2000},(_,index)=>({from:day(index),title:`Version ${index}`,weekdays:[3],startDate:'1950-01-01'}));
+  app=boot(store([{id:'busy',kind:'weekly',title:'Version 1999',weekdays:[3],startDate:'1950-01-01',versions}]),wed);
+  row(app,'busy').querySelector('.edit-task').onclick();app.ids.taskTitle.value='Version 2000';app.ids.taskForm.dispatch('submit');
+  assert.match(app.ids.formError.textContent,/2,000 dated changes/);assert.equal(app.state().tasks[0].versions.length,2000);
+  const exceptions=Array.from({length:20000},(_,index)=>day(index));
+  app=boot(store([{id:'skips',kind:'weekly',title:'Skipped often',weekdays:[3],startDate:'1950-01-01',exceptions}]),wed);
+  row(app,'skips').querySelector('.skip-task').onclick();assert.equal(app.state().tasks[0].exceptions.length,20000);assert.match(app.ids.toastMessage.textContent,/20,000 skipped dates/);
+  console.log('Review fixes passed: browser-save retry and close warning, Skip over saved details, moved-occurrence labels without duplicate Restore, quiet reminders added after the due time, and save-time data limits.');
+}
+verifyReviewFixes();

@@ -53,8 +53,12 @@ You stay on today's page, and Undo restores the original date.
 For weekly routines, only today's occurrence moves: today is skipped and a
 separate one-time task is created for tomorrow. Future weekly repeats keep their
 schedule. If the routine already repeats tomorrow, that scheduled occurrence and
-the carried task have independent checkboxes. All-day, completed, and not-yet-due
-tasks do not offer this action. Earlier overdue tasks still offer Move to today.
+the carried task have independent checkboxes. The carried task shows "Moved from"
+with its original date. On the original date, Skipped for this date shows where
+the occurrence went instead of Restore occurrence, so the task cannot end up on
+both days. Delete the carried task to make Restore occurrence available again.
+All-day, completed, and not-yet-due tasks do not offer this action. Earlier
+overdue tasks still offer Move to today.
 
 Overdue appears above the checklist on today's page. Unfinished timed tasks,
 including routines, move there once today's due time has passed. The app checks
@@ -159,6 +163,11 @@ instead of an empty fallback session. If you add unsaved session tasks, Backup
 exports a separate session file; recover the original using the warning button.
 These exports do not mark the original tasks as successfully backed up. Restore
 warns before replacing unreadable data; cancel keeps the original untouched.
+
+If the browser cannot save a change, a warning appears and the app tries again
+with every later change. The warning clears once a save succeeds. Until then,
+closing the tab asks for confirmation, unless a connected task file already holds
+your changes. Use Back up tasks to keep a copy if the warning stays.
 
 The one-time task form uses one Date input. The single-letter N shortcut has been
 removed to avoid accidental activation. Use the Add task button with mouse or keyboard.

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Retry browser saving with every change after a storage error, clear the warning once a save succeeds, and ask before closing a tab whose changes reached neither browser storage nor a connected task file.
+- Fix Skip this occurrence for an unchecked routine occurrence that kept saved details from an earlier edit. Skipping now always hides that date, and Restore brings the saved details back.
+- Label tasks created by Move to tomorrow with "Moved from" and their original date. The original date shows where the occurrence went instead of offering Restore occurrence, which would have put the task on both days.
+- Reset reminder timing when reminder choices change, so adding a reminder to a task that is already overdue sends no old alert.
+- Let Disconnect release the task file even when the browser cannot forget the stored connection, and explain that the file may reopen next time.
+- Enforce the 20,000-task, 2,000-routine-change, and 20,000-skipped-date limits when saving, matching what the app accepts when loading.
+- Point the main README download to the latest release. The build now stops if a source tag it inlines is missing and refreshes SHA256SUMS.txt. GitHub Actions runs the tests and checks the committed HTML and checksums.
+- Remove the unused swap-based reorder helper, ignore live task files and recovery exports in git, fix README wording, and add the missing v1.0.0, v1.1.0, and v1.3.0 release notes.
+- Saved-data format remains 5. Moved tasks gain an optional movedFrom field that older versions ignore.
+
 ## 1.4.0 — 2026-11-04
 
 - Add Move to tomorrow to unfinished timed tasks in today's Overdue list. Preserve due time, descriptions, and reminders, keep today's view open, and support Undo.
