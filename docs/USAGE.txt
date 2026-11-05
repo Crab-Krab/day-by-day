@@ -44,6 +44,18 @@ Weekly routines begin on their Starting on date. Each scheduled date gets its
 own checkbox. Completing one occurrence does not check off other occurrences.
 Existing single-day tasks and older backups keep their schedules and history.
 Existing tasks remain All day until you assign a specific time.
+MOVE TODAY'S OVERDUE TASK TO TOMORROW
+After a task's due time has passed today, its Overdue row offers Move to tomorrow.
+For example, a task due at 6:30 can be moved at 7:00. The task keeps the same due
+time, notes, and reminder settings on the next calendar day and starts unchecked.
+You stay on today's page, and Undo restores the original date.
+
+For weekly routines, only today's occurrence moves: today is skipped and a
+separate one-time task is created for tomorrow. Future weekly repeats keep their
+schedule. If the routine already repeats tomorrow, that scheduled occurrence and
+the carried task have independent checkboxes. All-day, completed, and not-yet-due
+tasks do not offer this action. Earlier overdue tasks still offer Move to today.
+
 Overdue appears above the checklist on today's page. Unfinished timed tasks,
 including routines, move there once today's due time has passed. The app checks
 every 30 seconds while open and catches up when you return to the tab. Today's

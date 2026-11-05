@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.4.0 — 2026-11-04
+
+- Add Move to tomorrow to unfinished timed tasks in today's Overdue list. Preserve due time, descriptions, and reminders, keep today's view open, and support Undo.
+- Defer only the current occurrence of weekly routines as a one-time task while preserving future routine schedules and completion history. Tomorrow's regular occurrence stays independent when present.
+- Recheck stale controls after completion, another move, or midnight; use calendar-date arithmetic across month/year, leap-day, and daylight-saving boundaries.
+- Add runtime and JSON autosave coverage for deferral, Undo, reload, recurring snapshots, independent occurrences, accessible controls, and date boundaries. Saved-data format remains 5.
+
 ## 1.3.1 — 2026-11-04
 
 - License Day by Day under MIT, with a repository LICENSE file, package metadata, and documentation.

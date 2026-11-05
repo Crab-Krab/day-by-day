@@ -1205,6 +1205,12 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     return calendarCounts.get(date);
   }
   function isDone(id, date = selected) { return (data.completed[date] || []).includes(id); }
+  function newTaskId() {
+    let id;
+    do { id = globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`; }
+    while (data.tasks.some(task => task.id === id));
+    return id;
+  }
   function save() {
     // A new data change supersedes the previous one-step Undo.
     undoNotice.hide();
@@ -1334,6 +1340,41 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
       copy.append(moveToday);
+    }
+    if (inOverdue && !done && occurrenceDate === today && validDate(dateKey(plusDays(parseDate(today), 1)))) {
+      const moveTomorrow = el('button', 'text-button move-tomorrow', 'Move to tomorrow'); moveTomorrow.type = 'button';
+      moveTomorrow.setAttribute('aria-label', `Move ${task.title} to tomorrow`);
+      moveTomorrow.onclick = () => {
+        const currentDate = dateKey(new Date());
+        // Recheck the occurrence so double clicks, other tabs, and a midnight
+        // rollover cannot defer the same task twice or move a completed task.
+        if (occurrenceDate !== currentDate || !overdueTasks(data.tasks, data.completed, currentDate).some(item => item.id === task.id && item.date === currentDate)) {
+          refreshToday(); notify('This task is no longer overdue today.'); return;
+        }
+        const tomorrow = dateKey(plusDays(parseDate(currentDate), 1));
+        if (!validDate(tomorrow)) return;
+        const original = data.tasks.find(item => item.id === task.id);
+        const occurrence = resolveTask(original, currentDate);
+        let deferredId = original.id;
+        if (original.kind === 'once') {
+          data.tasks = data.tasks.map(item => item.id === original.id ? { ...item, date: tomorrow, reminderFrom: Date.now() } : item);
+        } else {
+          if (data.tasks.length >= 20000 || (original.exceptions || []).length >= 20000) { notify('The task limit has been reached. Remove unused tasks before moving this occurrence.'); return; }
+          // A separate one-time record keeps this occurrence independent even
+          // when tomorrow already has its own scheduled routine occurrence.
+          deferredId = newTaskId();
+          const deferred = { id: deferredId, kind: 'once', date: tomorrow, title: occurrence.title, description: occurrence.description || '', time: occurrence.time || null, reminders: [...(occurrence.reminders || [])], reminderFrom: Date.now() };
+          const snapshots = { ...original.snapshots }; delete snapshots[currentDate];
+          data.tasks = data.tasks.map(item => item.id === original.id ? { ...item, snapshots, exceptions: [...new Set([...(item.exceptions || []), currentDate])].sort() } : item);
+          data.tasks.push(deferred);
+        }
+        save();
+        ($('overdueList').querySelector('.move-tomorrow') || $('overdueList').querySelector('.check-button') || $('inlineAdd')).focus({ preventScroll: true });
+        notify(original.kind === 'once' ? 'Task moved to tomorrow. Due time and reminders kept.' : 'Occurrence moved to tomorrow as a one-time task. Future repeats are unchanged.', () => {
+          data.tasks = data.tasks.filter(item => original.kind === 'once' || item.id !== deferredId).map(item => item.id === original.id ? original : item);
+        });
+      };
+      copy.append(moveTomorrow);
     }
     if (!routine && task.kind === 'weekly' && !done && occurrenceDate >= today) {
       const skip = el('button', 'text-button skip-task', 'Skip this occurrence'); skip.type = 'button';
@@ -1513,7 +1554,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
     if (time !== null && !validTime(time)) { $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
-    const id = editingId || (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `t${Date.now()}_${Math.random().toString(36).slice(2)}`);
+    const id = editingId || newTaskId();
     const previous = data.tasks.find(task => task.id === editingId);
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
@@ -1775,7 +1816,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     let focusedRow = focused;
     while (focusedRow && !focusedRow.dataset?.id) focusedRow = focusedRow.parentNode;
     const focusedId = focusedRow?.dataset.id;
-    const focusClass = ['check-button', 'edit-task', 'move-up', 'move-down', 'description-toggle', 'skip-task', 'move-today'].find(name => focused?.className?.split(' ').includes(name));
+    const focusClass = ['check-button', 'edit-task', 'move-up', 'move-down', 'description-toggle', 'skip-task', 'move-today', 'move-tomorrow'].find(name => focused?.className?.split(' ').includes(name));
     const followedToday = selected === today;
     today = now;
     if (changedDate && followedToday) { selected = now; month = parseDate(now); }

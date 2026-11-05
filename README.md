@@ -29,6 +29,8 @@ Calendar weeks start Monday. Dates and times use your computer's local timezone.
 
 Complete an earlier task on its original date, or choose **Move to today** to change its date. Lists refresh as time passes, and each task appears in one section at a time.
 
+An unfinished timed task that becomes overdue **today** offers **Move to tomorrow**. It keeps its due time, notes, and reminder settings, disappears from today's list, and appears unchecked tomorrow. You stay on today's page and can Undo the move. For weekly routines, only today's occurrence moves as a separate one-time task; future repeats keep their schedule. If the routine already repeats tomorrow, both occurrences remain independently checkable.
+
 ## Your data and updates
 
 Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Set up autosave** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, choose **Open task file** instead.

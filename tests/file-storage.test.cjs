@@ -134,6 +134,14 @@ async function main() {
   noCache.context.crypto.randomUUID=()=> 'fresh_after_cleanup';
   await noCache.ids.openTaskFile.onclick();noCache.ids.addTask.onclick();noCache.ids.taskTitle.value='Works without cache';noCache.ids.taskForm.dispatch('submit');await settle();
   assert.equal(JSON.parse(realFile.raw).tasks.length,2);assert.match(noCache.ids.taskFileStatus.textContent,/Saved to/);
+  // Deferring from today's Overdue list and Undo both reach the autosave JSON.
+  const deferFile=disk(),deferConnection={},deferCache=new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[{id:'defer',kind:'once',title:'Carry forward',date:'2026-11-04',time:'18:30',description:'Keep notes',reminders:[15]}],completed:{}})]]);
+  const deferOptions={fileWindow:{isSecureContext:true,showSaveFilePicker:async()=>deferFile,showOpenFilePicker:async()=>[deferFile]},indexedDB:idb(deferConnection)};
+  let deferring=harness.boot(deferCache,new Date(2026,10,4,19).getTime(),deferOptions);await settle();await deferring.ids.createTaskFile.onclick();
+  deferring.ids.overdueList.querySelector('.move-tomorrow').onclick();await settle();assert.equal(JSON.parse(deferFile.raw).tasks[0].date,'2026-11-05');
+  deferring.ids.undoAction.onclick();await settle();assert.equal(JSON.parse(deferFile.raw).tasks[0].date,'2026-11-04');
+  deferring.ids.overdueList.querySelector('.move-tomorrow').onclick();await settle();
+  deferring=harness.boot(deferCache,new Date(2026,10,5,10).getTime(),deferOptions);await settle();assert.equal(deferring.state().tasks[0].date,'2026-11-05');assert.equal(deferring.ids.taskList.querySelector('.task-name').textContent,'Carry forward');
   console.log('File persistence passed: creation, autosave, automatic reopening, cleanup/reconnect, permission renewal, queued edits, failed writes, pending recovery, external conflict, invalid files, blocked browser storage, cancellation, unsupported browser, missing file and disconnect.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

@@ -609,3 +609,61 @@ function verifyAnnouncementAndFocusFixes() {
   console.log('Announcement/focus fixes passed: repeated messages re-announce, newer messages cancel pending announcements, same-name occurrence labels differ, stable completion labels, and Move to today focuses visible timed/all-day tasks.');
 }
 verifyAnnouncementAndFocusFixes();
+
+function verifyMoveToTomorrow() {
+  const key='day-by-day.v1',now=new Date(2026,10,4,19).getTime();
+  const make=(tasks,completed={},at=now)=>{const store=new Map([[key,JSON.stringify({version:5,tasks,completed})]]);return boot(store,at);};
+  const row=(app,id,list='overdueList')=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const task={id:'tonight',kind:'once',title:'Evening task',date:'2026-11-04',time:'18:30',description:'Keep notes https://example.com',reminders:[15,5],reminderFrom:123};
+  let app=make([task]);
+  assert.equal(row(app,task.id).querySelector('.move-tomorrow').textContent,'Move to tomorrow');
+  const old=app.context.window.DayByDay.validate(app.state()).tasks[0];
+  const control=row(app,task.id).querySelector('.move-tomorrow');
+  assert.equal(control.getAttribute('aria-label'),'Move Evening task to tomorrow');control.onclick();
+  let moved=app.state().tasks[0];assert.equal(moved.date,'2026-11-05');assert.equal(moved.time,'18:30');assert.equal(moved.id,task.id);
+  assert.equal(moved.description,task.description);assert.deepEqual(moved.reminders,[15,5]);assert.equal(moved.reminderFrom,now);
+  assert.equal(app.ids.dayTitle.textContent,'Wednesday.');assert.equal(app.ids.overdueSection.hidden,true);assert.equal(app.ids.todayCount.textContent,'0');
+  assert.equal(app.context.document.activeElement,app.ids.inlineAdd);assert.equal(app.ids.reminderPanel.hidden,true);
+  assert.equal(app.state().completed['2026-11-04'],undefined);
+  control.onclick();assert.equal(app.state().tasks[0].date,'2026-11-05'); // stale double click does not move again
+  // Check Undo independently, then reopen the persisted deferred task.
+  app=make([task]);row(app,task.id).querySelector('.move-tomorrow').onclick();app.ids.undoAction.onclick();
+  assert.equal(JSON.stringify(app.state().tasks[0]),JSON.stringify(old));assert.ok(row(app,task.id));
+  row(app,task.id).querySelector('.move-tomorrow').onclick();
+  app=boot(app.storage,new Date(2026,10,5,18).getTime());
+  assert.equal(row(app,task.id,'taskList').querySelector('.time-badge').textContent.includes('6:30')||row(app,task.id,'taskList').querySelector('.time-badge').textContent.includes('18:30'),true);
+  assert.equal(row(app,task.id,'taskList').querySelector('.check-button').getAttribute('aria-pressed'),'false');
+  assert.equal(row(app,task.id,'taskList').querySelector('.move-tomorrow'),null);
+  // Only unfinished, timed, overdue tasks today offer the action; previous-day Move to today remains.
+  app=make([task,{...task,id:'later',time:'20:00'},{...task,id:'done'},{...task,id:'all',time:null},{...task,id:'older',date:'2026-11-03'},{...task,id:'future',date:'2026-11-05'}],{'2026-11-04':['done']});
+  assert.equal(app.ids.overdueList.querySelectorAll('.move-tomorrow').length,1);assert.ok(row(app,'older').querySelector('.move-today'));assert.equal(row(app,'older').querySelector('.move-tomorrow'),null);
+  row(app,task.id).querySelector('.move-tomorrow').onclick();assert.equal(app.context.document.activeElement,row(app,'older').querySelector('.check-button'));
+  app=make([task],{},new Date(2026,10,4,18,30).getTime());assert.equal(app.ids.overdueList.querySelector('.move-tomorrow'),null);
+  app.clock(new Date(2026,10,4,18,30,1).getTime());app.refresh();assert.ok(row(app,task.id).querySelector('.move-tomorrow'));
+  const completedControl=row(app,task.id).querySelector('.move-tomorrow');row(app,task.id).querySelector('.check-button').onclick();completedControl.onclick();assert.equal(app.state().tasks[0].date,'2026-11-04');assert.deepEqual(app.state().completed['2026-11-04'],[task.id]);
+  // An overdue routine moves this resolved occurrence only. Tomorrow's normal repeat stays independent.
+  const routine={id:'routine',kind:'weekly',title:'Current definition',weekdays:[3,4],startDate:'2026-10-01',time:'18:30',description:'Routine notes',reminders:[30],versions:[{from:'1900-01-01',title:'Current definition',weekdays:[3,4],startDate:'2026-10-01',time:'18:30',description:'Routine notes',reminders:[30]},{from:'2026-11-05',title:'Future definition',weekdays:[3,4],startDate:'2026-10-01',time:'20:00',description:'Future notes',reminders:[]}],snapshots:{'2026-11-04':{title:'Occurrence snapshot',weekdays:[3,4],startDate:'2026-10-01',time:'18:30',description:'Snapshot notes',reminders:[5]}}};
+  app=make([routine],{'2026-10-28':['routine']});const original=JSON.parse(JSON.stringify(app.context.window.DayByDay.validate(app.state())));
+  row(app,'routine').querySelector('.move-tomorrow').onclick();
+  let state=app.state(),source=state.tasks.find(t=>t.id==='routine'),copy=state.tasks.find(t=>t.id!=='routine');
+  assert.equal(copy.kind,'once');assert.equal(copy.date,'2026-11-05');assert.equal(copy.title,'Occurrence snapshot');assert.equal(copy.description,'Snapshot notes');assert.equal(copy.time,'18:30');assert.deepEqual(copy.reminders,[5]);
+  assert.deepEqual(source.exceptions,['2026-11-04']);assert.equal(source.snapshots['2026-11-04'],undefined);assert.deepEqual(source.versions,original.tasks[0].versions);
+  assert.deepEqual(state.completed,original.completed);assert.equal(app.ids.overdueSection.hidden,true);
+  const roundtrip=app.context.window.DayByDay.validate(state);assert.equal(roundtrip.tasks.length,2);
+  app.ids.undoAction.onclick();assert.deepEqual(app.state(),original);assert.ok(row(app,'routine'));
+  row(app,'routine').querySelector('.move-tomorrow').onclick();state=app.state();copy=state.tasks.find(t=>t.id!=='routine');
+  app=boot(app.storage,new Date(2026,10,5,17).getTime());
+  assert.equal(app.ids.taskList.querySelectorAll('.task-row').length,2);assert.equal(row(app,'routine','taskList').querySelector('.task-name').textContent,'Future definition');assert.equal(row(app,copy.id,'taskList').querySelector('.task-name').textContent,'Occurrence snapshot');
+  row(app,copy.id,'taskList').querySelector('.check-button').onclick();assert.equal(row(app,'routine','taskList').querySelector('.check-button').getAttribute('aria-pressed'),'false');
+  // A once-weekly routine can move to a day that is not in its schedule.
+  app=make([{...routine,weekdays:[3],versions:undefined,snapshots:undefined}]);row(app,'routine').querySelector('.move-tomorrow').onclick();
+  const weekly=app.state().tasks[0];assert.equal(app.context.window.DayByDay.scheduled(weekly,'2026-11-05'),false);assert.equal(app.context.window.DayByDay.scheduled(weekly,'2026-11-11'),true);
+  // Do not turn a stale post-midnight control into another date change.
+  app=make([task]);const stale=row(app,task.id).querySelector('.move-tomorrow');app.clock(new Date(2026,10,5,0).getTime());stale.onclick();assert.equal(app.state().tasks[0].date,'2026-11-04');assert.equal(app.ids.dayTitle.textContent,'Thursday.');
+  // Calendar arithmetic handles month/year changes, leap day, and DST without adding fixed milliseconds.
+  for(const [from,to] of [['2026-12-31','2027-01-01'],['2028-02-28','2028-02-29'],['2026-10-31','2026-11-01'],['2026-03-08','2026-03-09']]) {
+    const [y,m,d]=from.split('-').map(Number);app=make([{...task,date:from}],{},new Date(y,m-1,d,19).getTime());row(app,task.id).querySelector('.move-tomorrow').onclick();assert.equal(app.state().tasks[0].date,to);
+  }
+  console.log('Move to tomorrow passed: overdue-only action, details/reminders, one-time and routine occurrences, independent future repeats, snapshot handling, Undo, stale clicks, reload, focus, and calendar boundaries.');
+}
+verifyMoveToTomorrow();
