@@ -10,7 +10,7 @@ The existing scheduling, history, reminder, recovery, theme, and file-storage su
 
 ## Real-browser checks
 
-The **UI browser checks** workflow runs on pushes to `codex/ui-ux-improvements`. It opens the generated standalone HTML in Chromium at 1366px and 390px widths, with ordinary and reduced motion. It checks all six improvements, dark mode, pointer hit targets, safe description links, 24 repeated edit/check cycles per width, failed file saves, and retry. Screenshots are saved as workflow artifacts.
+The **UI browser checks** workflow runs on pushes to `codex/ui-ux-improvements`. It opens the generated standalone HTML in Chromium and Edge on Linux at 1366px and 390px widths, with ordinary and reduced motion. It checks all six improvements, dark mode, pointer hit targets, safe description links, 24 repeated edit/check cycles per width, failed file saves, and retry. It also uses real pointer and keyboard input to add tasks with Enter, check tasks at the edge of their hit targets, operate the action menu with Enter/Escape, and validate a required time in the full editor. Screenshots are saved as workflow artifacts.
 
 To run the optional browser suite locally:
 

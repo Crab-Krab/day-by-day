@@ -61,7 +61,7 @@ async function main() {
         assert.equal(await checkbox.getAttribute('aria-pressed'), 'true');
         await checkbox.click({ position: { x: 4, y: 4 } });
         assert.equal(await checkbox.getAttribute('aria-pressed'), 'false');
-        const menu = standalone.locator('[data-id="routine"] .task-menu');
+        const menu = standalone.locator('#taskList [data-id="routine"] .task-menu');
         await menu.locator('summary').focus(); await menu.locator('summary').press('Enter');
         assert.equal(await menu.evaluate(node => node.open), true);
         await standalone.keyboard.press('Escape');
