@@ -828,3 +828,27 @@ function verifyMovedLinks() {
   console.log('Moved links passed: Moved to and Moved from navigate between both days, focus lands on the task or skipped list, and links survive reload.');
 }
 verifyMovedLinks();
+function verifyCalendarKeyboard() {
+  const wed=new Date(2026,10,4,10).getTime(),app=boot(new Map(),wed);
+  const days=()=>app.ids.calendarGrid.children,tabbable=()=>days().filter(day=>day.tabIndex===0).map(day=>day.dataset.date);
+  const press=(key,date)=>{let prevented=false;days().find(day=>day.dataset.date===date).onkeydown({key,preventDefault(){prevented=true;}});return prevented;};
+  // Exactly one day can be reached with Tab: today at first, then the selected day.
+  assert.deepEqual(tabbable(),['2026-11-04']);
+  // Changing month never leaves the calendar unreachable. The 1st of the shown month takes the Tab stop.
+  app.ids.nextMonth.onclick();assert.deepEqual(tabbable(),['2026-12-01']);
+  app.ids.nextMonth.onclick();assert.deepEqual(tabbable(),['2027-01-01']);
+  app.ids.prevMonth.onclick();app.ids.prevMonth.onclick();assert.deepEqual(tabbable(),['2026-11-04']);
+  // Arrow keys move by day and week, select the day, and carry focus, across month and year boundaries.
+  assert.equal(press('ArrowRight','2026-11-04'),true);assert.deepEqual(tabbable(),['2026-11-05']);assert.equal(app.context.document.activeElement.dataset.date,'2026-11-05');assert.equal(app.ids.dayTitle.textContent,'Thursday.');
+  press('ArrowUp','2026-11-05');assert.equal(app.context.document.activeElement.dataset.date,'2026-10-29');assert.match(app.ids.monthLabel.textContent,/October/);
+  press('ArrowLeft','2026-10-29');press('ArrowDown','2026-10-28');assert.equal(app.context.document.activeElement.dataset.date,'2026-11-04');
+  app.ids.jumpDate.value='2026-12-29';app.ids.jumpDate.onchange();press('ArrowDown','2026-12-29');
+  assert.equal(app.context.document.activeElement.dataset.date,'2027-01-05');assert.match(app.ids.monthLabel.textContent,/2027/);
+  assert.equal(press('Enter','2027-01-05'),false);assert.equal(app.context.document.activeElement.dataset.date,'2027-01-05'); // other keys keep their usual meaning
+  // Go to date opens any day, ignores an empty or invalid value, and follows other navigation.
+  app.ids.jumpDate.value='2027-03-15';app.ids.jumpDate.onchange();assert.equal(app.ids.dayTitle.textContent,'Monday.');assert.deepEqual(tabbable(),['2027-03-15']);
+  app.ids.jumpDate.value='';app.ids.jumpDate.onchange();app.ids.jumpDate.value='2027-02-30';app.ids.jumpDate.onchange();assert.equal(app.ids.dayTitle.textContent,'Monday.');
+  app.ids.nextWeek.onclick();assert.equal(app.ids.jumpDate.value,'2027-03-22');
+  console.log('Calendar keyboard passed: one Tab stop that survives month changes, arrow keys across month and year boundaries with focus, other keys untouched, and Go to date.');
+}
+verifyCalendarKeyboard();
