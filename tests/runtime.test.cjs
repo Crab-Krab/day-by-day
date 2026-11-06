@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const html = fs.readFileSync('src/index.html', 'utf8');
-const source = ['schedule.js', 'file-storage.js', 'app.js'].map(name => fs.readFileSync('src/' + name, 'utf8')).join('\n');
+const source = ['schedule.js', 'recovery.js', 'file-storage.js', 'app.js'].map(name => fs.readFileSync('src/' + name, 'utf8')).join('\n');
 // A small in-memory DOM exercises application events without a browser, network, or user data.
 function boot(storage, initialClock, options = {}) {
   let clock = initialClock, uid = 0;
@@ -852,3 +852,86 @@ function verifyCalendarKeyboard() {
   console.log('Calendar keyboard passed: one Tab stop that survives month changes, arrow keys across month and year boundaries with focus, other keys untouched, and Go to date.');
 }
 verifyCalendarKeyboard();
+async function verifyRecoveryCopies() {
+  const key='day-by-day.v1',t0=new Date(2026,10,6,9).getTime(),HOUR=3600000;
+  const tick=async()=>{for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));};
+  function fakeFolder() {
+    const files=new Map(),top={name:'Private',permission:'granted',fail:false};
+    const sub={files,async getFileHandle(name,{create}={}){if(!files.has(name)){if(!create)throw Error('Missing');files.set(name,{kind:'file',raw:'',async getFile(){const raw=this.raw;return {size:Buffer.byteLength(raw),text:async()=>raw};},async createWritable(){const file=this;let text='';return {async write(value){if(top.fail)throw Error('Disk full');text=value;},async close(){file.raw=text;},async abort(){}};}});}return files.get(name);},
+      async removeEntry(name){files.delete(name);},async *entries(){yield* [...files.entries()];}};
+    return Object.assign(top,{sub,async queryPermission(){return top.permission;},async requestPermission(){return top.permission;},async getDirectoryHandle(name){assert.equal(name,'Day-by-Day recovery copies');return sub;}});
+  }
+  function idb(store) {
+    return {open(){const request={};queueMicrotask(()=>{request.result={transaction(){const tx={objectStore(){return {
+      get(){const req={};queueMicrotask(()=>{req.result=store.value;tx.oncomplete();});return req;},
+      put(value){const req={};queueMicrotask(()=>{store.value=value;tx.oncomplete();});return req;},
+      delete(){const req={};queueMicrotask(()=>{delete store.value;tx.oncomplete();});return req;}};}};return tx;}};request.onsuccess();});return request;}};
+  }
+  const copies=folder=>[...folder.sub.files.keys()].filter(name=>name.startsWith('day-by-day-copy-')).sort();
+  const newest=folder=>copies(folder).at(-1),titles=(folder,name)=>JSON.parse(folder.sub.files.get(name).raw).tasks.map(task=>task.title);
+  const row=(app,id)=>app.ids.taskList.querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const tasks=[{id:'a',kind:'once',title:'Keep me',date:'2026-11-06'},{id:'b',kind:'once',title:'Delete me',date:'2026-11-06'},{id:'r',kind:'weekly',title:'Routine',weekdays:[5],startDate:'2026-10-01'}];
+  // Browsers without folder access never see the panel.
+  let app=boot(new Map(),t0);assert.equal(app.ids.recoveryPanel.hidden,true);
+  // Off until turned on: edits make no copies.
+  const folder=fakeFolder(),idbStore={},storageOptions={},options={secure:true,fileWindow:{showDirectoryPicker:async()=>folder},indexedDB:idb(idbStore)};
+  const storage=new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]);
+  app=boot(storage,t0,options);await tick();
+  assert.equal(app.ids.recoveryPanel.hidden,false);assert.equal(app.ids.recoveryState.textContent,'Off');
+  row(app,'a').querySelector('.check-button').onclick();await tick();assert.equal(folder.sub.files.size,0);
+  // Turning on saves a first copy and remembers the folder.
+  await app.ids.chooseRecoveryFolder.onclick();await tick();
+  assert.equal(app.ids.recoveryState.textContent,'On');assert.equal(copies(folder).length,1);assert.match(newest(folder),/-first\.json$/);assert.equal(idbStore.value,folder);
+  // Within the hour, edits make no new copy. After an hour, one hourly copy of the current tasks.
+  row(app,'a').querySelector('.check-button').onclick();await tick();assert.equal(copies(folder).length,1);
+  app.clock(t0+HOUR);row(app,'a').querySelector('.check-button').onclick();await tick();
+  assert.equal(copies(folder).length,2);assert.match(newest(folder),/-hourly\.json$/);assert.deepEqual(JSON.parse(folder.sub.files.get(newest(folder)).raw).completed,app.state().completed);
+  // Deleting a task and ending a routine copy the tasks from just before.
+  row(app,'b').querySelector('.edit-task').onclick();app.ids.deleteTask.onclick();await tick();
+  assert.match(newest(folder),/-delete\.json$/);assert.ok(titles(folder,newest(folder)).includes('Delete me'));assert.equal(app.state().tasks.some(task=>task.id==='b'),false);
+  app.ids.routinesNav.onclick();app.ids.routineList.querySelector('.edit-task').onclick();app.ids.deleteTask.onclick();await tick();
+  assert.match(newest(folder),/-end-routine\.json$/);assert.equal(JSON.parse(folder.sub.files.get(newest(folder)).raw).tasks.find(task=>task.id==='r').endedOn,null);
+  app.ids.todayNav.onclick();
+  // Restoring a copy asks first and saves the current tasks before replacing them.
+  await app.ids.showRecoveryCopies.onclick();
+  const deleted=app.ids.recoveryList.children.find(item=>item.textContent.includes('before deleting a task'));
+  const pending=deleted.querySelector('button').onclick();await tick();
+  assert.equal(app.ids.restoreDialog.open,true);assert.equal(app.ids.restoreTitle.textContent,'Restore this recovery copy?');assert.match(app.ids.restoreMessage.textContent,/recovery copy of your current tasks is saved first/);
+  app.ids.confirmRestore.onclick();await pending;await tick();
+  assert.ok(app.state().tasks.some(task=>task.id==='b'));assert.equal(app.ids.toastMessage.textContent,'Recovery copy restored.');
+  assert.match(newest(folder),/-restore\.json$/);assert.equal(titles(folder,newest(folder)).includes('Delete me'),false);
+  // A copy that can't be read changes nothing.
+  folder.sub.files.get(copies(folder)[0]).raw='broken';await app.ids.showRecoveryCopies.onclick();
+  const before=JSON.stringify(app.state());await app.ids.recoveryList.children.at(-1).querySelector('button').onclick();
+  assert.match(app.ids.recoveryStatus.textContent,/could not be read/);assert.equal(JSON.stringify(app.state()),before);assert.equal(app.ids.restoreDialog.open,false);
+  // Only the newest 20 copies are kept, and other files in the folder are never touched.
+  folder.sub.files.set('my-notes.json',{kind:'file',raw:'mine'});folder.sub.files.set('day-by-day-recovery-2026-11-01.json',{kind:'file',raw:'export'});
+  for(let hour=2;hour<30;hour++){app.clock(t0+hour*HOUR);row(app,'a').querySelector('.check-button').onclick();await tick();}
+  assert.equal(copies(folder).length,20);assert.ok(folder.sub.files.has('my-notes.json'));assert.ok(folder.sub.files.has('day-by-day-recovery-2026-11-01.json'));
+  // Losing folder access pauses copies but never stops saving.
+  folder.permission='prompt';const count=copies(folder).length;app.clock(t0+40*HOUR);row(app,'a').querySelector('.check-button').onclick();await tick();
+  assert.equal(app.ids.recoveryState.textContent,'Paused');assert.equal(app.ids.recoveryPanel.open,true);assert.match(app.ids.recoveryStatus.textContent,/still save normally/);
+  assert.equal(JSON.parse(app.storage.get(key)).completed['2026-11-06'].length,JSON.parse(JSON.stringify(app.state())).completed['2026-11-06'].length);assert.equal(app.ids.storageWarning.hidden,true);
+  row(app,'a').querySelector('.check-button').onclick();await tick();assert.equal(copies(folder).length,count); // paused copies stay off
+  // Turn copies back on asks about the same folder.
+  folder.permission='granted';await app.ids.chooseRecoveryFolder.onclick();await tick();assert.equal(app.ids.recoveryState.textContent,'On');assert.match(newest(folder),/-first\.json$/);
+  // A failed copy write also pauses without stopping saving.
+  folder.fail=true;app.clock(t0+50*HOUR);const last=newest(folder);row(app,'a').querySelector('.check-button').onclick();await tick();
+  assert.equal(app.ids.recoveryState.textContent,'Paused');assert.equal(newest(folder),last);assert.equal(app.ids.storageWarning.hidden,true);folder.fail=false;
+  // The folder is remembered across visits, and paused when the browser no longer allows it.
+  app=boot(app.storage,t0+51*HOUR,options);await tick();assert.equal(app.ids.recoveryState.textContent,'On');
+  folder.permission='prompt';app=boot(app.storage,t0+52*HOUR,options);await tick();assert.equal(app.ids.recoveryState.textContent,'Paused');folder.permission='granted';
+  await app.ids.chooseRecoveryFolder.onclick();await tick();
+  // Which-copy choices between tabs copy the tasks about to be replaced.
+  storageOptions.storageWriteFails=true;Object.assign(options,storageOptions);
+  app=boot(app.storage,t0+53*HOUR,options);await tick();app.ids.jumpDate.value='2026-11-06';app.ids.jumpDate.onchange();row(app,'a').querySelector('.check-button').onclick();
+  const otherTab=JSON.stringify({version:5,tasks:[{id:'z',kind:'once',title:'Other tab',date:'2026-11-06'}],completed:{}});
+  app.storage.set(key,otherTab);for(const fn of app.windowListeners.storage)fn({key,newValue:otherTab}); // the other tab writes, then this tab hears about it
+  options.storageWriteFails=false;app.ids.tabChoiceOther.onclick();await tick();
+  assert.match(newest(folder),/-choice\.json$/);assert.ok(titles(folder,newest(folder)).includes('Keep me'));assert.deepEqual(app.state().tasks.map(task=>task.id),['z']);
+  // Turning off forgets the folder and leaves its copies.
+  const kept=copies(folder).length;await app.ids.stopRecoveryCopies.onclick();
+  assert.equal(app.ids.recoveryState.textContent,'Off');assert.equal(idbStore.value,undefined);assert.equal(copies(folder).length,kept);
+  console.log('Recovery copies passed: off by default, first copy, hourly limit, copies before deleting, ending, restoring and which-copy choices, confirmed restore, unreadable copies, newest 20 kept, other files untouched, paused without blocking saving, reopening, and turning off.');
+}
+verifyRecoveryCopies().catch(error=>{console.error(error);process.exitCode=1;});

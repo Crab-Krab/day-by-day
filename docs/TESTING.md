@@ -23,6 +23,14 @@ Use a test JSON file in a test folder, never your everyday task file. Open the d
 - [ ] With the app open, edit the JSON in a text editor and save it. The next change pauses saving instead of overwriting it. **Reconnect task file** asks which copy to keep. Try both answers and Cancel.
 - [ ] **Disconnect**, then check the JSON file is still on disk.
 
+**Recovery copies (Chrome or Edge)**
+
+- [ ] Open **Recovery copies**, choose a test folder, and check a first copy appears in its **Day-by-Day recovery copies** folder.
+- [ ] Delete a task, then **Show copies** and **Restore** the "before deleting a task" copy. The app asks first, and the task comes back.
+- [ ] Close and reopen the HTML. The panel shows **On**, or **Paused** if the browser didn't keep folder access. In that case **Turn copies back on** asks again.
+- [ ] Remove the folder's permission in browser settings, then make a change. The panel shows **Paused**, and the task still saves.
+- [ ] Put an unrelated file in the copies folder, make more than 20 copies, and check only the oldest copies were removed.
+
 **Everything else**
 
 - [ ] Add a timed task with a reminder a few minutes ahead. The in-app reminder appears. With desktop alerts allowed, a desktop notification appears too.
