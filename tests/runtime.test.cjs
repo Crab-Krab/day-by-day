@@ -115,7 +115,7 @@ console.log('Runtime passed: form controls, saving, reminder panel delivery, dup
 async function verifyMotion() {
   const moving = boot(new Map(),clock,{motion:true});
   moving.ids.addTask.onclick(); assert.equal(moving.ids.taskDialog.open,true);
-  moving.ids.cancelDialog.onclick(); assert.equal(moving.ids.taskDialog.open,true);
+  moving.ids.cancelDialog.onclick(); assert.equal(moving.ids.taskDialog.open,false);
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
   assert.equal(moving.animations.every(animation=>animation.node!==moving.ids.taskDialog || animation.cancelled),true);
@@ -167,7 +167,7 @@ async function verifyDescriptions() {
   const id=notesApp.state().tasks[0].id;
   assert.equal(notesApp.state().tasks[0].description,notes); assert.equal(notesApp.state().tasks[0].weekdays.length,5);
   let row=notesApp.ids.taskList.querySelector('.task-row'), body=row.querySelector('.description-body');
-  assert.equal(row.querySelector('details'),null); assert.equal(row.querySelector('.description-toggle'),null); assert.equal(body.textContent,notes); assert.equal(body.querySelector('script'),null);
+  assert.equal(row.querySelector('.task-description').querySelector('details'),null); assert.equal(row.querySelector('.description-toggle'),null); assert.equal(body.textContent,notes); assert.equal(body.querySelector('script'),null);
   const link=body.querySelector('a'); assert.equal(link.href,'https://example.com/guide'); assert.equal(link.target,'_blank'); assert.equal(link.rel,'noopener noreferrer');
   row.querySelector('.check-button').onclick();
   assert.equal(notesApp.ids.taskList.querySelector('.description-body').textContent,notes);
@@ -271,7 +271,7 @@ async function verifyReliability() {
   assert.equal(work.ids.undoNotice.hidden,false);assert.equal(work.ids.toast.hidden,true);
   work.ids.prevMonth.onclick();assert.equal(work.ids.undoNotice.hidden,false);work.ids.undoAction.onclick();assert.equal(work.state().tasks.some(task=>task.id==='current'),true);
   assert.equal(work.ids.statusAnnouncement.textContent,'Change undone.');assert.equal(work.ids.statusAnnouncement.hidden,false);
-  assert.equal(work.documentListeners.keydown,undefined);
+  assert.equal(work.documentListeners.keydown.length,1);
   const moving=boot(new Map([['day-by-day.v1',JSON.stringify({version:4,tasks:[tasks[0]],completed:{}})]]),clock);
   moving.ids.overdueList.querySelector('.move-today').onclick();assert.equal(moving.state().tasks[0].date,'2026-10-28');assert.equal(moving.state().tasks[0].description,'Keep these notes');assert.equal(moving.ids.reminderPanel.hidden,true);
   moving.ids.undoAction.onclick();assert.equal(moving.state().tasks[0].date,'2026-10-27');assert.equal(moving.state().tasks[0].reminderFrom,0);

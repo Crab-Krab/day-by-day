@@ -8,7 +8,7 @@ A daily checklist with weekly routines, a calendar, and reminders, all in one HT
 
 1. Download the HTML file and save it in a folder you plan to keep using.
 2. Double-click it to open it in your browser. You only need this file; source-code downloads are for development.
-3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
+3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Choose **More options** for notes, repetition, a due time, or reminders. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
 
 The app opens to today. Select another day from the week strip or month calendar, and use the pencil beside a task to edit it.
 
@@ -16,8 +16,9 @@ The app opens to today. Select another day from the week strip or month calendar
 
 - **Plan your day:** All-day tasks or specific due times, with optional descriptions, notes, and clickable web links.
 - **Repeat weekly:** Each scheduled date gets its own checkbox. Completing a routine today leaves future occurrences unchecked.
-- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows let you rearrange tasks. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
+- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. **More** beside each task contains reordering arrows and other secondary actions. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
 - **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
+- **Keep the list focused:** Collapse **Completed** to hide finished tasks; its count and your progress remain visible.
 - **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.
 - **Save locally:** Automatic saving to a selected JSON file in desktop Chrome/Edge, remembered-file reopening, browser saving, and separate JSON backups.
 
@@ -34,6 +35,8 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 ## Your data and updates
 
 Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Set up autosave** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, choose **Open task file** instead.
+
+After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 
@@ -59,7 +62,7 @@ Keep the file open and your computer awake. Reminders are **best effort**: backg
 
 In-app reminders need no notification permission and have no action-confirmation timeout. Desktop alerts depend on browser support and workplace policies. Completing a task suppresses its reminders.
 
-**Known Edge issue:** The checklist has intermittently stopped accepting clicks or focus. Resizing the window or opening **Add task** may restore it; a long-term resolution has not been confirmed.
+**Known Edge issue:** The checklist has intermittently stopped accepting clicks or focus. This branch closes the task dialog immediately and keeps the checklist usable during startup file reconnection; these changes address possible causes but do not establish a long-term fix. Resizing the window or opening **Add task** may restore it; a long-term resolution has not been confirmed.
 
 ## Development
 
@@ -84,7 +87,7 @@ npm run build
 
 The build writes `Day-by-Day.html` and refreshes `SHA256SUMS.txt`. It stops with an error if `src/index.html` no longer contains a tag it needs to inline. Edit `src/`, preserve existing saved data, and commit the rebuilt HTML and checksums alongside code changes.
 
-GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers.
+GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers. See [UI testing](docs/UI-TESTING.md) for the optional browser suite and its limits.
 
 To publish a release, set the version in `package.json`, add its `CHANGELOG.md` section and `docs/releases/vX.Y.Z.md` notes, and merge to `main`. Then open **Actions**, choose **Release**, and select **Run workflow** with the version. Leave **Dry run** on the first time to check everything without publishing. The workflow repeats the checks, creates the tag, and attaches the HTML, guides, license, and checksums.
 

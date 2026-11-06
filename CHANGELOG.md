@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Collapse connected autosave to one status row; group file controls, browser saving, and backups under Manage. Expand setup and file errors automatically.
+- Start one-time task entry with a name and date; reveal notes, repeats, time, and reminders through More options. Existing tasks and new routines open the full editor.
+- Reduce heading, week-strip, and row spacing; enlarge checkbox hit targets to 44px while keeping the checkbox drawing compact.
+- Group secondary task actions and reminder details under More, explain weekday/catalog reordering scope before moving, and label the reset action clearly.
+- Add collapsible completed sections with stable per-date session state and visible keyboard focus when a newly completed task is hidden.
+- Release the task dialog immediately on close and keep startup reconnection from blocking the checklist. Add regression checks for stalled animations and edits during slow reconnection; the intermittent Edge issue still needs long-session verification.
+- Add browser regression checks for desktop/mobile layouts, normal/reduced motion, repeated edits, file-save errors, and pointer targets.
+
 - Make **Moved from** on a task carried over by Move to tomorrow a link to its original day, and show a matching **Moved to** link on that day's skipped list. Each link opens the other day and moves keyboard focus there.
 
 - Add **Retry saving** to the browser-storage warning, and **Retry file save** to the task-file panel after a failed write. Both try again right away without another edit. File retry resumes only when nothing else changed the file, otherwise Reconnect still asks which copy to keep. No retry is offered over saved data that could not be loaded.

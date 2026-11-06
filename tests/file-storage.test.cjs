@@ -35,7 +35,7 @@ function idb(store, fail = false) {
 function boot({data=empty(),store={},file=disk(),supported=true,storageFails=false,recovery=false,locks}={}) {
   let state=data;
   const nodes={}, listeners={}, shell={};
-  const node=id=>nodes[id] ||= {hidden:false,disabled:false,textContent:'',dataset:{},listeners:{},addEventListener(key,fn){this.listeners[key]=fn;},showModal(){this.open=true;},close(){this.open=false;}};
+  const node=id=>nodes[id] ||= {hidden:false,disabled:false,textContent:'',dataset:{},listeners:{},setAttribute(key,value){this[key]=String(value);},addEventListener(key,fn){this.listeners[key]=fn;},showModal(){this.open=true;},close(){this.open=false;}};
   const window={isSecureContext:supported,addEventListener:(key,fn)=>listeners[key]=fn,confirm:()=>true,
     showSaveFilePicker:async()=>file, showOpenFilePicker:async()=>[file]};
   const context={window,document:{getElementById:node,querySelector:()=>shell},indexedDB:idb(store,storageFails),setTimeout,clearTimeout,console,Blob,navigator:{locks}};
@@ -46,9 +46,14 @@ function boot({data=empty(),store={},file=disk(),supported=true,storageFails=fal
 async function main() {
   const file=disk(),store={}; let app=boot({data:sample('First'),file,store});
   await app.controller.init(); await app.click('createTaskFile');
+  assert.equal(app.nodes.taskFileDetails.hidden,true);
+  assert.equal(app.nodes.manageTaskFile['aria-expanded'],'false');
+  app.click('manageTaskFile');assert.equal(app.nodes.taskFileDetails.hidden,false);
   assert.equal(JSON.parse(file.raw).tasks[0].title,'First'); assert.match(app.title(),/^Saved to/);
   assert.equal(store.value.handle,file); assert.equal(app.shell.inert,false);
   app.change(sample('Edited')); await app.controller.flush();
+  assert.equal(app.nodes.taskFileDetails.hidden,false); // user-opened details stay open after a save
+  app.click('manageTaskFile');assert.equal(app.nodes.taskFileDetails.hidden,true);
   assert.equal(JSON.parse(file.raw).tasks[0].title,'Edited'); assert.equal(app.controller.isPending(),false);
   assert.equal(app.nodes.openTaskFile.disabled,false);
   // Fresh page, same remembered file: load automatically without requesting access.
@@ -73,6 +78,7 @@ async function main() {
   // Close failure is never reported as saved; original disk data survives.
   file.closeFails=true;app.change(sample('Unsaved edit'));await app.controller.flush();
   assert.match(app.title(),/not saved/);assert.equal(JSON.parse(file.raw).tasks[0].title,'Latest edit');assert.equal(app.nodes.reconnectTaskFile.disabled,false);
+  assert.equal(app.nodes.taskFileDetails.hidden,false); // errors cannot be hidden by the compact status
   delete file.closeFails;
   const reconnect=app.click('reconnectTaskFile');await settle();assert.equal(app.nodes.fileChoiceDialog.open,true);
   app.click('fileChoiceCurrent');await reconnect;assert.equal(JSON.parse(file.raw).tasks[0].title,'Unsaved edit');
@@ -94,6 +100,15 @@ async function main() {
   blocked.change(sample('Still saving'));await blocked.controller.flush();assert.equal(JSON.parse(blocked.file.raw).tasks[0].title,'Still saving');
   // Unsupported browsers retain the checklist and cannot pretend file autosave works.
   const unsupported=boot({supported:false});await unsupported.controller.init();assert.match(unsupported.title(),/Chrome or Edge/);assert.equal(unsupported.nodes.createTaskFile.disabled,true);
+  assert.equal(unsupported.nodes.taskFileDetails.hidden,false);
+  // A slow remembered-file permission check must not make the checklist inert.
+  const slowFile=disk(JSON.stringify(sample('Before startup')));
+  let releasePermission;slowFile.queryPermission=()=>new Promise(resolve=>releasePermission=resolve);
+  const slow=boot({data:sample('Before startup'),file:slowFile,store:{value:{handle:slowFile,baseline:JSON.stringify(sample('Before startup'))}}});
+  const initializing=slow.controller.init();await settle();assert.equal(slow.shell.inert,false);
+  slow.change(sample('Edited while connecting'));releasePermission('granted');await settle();
+  assert.equal(slow.nodes.fileChoiceDialog.open,true);slow.click('fileChoiceCurrent');await initializing;
+  assert.equal(JSON.parse(slowFile.raw).tasks[0].title,'Edited while connecting');assert.equal(slow.shell.inert,false);
   // Cancel replacement preserves both datasets.
   const cancel=boot({data:sample('Local'),file:disk(JSON.stringify(sample('Disk')))});await cancel.controller.init();const opening=cancel.click('openTaskFile');await settle();cancel.click('fileChoiceCancel');await opening;
   assert.equal(cancel.state().tasks[0].title,'Local');assert.equal(JSON.parse(cancel.file.raw).tasks[0].title,'Disk');assert.equal(cancel.controller.isConnected(),false);

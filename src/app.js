@@ -24,7 +24,7 @@
   function fadeDayContent() {
     playMotion($('dayTitle'), [{ opacity: .8 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
   }
-  let dialogClosing = false, dialogCloseMotion = null, dialogCycle = 0, dialogFocusTarget = null;
+  let dialogCycle = 0, dialogFocusTarget = null;
   function focusTask(id) {
     const containers = [view === 'routines' ? $('routineList') : $('taskList')];
     if (view === 'day' && selected === today && !$('overdueSection').hidden) containers.push($('overdueList'));
@@ -44,22 +44,18 @@
     });
   }
   function closeTaskDialog() {
-    const dialog = $('taskDialog'); if (!dialog.open || dialogClosing) return;
-    const cycle = dialogCycle;
-    dialogClosing = true; dialog.classList.toggle('is-closing', true);
-    const animation = playMotion(dialog, [{ opacity: 1 }, { opacity: 0 }], { duration: 130, easing: 'ease-in' });
-    if (!animation) { dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false); restoreDialogFocus(cycle); return; }
-    dialogCloseMotion = animation;
-    animation.finished.catch(() => {}).then(() => {
-      if (dialogCloseMotion !== animation) return;
-      dialogCloseMotion = null; dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false);
-      restoreDialogFocus(cycle);
-    });
+    const dialog = $('taskDialog'); if (!dialog.open) return;
+    // Release the native modal immediately. A suspended/unfinished animation must
+    // never leave an invisible top-layer dialog blocking checklist input in Edge.
+    activeMotion.get(dialog)?.cancel();
+    dialog.close();
+    restoreDialogFocus(dialogCycle);
   }
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
-  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null, browserUnsaved = false, localNote = null;
+  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null, browserUnsaved = false;
   function storageError(message) {
     if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
+    fileStore?.showDetails();
     persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
     $('downloadOriginalData').hidden = originalSavedData === null;
     // Retrying only helps when a write failed. Unreadable saved data is never written over.
@@ -87,6 +83,8 @@
   let renderedOverdueKey = '';
   function overdueKey(tasks) { return JSON.stringify(tasks.map(task => [task.date, task.id])); }
   const expandedDescriptions = new Set();
+  const collapsedCompleted = new Set();
+  let openTaskMenuKey = null;
   const calendarCounts = new Map();
   const BACKUP_KEY = 'day-by-day.backup.v1';
   let backupStatus = { lastExported: 0, changes: 0, firstChangeAt: 0, snoozedUntil: 0 };
@@ -109,7 +107,6 @@
     const oldChanges = backupStatus.firstChangeAt && Date.now() - backupStatus.firstChangeAt >= 7 * 86400000;
     $('backupNotice').hidden = !data.tasks.length || backupStatus.snoozedUntil > Date.now() || !(backupStatus.changes >= 25 || (backupStatus.changes > 0 && oldChanges));
     $('backupNoticeText').textContent = `${text}. You have changes to back up.`;
-    if (localNote) localNote.textContent = `${persistent ? 'Saved in this browser' : 'Not saved in this browser'} · ${text}`;
   }
   let undoAction, announcementTimer, pendingAnnouncement = null;
   function announceStatus(message) {
@@ -296,9 +293,11 @@
         data.completed[occurrenceDate] = [...completed];
         if (!save()) return;
         const updated = [...$('taskList').querySelectorAll('.check-button'), ...$('overdueList').querySelectorAll('.check-button')].find(b => b.dataset.id === task.id);
-        (updated || (overdue && !$('overdueSection').hidden ? $('overdueTitle') : $('inlineAdd'))).focus({ preventScroll: true });
+        const completedSummary = isDone(task.id, occurrenceDate) && collapsedCompleted.has(occurrenceDate) ? $('taskList').querySelector('.completed-tasks')?.querySelector('summary') : null;
+        (completedSummary || updated || (overdue && !$('overdueSection').hidden ? $('overdueTitle') : $('inlineAdd'))).focus({ preventScroll: true });
       }; check.dataset.id = task.id; row.append(check);
     }
+    const secondary = el('div', 'task-menu-content');
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
     meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
@@ -310,7 +309,7 @@
       origin.onclick = () => { chooseDate(task.movedFrom.date); ($('skippedSection').hidden ? $('inlineAdd') : $('skippedTitle')).focus({ preventScroll: true }); };
       copy.append(origin);
     }
-    if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
+    if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); secondary.append(reminder); }
     if (task.description) {
       const description = el('div', 'task-description'), body = el('div', 'description-body'), preview = descriptionPreview(task.description);
       const expansionKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
@@ -347,7 +346,7 @@
         if (!save()) return; focusTask(task.id);
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
-      copy.append(moveToday);
+      secondary.append(moveToday);
     }
     if (inOverdue && !done && occurrenceDate === today && validDate(dateKey(plusDays(parseDate(today), 1)))) {
       const moveTomorrow = el('button', 'text-button move-tomorrow', 'Move to tomorrow'); moveTomorrow.type = 'button';
@@ -382,7 +381,7 @@
           data.tasks = data.tasks.filter(item => original.kind === 'once' || item.id !== deferredId).map(item => item.id === original.id ? original : item);
         });
       };
-      copy.append(moveTomorrow);
+      secondary.append(moveTomorrow);
     }
     if (!routine && task.kind === 'weekly' && !done && occurrenceDate >= today) {
       const skip = el('button', 'text-button skip-task', 'Skip this occurrence'); skip.type = 'button';
@@ -394,7 +393,7 @@
         if (!save()) return; $('skippedTitle').focus({ preventScroll: true });
         notify('Occurrence skipped. Future repeats are unchanged.', () => { source.exceptions = source.exceptions.filter(date => date !== occurrenceDate); });
       };
-      copy.append(skip);
+      secondary.append(skip);
     }
     if (routine && task.endedOn) copy.append(el('p', 'task-meta', `Ends before ${fmt(task.endedOn, { month: 'short', day: 'numeric', year: 'numeric' })}`));
     const nextVersion = routine && task.versions?.find(version => version.from > today);
@@ -403,7 +402,7 @@
     const actions = el('div', 'task-actions'), ordering = el('div', 'task-order'), position = peers.findIndex(peer => peer.id === task.id);
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
       const move = el('button', `icon-button move-task move-${direction}`); move.type = 'button'; move.append(icon('arrow'));
-      move.title = `Move ${direction}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.dataset.move = direction;
+      move.title = routine ? `Move ${direction} in the routine catalog` : `Move ${direction} for every ${DAYS[parseDate(occurrenceDate).getDay()]}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.setAttribute('aria-describedby', routine ? 'routineOrderScope' : 'dayOrderScope'); move.dataset.move = direction;
       const neighbor = peers[position + step]; move.disabled = !neighbor;
       move.onclick = () => {
         if (!neighbor) return;
@@ -418,13 +417,30 @@
         const container = routine ? $('routineList') : overdue ? $('overdueList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
         const control = movedRow?.querySelector(`[data-move="${direction}"]`);
+        const menu = movedRow?.querySelector('.task-menu');
+        if (menu) { menu.open = true; openTaskMenuKey = menu.dataset.key; }
         if (control && !control.disabled) control.focus({ preventScroll: true }); else movedRow?.focus({ preventScroll: true });
         notify(routine ? `Routine moved ${direction}. Daily orders are unchanged.` : `Task moved ${direction}. This order repeats on ${DAYS[weekday]}.`);
       };
       ordering.append(move);
     }
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
-    if (!overdue || occurrenceDate === selected) row.prepend(ordering); actions.append(edit); row.append(actions); return row;
+    if (!overdue || occurrenceDate === selected) {
+      secondary.append(el('p', 'order-scope', routine ? 'Reorder the routine catalog only.' : `Reordering repeats every ${DAYS[parseDate(occurrenceDate).getDay()]}.`), ordering);
+    }
+    const menu = el('details', 'task-menu'), summary = el('summary', 'task-menu-toggle', 'More');
+    const menuKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
+    menu.dataset.key = menuKey; menu.open = openTaskMenuKey === menuKey;
+    summary.setAttribute('aria-label', `More actions for ${task.title}`); summary.title = 'More actions';
+    menu.append(summary, secondary);
+    menu.addEventListener('toggle', () => {
+      if (!menu.isConnected) return;
+      if (menu.open) {
+        openTaskMenuKey = menuKey;
+        for (const other of document.querySelectorAll('.task-menu')) if (other !== menu) other.open = false;
+      } else if (openTaskMenuKey === menuKey) openTaskMenuKey = null;
+    });
+    actions.append(edit, menu); row.append(actions); return row;
   }
   function render() {
     calendarCounts.clear();
@@ -441,6 +457,8 @@
     $('viewBreadcrumb').textContent = view === 'day' ? 'My day' : 'Weekly routines';
     $('sortDay').hidden = !data.weekdayOrders[parseDate(selected).getDay()];
     $('sortDay').title = `Restore automatic sorting for ${DAYS[parseDate(selected).getDay()]}`;
+    $('dayOrderScope').textContent = `${data.weekdayOrders[parseDate(selected).getDay()] ? 'Custom order' : 'Due time'} · reordering repeats every ${DAYS[parseDate(selected).getDay()]}`;
+    $('routineOrderScope').textContent = `${data.routineOrder ? 'Custom order' : 'Due time'} · catalog only`;
     $('sortRoutines').hidden = !data.routineOrder;
     $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
@@ -454,7 +472,17 @@
     const list = $('taskList'); list.replaceChildren();
     if (!tasks.length || (!pending.length && !done.length)) list.append(makeEmpty(false, selected === today && overdueToday.length > 0));
     pending.forEach(task => list.append(taskRow(task, false, pending)));
-    if (done.length) { list.append(el('div', 'section-label', `COMPLETED · ${done.length}`)); done.forEach(task => list.append(taskRow(task, false, done))); }
+    if (done.length) {
+      const completed = el('details', 'completed-tasks'); completed.open = !collapsedCompleted.has(selected);
+      const summary = el('summary', 'section-label', `Completed · ${done.length}`);
+      completed.append(summary, ...done.map(task => taskRow(task, false, done)));
+      const date = selected;
+      completed.addEventListener('toggle', () => {
+        if (!completed.isConnected) return;
+        if (completed.open) collapsedCompleted.delete(date); else collapsedCompleted.add(date);
+      });
+      list.append(completed);
+    }
     $('overdueSection').hidden = selected !== today || !overdue.length;
     $('overdueCount').textContent = overdue.length;
     $('overdueList').replaceChildren(...overdueEarlier.map(task => taskRow(task, false, [task], task.date, true)), ...overdueToday.map(task => taskRow(task, false, overdueToday, today, true)));
@@ -509,6 +537,7 @@
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
     const source = data.tasks.find(task => task.id === editingId);
+    if (weekly) setTaskOptions(true);
     const converting = source?.kind === 'once' && weekly;
     $('routineChanges').hidden = !(source?.kind === 'weekly' && weekly);
     const date = $('taskDate').value;
@@ -518,6 +547,17 @@
     $('workdaysPreset').setAttribute('aria-pressed', String(days.length === 5 && [1, 2, 3, 4, 5].every(day => days.includes(day))));
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
+  function setTaskOptions(expanded) {
+    $('taskOptions').hidden = !expanded;
+    $('toggleTaskOptions').setAttribute('aria-expanded', String(expanded));
+    $('taskOptionsLabel').textContent = expanded ? 'Fewer options' : 'More options';
+  }
+  $('toggleTaskOptions').onclick = () => {
+    if (!$('taskOptions').hidden && $('taskForm').elements.timing.value === 'timed' && !validTime($('taskTime').value)) {
+      $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return;
+    }
+    setTaskOptions($('taskOptions').hidden);
+  };
   function openTask(task = null, kind = 'once') {
     const source = task ? data.tasks.find(item => item.id === task.id) || task : null;
     const effective = view === 'routines' || selected < today ? today : selected;
@@ -525,7 +565,7 @@
     if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
-    dialogCloseMotion?.cancel(); dialogCloseMotion = null; dialogClosing = false; $('taskDialog').classList.toggle('is-closing', false);
+    setTaskOptions(Boolean(task) || kind === 'weekly');
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
@@ -557,19 +597,19 @@
   }
   $('taskForm').addEventListener('submit', event => {
     event.preventDefault();
+    if (!$('taskDialog').open) return;
     const title = $('taskTitle').value.trim();
     const description = $('taskDescription').value.trim();
     const kind = $('taskForm').elements.kind.value;
     const date = $('taskDate').value;
-    if (dialogClosing) return;
     if (editingReadOnly) return;
     if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
-    if (description.length > 5000) { $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
+    if (description.length > 5000) { setTaskOptions(true); $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
     if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
     const weekdays = selectedWeekdays();
-    if (kind === 'weekly' && !weekdays.length) { $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
+    if (kind === 'weekly' && !weekdays.length) { setTaskOptions(true); $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
-    if (time !== null && !validTime(time)) { $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
+    if (time !== null && !validTime(time)) { setTaskOptions(true); $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     const previous = data.tasks.find(task => task.id === editingId);
     // Keep saved data within the limits the app accepts when it loads.
@@ -618,7 +658,7 @@
   $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
   $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
   $('deleteTask').onclick = () => {
-    if (dialogClosing || editingReadOnly) return;
+    if (editingReadOnly) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
@@ -638,12 +678,23 @@
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
   $('taskDialog').addEventListener('cancel', event => { event.preventDefault(); closeTaskDialog(); });
+  document.addEventListener('click', event => {
+    // A row action may have just rebuilt the list. Keep its replacement menu open.
+    if (!event.target.isConnected) return;
+    for (const menu of document.querySelectorAll('.task-menu')) if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || ['taskDialog', 'restoreDialog', 'tabChoiceDialog', 'fileChoiceDialog'].some(id => $(id).open)) return;
+    for (const menu of document.querySelectorAll('.task-menu')) if (menu.open) {
+      event.preventDefault(); menu.open = false; menu.querySelector('summary').focus();
+    }
+  });
   $('addTask').onclick = () => openTask(null, view === 'routines' ? 'weekly' : 'once'); $('inlineAdd').onclick = () => openTask();
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
   $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
-  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; if (!save()) return; notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
-  $('sortRoutines').onclick = () => { data.routineOrder = null; if (!save()) return; notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
+  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; if (!save()) return; $('dayOrderScope').focus({ preventScroll: true }); notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
+  $('sortRoutines').onclick = () => { data.routineOrder = null; if (!save()) return; $('routineOrderScope').focus({ preventScroll: true }); notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function downloadData(text, name) {
@@ -891,8 +942,6 @@
   setInterval(checkReminders, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); }); window.addEventListener('focus', () => { checkReminders(); updateNotificationStatus(); renderBackupStatus(); });
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
-  const footer = document.querySelector('.main-footer'); const mobileBackup = el('button', 'text-button', 'Back up'); mobileBackup.style.display = 'none'; mobileBackup.onclick = backup; const mobileRestore = el('button', 'text-button', 'Restore'); mobileRestore.style.display = 'none'; mobileRestore.onclick = () => $('restoreFile').click(); footer.append(mobileBackup, mobileRestore);
-  localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
   fileStore = window.createTaskFileStorage({

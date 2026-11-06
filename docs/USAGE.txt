@@ -13,6 +13,10 @@ Allow editing access. Each task change saves automatically; wait for Saved to
 Day-by-Day-data.json before closing or signing out. If you already have a task
 JSON or backup, use Open task file instead; it becomes the live autosave file.
 
+After a successful file connection, saving controls collapse to one status row.
+Choose Manage to see file controls, browser saving, Back up tasks, and Restore
+backup together. Setup and file-saving errors show the details automatically.
+
 The app automatically reopens the remembered file when browser access survives.
 If permission expires, click Reconnect task file. If daily browser cleanup clears
 the connection, click Open task file and select the same JSON again. The actual
@@ -36,7 +40,9 @@ Enable Reduce motion in your device's accessibility settings to turn effects off
 The app opens to today's list. Choose a weekday or a date on the month calendar
 to see another day. On a small screen, use the Calendar button to show the month.
 
-Use + Add task to enter a task, date, and One time or Every week.
+Use + Add task to enter a task and date, then Add task. More options reveals
+notes, One time / Every week, time, and reminders. Editing an existing task
+opens the full editor; Add task in Weekly routines opens repeat controls.
 For weekly tasks, select any combination of weekdays under Repeat on.
 Mon-Fri selects the five weekdays; Every day selects all seven days.
 One task can repeat on multiple days and is edited as a single routine.
@@ -45,7 +51,8 @@ own checkbox. Completing one occurrence does not check off other occurrences.
 Existing single-day tasks and older backups keep their schedules and history.
 Existing tasks remain All day until you assign a specific time.
 MOVE TODAY'S OVERDUE TASK TO TOMORROW
-After a task's due time has passed today, its Overdue row offers Move to tomorrow.
+After a task's due time has passed today, choose More in its Overdue row,
+then Move to tomorrow.
 For example, a task due at 6:30 can be moved at 7:00. The task keeps the same due
 time, notes, and reminder settings on the next calendar day and starts unchecked.
 You stay on today's page, and Undo restores the original date.
@@ -97,20 +104,26 @@ Add an optional Description when creating or editing a task. Use it for details,
 multiline notes, and web links (starting with https:// or http://), up to 5,000
 characters. Descriptions appear directly below each task. Longer notes show a
 preview of up to three lines / 240 characters, with Show more and Show less to
-expand or collapse them. The arrows and checkbox stay at the top of that task.
+expand or collapse them. The checkbox, Edit, and More stay at the top of that task.
 Web links open in a new tab. Descriptions are shared across a routine's scheduled days, saved in
 this browser, and included in backups. Clear the Description field to remove it.
 Older tasks and backups load with empty descriptions.
+
+Completed tasks have a collapsible Completed section. Its count stays visible.
+Your choice is kept for that date while this tab is open. Completing another
+task keeps the section collapsed and moves keyboard focus to its summary.
 
 Tasks default to due-time order, earliest first, with All day tasks at the end.
 Tasks with the same time sort alphabetically by name, ignoring capitalization;
 the All day group also sorts alphabetically. Numbered titles use natural order
 (Task 2 before Task 10). Custom ordering takes precedence over these defaults.
-Use the small up/down arrows beside the checkbox to move any task in its section,
+Choose More beside a task to find Skip, rescheduling actions, reminder details,
+and the up/down arrows. The ordering scope appears before you move anything.
+Use the arrows to move any task in its section,
 regardless of due time. The first move switches to custom ordering, starting from
 the current due-time order. The custom order is saved for that weekday and reused
 in future weeks; other weekdays are unchanged. New tasks follow ranked tasks in
-due-time order. Sort by due time resets only the selected weekday. The Weekly
+due-time order. Reset to due time resets only the selected weekday. The Weekly
 routines catalog has a separate order that never changes daily orders. Completed
 tasks stay in their own section in both ordering modes. Older shared preferences
 are migrated into all seven weekday preferences, which can then be changed
