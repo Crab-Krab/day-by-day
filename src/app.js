@@ -300,9 +300,16 @@
       }; check.dataset.id = task.id; row.append(check);
     }
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
-    meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : task.movedFrom ? `Moved from ${fmt(task.movedFrom.date, { weekday: 'short', month: 'short', day: 'numeric' })}` : 'One time'));
+    meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
     heading.append(name, time); copy.append(heading, meta);
+    if (task.movedFrom) {
+      // A task carried over by Move to tomorrow links back to the day it came from.
+      const origin = el('button', 'text-button moved-link', `Moved from ${fmt(task.movedFrom.date, { weekday: 'short', month: 'short', day: 'numeric' })}`); origin.type = 'button';
+      origin.setAttribute('aria-label', `${task.title} was moved from ${fmt(task.movedFrom.date, { weekday: 'long', month: 'long', day: 'numeric' })}. Go to that day.`);
+      origin.onclick = () => { chooseDate(task.movedFrom.date); ($('skippedSection').hidden ? $('inlineAdd') : $('skippedTitle')).focus({ preventScroll: true }); };
+      copy.append(origin);
+    }
     if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
     if (task.description) {
       const description = el('div', 'task-description'), body = el('div', 'description-body'), preview = descriptionPreview(task.description);
@@ -457,7 +464,12 @@
       const item = el('div', 'history-item'), version = resolveTask(task, selected) || task;
       // Restoring a moved occurrence would leave the task on both days.
       const moved = data.tasks.find(item => item.movedFrom?.taskId === task.id && item.movedFrom.date === selected);
-      if (moved) { item.append(el('span', '', `${version.title} · Moved to ${fmt(moved.date, { weekday: 'short', month: 'short', day: 'numeric' })}`)); return item; }
+      if (moved) {
+        const where = el('button', 'text-button moved-link', `Moved to ${fmt(moved.date, { weekday: 'short', month: 'short', day: 'numeric' })}`); where.type = 'button';
+        where.setAttribute('aria-label', `${version.title} was moved to ${fmt(moved.date, { weekday: 'long', month: 'long', day: 'numeric' })}. Go to that day.`);
+        where.onclick = () => { chooseDate(moved.date); if (!focusTask(moved.id)) $('inlineAdd').focus({ preventScroll: true }); };
+        item.append(el('span', '', version.title), where); return item;
+      }
       item.append(el('span', '', version.title));
       const restore = el('button', 'text-button restore-occurrence', 'Restore occurrence'); restore.type = 'button';
       restore.onclick = () => { task.exceptions = task.exceptions.filter(date => date !== selected); if (!save()) return; focusTask(task.id); notify('Occurrence restored.'); };
