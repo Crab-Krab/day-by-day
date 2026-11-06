@@ -48,6 +48,8 @@ into the next or previous month.
 Use + Add task to enter a task and date, then Add task. More options reveals
 notes, One time / Every week, time, and reminders. Editing an existing task
 opens the full editor; Add task in Weekly routines opens repeat controls.
+Click outside the task window to close it, like Cancel. If you have typed or
+changed anything, the app asks before discarding it.
 For weekly tasks, select any combination of weekdays under Repeat on.
 Mon-Fri selects the five weekdays; Every day selects all seven days.
 One task can repeat on multiple days and is edited as a single routine.
@@ -60,8 +62,6 @@ After a task's due time has passed today, its Overdue row offers Move to tomorro
 For example, a task due at 6:30 can be moved at 7:00. The task keeps the same due
 time, notes, and reminder settings on the next calendar day and starts unchecked.
 You stay on today's page, and Undo restores the original date.
-Click outside the task window to close it, like Cancel. If you have typed or
-changed anything, the app asks before discarding it.
 
 For weekly routines, only today's occurrence moves: today is skipped and a
 separate one-time task is created for tomorrow. Future weekly repeats keep their
