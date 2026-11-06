@@ -968,3 +968,31 @@ function verifyMoreOnlyWhenNeeded() {
   console.log('More only when needed passed: no empty menu on plain tasks, an aligned invisible stand-in, and real menus for reminders and Skip.');
 }
 verifyMoreOnlyWhenNeeded();
+function verifyComingUp() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime();
+  const tasks=[
+    {id:'gym',kind:'weekly',title:'Gym',weekdays:[4,6],startDate:'2026-10-01',exceptions:['2026-11-12']},
+    ...['A','B','C','D','E'].map((letter,index)=>({id:'t'+letter,kind:'once',title:'Task '+letter,date:'2026-11-07',time:`0${index+1}:00`})),
+    {id:'done',kind:'once',title:'Finished early',date:'2026-11-09'}];
+  const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{'2026-11-09':['done']}})]]),wed);
+  const days=()=>app.ids.comingUpList.children.map(item=>item.querySelector('button'));
+  const text=button=>button.textContent;
+  const names=button=>(button.querySelector('.coming-up-tasks')?.children||[]).map(name=>name.textContent);
+  // Seven days after today, each with a count and the first few task names in list order.
+  assert.equal(days().length,7);assert.equal(app.ids.comingUpHint.textContent,'Next 7 days');
+  assert.match(text(days()[0]),/^Thu, Nov 5.*1 task/);assert.deepEqual(names(days()[0]),['Gym']);
+  // Up to six names, each on its own line, in list order. Gym is all day, so it sorts after the timed tasks.
+  assert.match(text(days()[2]),/Sat, Nov 7.*6 tasks/);assert.deepEqual(names(days()[2]),['Task A','Task B','Task C','Task D','Task E','Gym']);
+  assert.match(text(days()[3]),/Sun, Nov 8.*Nothing planned/);assert.ok(days()[3].className.includes('empty'));
+  assert.match(text(days()[4]),/Mon, Nov 9.*All done/);assert.deepEqual(names(days()[4]),['Finished early']);
+  // Clicking a day opens it, and the column then follows that day.
+  days()[2].onclick();
+  assert.equal(app.ids.dayTitle.textContent,'Saturday.');assert.equal(app.ids.comingUpHint.textContent,'7 days after Sat, Nov 7');
+  // A skipped routine occurrence is left out (Gym is skipped on Thu, Nov 12).
+  assert.match(text(days()[4]),/Thu, Nov 12.*Nothing planned/);
+  // A seventh task on a day shows as "+1 more" after six names.
+  app.ids.addTask.onclick();app.ids.taskTitle.value='Task F';app.ids.taskDate.value='2026-11-07';app.ids.taskForm.dispatch('submit');app.ids.jumpToday.onclick();
+  assert.deepEqual(names(days()[2]).slice(-2),['Gym','+1 more']);
+  console.log('Coming up passed: 7 days after the selected day, counts, names in list order with +more, empty and all-done days, skipped occurrences left out, and opening a day.');
+}
+verifyComingUp();

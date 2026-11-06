@@ -472,6 +472,27 @@
     });
     actions.append(edit, menu); row.append(actions); return row;
   }
+  // The Coming up column lists the 7 days after the selected day. It only shows on wide screens.
+  function renderComingUp() {
+    const start = parseDate(selected);
+    $('comingUpHint').textContent = selected === today ? 'Next 7 days' : `7 days after ${fmt(selected, { weekday: 'short', month: 'short', day: 'numeric' })}`;
+    const days = [];
+    for (let offset = 1; offset <= 7; offset++) {
+      const key = dateKey(plusDays(start, offset));
+      if (!validDate(key)) break;
+      // Only days with two or more tasks need sorting into the order your list uses.
+      const found = data.tasks.filter(task => scheduled(task, key)).map(task => resolveTask(task, key));
+      const tasks = found.length > 1 ? orderedTasks(found, key) : found, open = tasks.filter(task => !isDone(task.id, key));
+      const button = el('button', 'coming-up-open' + (tasks.length ? '' : ' empty')); button.type = 'button';
+      const count = !tasks.length ? 'Nothing planned' : !open.length ? 'All done' : `${open.length} task${open.length === 1 ? '' : 's'}`;
+      button.append(el('span', 'coming-up-date', fmt(key, { weekday: 'short', month: 'short', day: 'numeric' })), el('span', 'coming-up-count', count));
+      const shown = (open.length ? open : tasks).slice(0, 6), more = (open.length ? open : tasks).length - shown.length;
+      if (shown.length) { const names = el('span', 'coming-up-tasks'); names.append(...shown.map(task => el('span', '', task.title)), ...(more > 0 ? [el('span', '', `+${more} more`)] : [])); button.append(names); }
+      button.onclick = () => chooseDate(key);
+      const item = el('li', 'coming-up-day'); item.append(button); days.push(item);
+    }
+    $('comingUpList').replaceChildren(...days);
+  }
   function render() {
     calendarCounts.clear();
     const overdue = overdueTasks(data.tasks, data.completed, today);
@@ -545,7 +566,7 @@
       history.onclick = () => chooseDate(lastRoutineDate(task, task.endedOn) || task.endedOn);
       item.append(history); return item;
     }));
-    renderCalendar(); renderWeek();
+    renderComingUp(); renderCalendar(); renderWeek();
   }
   const weekdayInputs = [...document.querySelectorAll('input[name="weekdays"]')];
   weekdayInputs.forEach(input => {
