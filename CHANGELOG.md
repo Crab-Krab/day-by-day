@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- On screens 1360px wide and up, add a **Coming up** column beside the checklist with the 7 days after the selected day: each day's task count and first few task names, and a click to open it. Put the day title beside the week strip, line the saving panels up with the content, and let content use more width on large monitors. Narrower screens and phones are unchanged.
 - Collapse connected autosave to one status row; group file controls, browser saving, and backups under Manage. Expand setup and file errors automatically.
 - Start one-time task entry with a name and date; reveal notes, repeats, time, and reminders through More options. Existing tasks and new routines open the full editor.
 - Reduce heading, week-strip, and row spacing; enlarge checkbox hit targets to 44px while keeping the checkbox drawing compact.

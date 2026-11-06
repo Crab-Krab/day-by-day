@@ -182,7 +182,32 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .theme-moon { opacity: 0; transform: rotate(-75deg) scale(.45); }
 [data-theme=dark] .theme-sun { opacity: 0; transform: rotate(75deg) scale(.45); }
 [data-theme=dark] .theme-moon { opacity: 1; transform: rotate(0) scale(1); }
-.content { width: 100%; max-width: 1380px; margin: 0 auto; padding: 28px 40px 32px; }
+.content { width: 100%; max-width: var(--content-max, 1380px); margin: 0 auto; padding: 28px 40px 32px; }
+/* The Coming up column appears only on wide screens, beside the checklist. */
+.coming-up { display: none; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); padding: 18px 14px 8px; }
+.coming-up h2 { margin: 0 6px; font-size: 16px; }
+.coming-up-hint { margin: 2px 6px 10px; font-size: 12px; color: var(--secondary); }
+.coming-up-list { list-style: none; margin: 0; padding: 0; }
+.coming-up-day { border-top: 1px solid var(--line); }
+.coming-up-open { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 10px; width: 100%; margin: 4px 0; padding: 8px 6px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.coming-up-open:hover { background: var(--hover); }
+.coming-up-date { font-size: 13px; font-weight: 600; }
+.coming-up-count { font-size: 12px; color: var(--secondary); white-space: nowrap; }
+.coming-up-tasks { grid-column: 1 / -1; overflow: hidden; font-size: 12px; color: var(--secondary); text-overflow: ellipsis; white-space: nowrap; }
+.coming-up-open.empty .coming-up-date { font-weight: 500; color: var(--secondary); }
+@media (min-width: 1151px) {
+  /* Notices and the saving panels line up with the content below them instead of running edge to edge. */
+  .task-file-panel, .recovery-panel, .backup-notice, .undo-notice, .warning { margin-inline: max(40px, calc((100% - var(--content-max, 1380px)) / 2 + 40px)); }
+}
+@media (min-width: 1360px) {
+  :root { --content-max: 1680px; }
+  /* Wide screens: the day title sits beside the week strip, and Coming up sits beside the checklist. */
+  #dailyView:not([hidden]) { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(260px, 320px); column-gap: 28px; align-items: start; }
+  #dailyView > .page-heading { grid-column: 1; }
+  #dailyView > .week-section { grid-column: 2 / 4; align-self: end; }
+  #dailyView > .day-main { grid-column: 1 / 3; min-width: 0; }
+  #dailyView > .coming-up { display: block; grid-column: 3; position: sticky; top: 20px; }
+}
 .page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 18px; }
 .eyebrow { font-size: 11px; font-weight: 650; letter-spacing: 1.7px; color: var(--accent); margin: 0 0 13px; line-height: 1.6; }
 h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 48px; letter-spacing: -1.5px; font-weight: 400; margin: 0 0 8px; line-height: 1.12; }
