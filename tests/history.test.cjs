@@ -1,8 +1,5 @@
-const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('src/app.js','utf8'),context={Date,Set,Map,URL,Error,DAYS:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']};
-vm.createContext(context);
-vm.runInContext(source.slice(source.indexOf('  function dateKey'),source.indexOf('  const empty ='))+';this.api={validate,scheduled,resolveTask,reviseRoutine,createRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime};',context);
-const {validate,scheduled,resolveTask,reviseRoutine,createRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime}=context.api;
+const assert=require('node:assert/strict');
+const {validate,scheduled,resolveTask,reviseRoutine,createRoutine,routineFields,orderByIds,moveOrderedId,lastRoutineDate,dueReminders,dueTime}=require('../src/schedule.js');
 const original={id:'work',title:'Original',description:'Old notes',kind:'weekly',weekdays:[1,3],startDate:'2026-10-01',time:'10:00',reminders:[15]};
 let state=validate({version:4,tasks:[original],completed:{'2026-10-26':['work'],'2026-10-28':['work']},sortMode:'manual'});
 assert.equal(state.version,5);for(let day=0;day<7;day++)assert.deepEqual(Array.from(state.weekdayOrders[day]),['work']);

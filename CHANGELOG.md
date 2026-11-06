@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Move the scheduling, history, reminder, and validation logic from `app.js` into `src/schedule.js`. Tests now load that file directly instead of cutting code out of `app.js` by searching for marker text, so reorganizing the app can't silently break them. App behavior is unchanged.
+
 ## 1.4.1 — 2026-11-05
 
 - Retry browser saving with every change after a storage error, clear the warning once a save succeeds, and ask before closing a tab whose changes reached neither browser storage nor a connected task file.

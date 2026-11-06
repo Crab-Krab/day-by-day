@@ -1,9 +1,6 @@
 const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict');
 const source = fs.readFileSync('src/file-storage.js', 'utf8');
-const appSource = fs.readFileSync('src/app.js', 'utf8');
-const helpers = { Date, Set, Map, URL, Error, DAYS: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] };
-vm.createContext(helpers);
-vm.runInContext(appSource.slice(appSource.indexOf('  function dateKey'), appSource.indexOf('  const empty =')) + ';this.validate = validate;', helpers);
+const helpers = require('../src/schedule.js');
 const valid = value => JSON.parse(JSON.stringify(helpers.validate(value)));
 const empty = () => valid({version:5,tasks:[],completed:{}});
 const sample = title => valid({version:5,tasks:[{id:'task1',title,kind:'once',date:'2026-11-01'}],completed:{}});

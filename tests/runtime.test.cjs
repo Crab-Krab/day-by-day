@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const html = fs.readFileSync('src/index.html', 'utf8');
-const source = fs.readFileSync('src/file-storage.js', 'utf8') + '\n' + fs.readFileSync('src/app.js', 'utf8');
+const source = ['schedule.js', 'file-storage.js', 'app.js'].map(name => fs.readFileSync('src/' + name, 'utf8')).join('\n');
 // A small in-memory DOM exercises application events without a browser, network, or user data.
 function boot(storage, initialClock, options = {}) {
   let clock = initialClock, uid = 0;
