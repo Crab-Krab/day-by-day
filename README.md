@@ -67,7 +67,7 @@ Use **Node.js 20 or newer**. There are no packages to install.
 
 | Path | Purpose |
 | --- | --- |
-| `src/` | Editable HTML, CSS, app logic, and theme handling |
+| `src/` | Editable HTML, CSS, app logic, and theme handling. `schedule.js` holds the scheduling, history, reminder, and validation logic that the tests load directly |
 | `scripts/build.mjs` | Builds the standalone HTML and its checksums |
 | `scripts/release-files.mjs` | Prepares the files attached to a GitHub release |
 | `tests/` | Scheduling, history/migration, theme, runtime, and file-storage checks |

@@ -17,8 +17,9 @@ inline('<!doctype html>', '<!doctype html>\n<!--\n' + license + '\n-->');
 inline('<link rel="stylesheet" href="styles.css">', '<style>' + read('styles.css') + '</style>');
 inline('<script src="theme.js"></script>', '<script>' + escapeScript(read('theme.js')) + '</script>');
 inline('<script src="app.js" defer></script>', '');
+inline('<script src="schedule.js" defer></script>', '');
 inline('<script src="file-storage.js" defer></script>', '');
-inline('</body>', '<script>' + escapeScript(read('file-storage.js') + '\n' + read('app.js')) + '</script>\n</body>');
+inline('</body>', '<script>' + escapeScript(read('schedule.js') + '\n' + read('file-storage.js') + '\n' + read('app.js')) + '</script>\n</body>');
 fs.writeFileSync(path.join(root, 'Day-by-Day.html'), html);
 // Checksums for the release downloads stay in step with every build.
 const sums = ['Day-by-Day.html', 'docs/USAGE.txt', 'LICENSE']

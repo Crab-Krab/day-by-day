@@ -1,13 +1,6 @@
-const fs = require('node:fs');
-const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const source = fs.readFileSync('src/app.js', 'utf8');
-const start = source.indexOf('  function dateKey');
-const end = source.indexOf('  const empty =');
-const context = { Date, Set, Error, URL, DAYS: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
-vm.createContext(context);
-vm.runInContext(source.slice(start, end) + ';this.api = {dateKey, parseDate, validDate, plusDays, monday, scheduled, overdueTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts, descriptionPreview, sortTasksByTime};', context);
-const {dateKey, parseDate, validDate, plusDays, monday, scheduled, overdueTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts, descriptionPreview, sortTasksByTime} = context.api;
+// The scheduling logic lives in its own file, so the tests load it directly.
+const {dateKey, parseDate, validDate, plusDays, monday, scheduled, overdueTasks, validTime, dueTime, reminderKey, dueReminders, validate, descriptionParts, descriptionPreview, sortTasksByTime} = require('../src/schedule.js');
 assert.equal(dateKey(monday(parseDate('2026-11-01'))), '2026-10-26');
 assert.equal(dateKey(plusDays(parseDate('2026-11-01'), 1)), '2026-11-02');
 assert.equal(dateKey(plusDays(parseDate('2026-03-08'), 1)), '2026-03-09');
