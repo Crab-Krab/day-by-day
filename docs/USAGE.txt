@@ -53,10 +53,10 @@ You stay on today's page, and Undo restores the original date.
 For weekly routines, only today's occurrence moves: today is skipped and a
 separate one-time task is created for tomorrow. Future weekly repeats keep their
 schedule. If the routine already repeats tomorrow, that scheduled occurrence and
-the carried task have independent checkboxes. The carried task shows "Moved from"
-with its original date. On the original date, Skipped for this date shows where
-the occurrence went instead of Restore occurrence, so the task cannot end up on
-both days. Delete the carried task to make Restore occurrence available again.
+the carried task have independent checkboxes. The carried task shows a "Moved
+from" link with its original date. On the original date, Skipped for this date
+shows a "Moved to" link instead of Restore occurrence, so the task cannot end up
+on both days. Select either link to jump to the other day. Delete the carried task to make Restore occurrence available again.
 All-day, completed, and not-yet-due tasks do not offer this action. Earlier
 overdue tasks still offer Move to today.
 

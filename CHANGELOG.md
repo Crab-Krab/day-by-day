@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make **Moved from** on a task carried over by Move to tomorrow a link to its original day, and show a matching **Moved to** link on that day's skipped list. Each link opens the other day and moves keyboard focus there.
+
 - Add **Retry saving** to the browser-storage warning, and **Retry file save** to the task-file panel after a failed write. Both try again right away without another edit. File retry resumes only when nothing else changed the file, otherwise Reconnect still asks which copy to keep. No retry is offered over saved data that could not be loaded.
 
 - Move the scheduling, history, reminder, and validation logic from `app.js` into `src/schedule.js`. Tests now load that file directly instead of cutting code out of `app.js` by searching for marker text, so reorganizing the app can't silently break them. App behavior is unchanged.

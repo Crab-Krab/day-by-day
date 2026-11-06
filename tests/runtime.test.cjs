@@ -695,7 +695,7 @@ function verifyReviewFixes() {
   assert.deepEqual(copy.movedFrom,{taskId:'routine',date:'2026-11-04'});
   assert.equal(app.ids.skippedSection.hidden,false);assert.equal(app.ids.skippedList.querySelector('.restore-occurrence'),null);assert.match(app.ids.skippedList.textContent,/Moved to/);
   app=boot(app.storage,new Date(2026,10,5,9).getTime());
-  assert.match(row(app,copy.id).querySelector('.task-meta').textContent,/Moved from/);assert.equal(row(app,'routine').querySelector('.task-meta').textContent.includes('Moved'),false);
+  assert.match(row(app,copy.id).querySelector('.moved-link').textContent,/Moved from/);assert.equal(row(app,'routine').querySelector('.moved-link'),null);assert.equal(row(app,'routine').querySelector('.task-meta').textContent.includes('Moved'),false);
   row(app,copy.id).querySelector('.edit-task').onclick();app.ids.taskTitle.value='Evening run, renamed';app.ids.taskForm.dispatch('submit');
   assert.deepEqual(app.state().tasks.find(task=>task.id===copy.id).movedFrom,{taskId:'routine',date:'2026-11-04'});
   app=boot(app.storage,wed);
@@ -806,3 +806,25 @@ function verifyRetryButtons() {
   console.log('Retry buttons passed: browser retry without another edit, repeated failure, warning cleared on success, and no retry over unreadable saved data.');
 }
 verifyRetryButtons();
+function verifyMovedLinks() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,19).getTime();
+  const row=(app,id,list='taskList')=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const routine={id:'routine',kind:'weekly',title:'Evening run',weekdays:[3,4],startDate:'2026-10-01',time:'18:30',reminders:[]};
+  let app=boot(new Map([[key,JSON.stringify({version:5,tasks:[routine],completed:{}})]]),wed);
+  row(app,'routine','overdueList').querySelector('.move-tomorrow').onclick();
+  const copy=app.state().tasks.find(task=>task.id!=='routine');
+  // The original day links forward to the moved task, and the moved task links back.
+  const forward=app.ids.skippedList.querySelector('.moved-link');
+  assert.match(forward.textContent,/^Moved to /);assert.match(forward.getAttribute('aria-label'),/Evening run was moved to .*Go to that day/);
+  forward.onclick();
+  assert.equal(app.ids.dayTitle.textContent,'Thursday.');assert.equal(app.context.document.activeElement,row(app,copy.id).querySelector('.edit-task'));
+  const back=row(app,copy.id).querySelector('.moved-link');
+  assert.match(back.textContent,/^Moved from /);assert.equal(row(app,copy.id).querySelector('.task-meta').textContent,'One time');
+  back.onclick();
+  assert.equal(app.ids.dayTitle.textContent,'Wednesday.');assert.equal(app.context.document.activeElement,app.ids.skippedTitle);
+  // The link survives a reload, and ordinary one-time tasks get none.
+  app=boot(app.storage,new Date(2026,10,5,9).getTime());
+  assert.ok(row(app,copy.id).querySelector('.moved-link'));assert.equal(row(app,'routine').querySelector('.moved-link'),null);
+  console.log('Moved links passed: Moved to and Moved from navigate between both days, focus lands on the task or skipped list, and links survive reload.');
+}
+verifyMovedLinks();

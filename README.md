@@ -29,7 +29,7 @@ Calendar weeks start Monday. Dates and times use your computer's local timezone.
 
 Complete an earlier task on its original date, or choose **Move to today** to change its date. Lists refresh as time passes, and each task appears in one section at a time.
 
-An unfinished timed task that becomes overdue **today** offers **Move to tomorrow**. It keeps its due time, notes, and reminder settings, disappears from today's list, and appears unchecked tomorrow. You stay on today's page and can Undo the move. For weekly routines, only today's occurrence moves as a separate one-time task; future repeats keep their schedule. If the routine already repeats tomorrow, both occurrences remain independently checkable. The moved task shows **Moved from** its original date, and the original date offers no Restore that would put it on both days.
+An unfinished timed task that becomes overdue **today** offers **Move to tomorrow**. It keeps its due time, notes, and reminder settings, disappears from today's list, and appears unchecked tomorrow. You stay on today's page and can Undo the move. For weekly routines, only today's occurrence moves as a separate one-time task; future repeats keep their schedule. If the routine already repeats tomorrow, both occurrences remain independently checkable. The moved task shows a **Moved from** link to its original date, and the original date shows a **Moved to** link instead of a Restore that would put it on both days.
 
 ## Your data and updates
 
