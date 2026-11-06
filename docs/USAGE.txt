@@ -165,7 +165,8 @@ These exports do not mark the original tasks as successfully backed up. Restore
 warns before replacing unreadable data; cancel keeps the original untouched.
 
 If the browser cannot save a change, a warning appears and the app tries again
-with every later change. The warning clears once a save succeeds. Until then,
+with every later change. Retry saving tries again right away, without another
+edit. The warning clears once a save succeeds. Until then,
 closing the tab asks for confirmation, unless a connected task file already holds
 your changes. Use Back up tasks to keep a copy if the warning stays. If another
 tab saves different tasks during that time, the app asks which copy to keep:

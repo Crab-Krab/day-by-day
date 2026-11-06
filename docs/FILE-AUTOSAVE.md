@@ -22,7 +22,7 @@ A standalone HTML file cannot silently locate and reopen an arbitrary file after
 
 ## If saving needs attention
 
-The status above the checklist reports file saves separately from the browser copy. Failed writes do not display a successful save. Keep the tab open, reconnect, or use **Back up tasks** to download a separate recovery copy.
+The status above the checklist reports file saves separately from the browser copy. Failed writes do not display a successful save. Keep the tab open and choose **Retry file save** to try again. Retry works only when nothing else changed the file since the last save. Otherwise use **Reconnect task file** to choose which copy to keep. You can also use **Back up tasks** to download a separate recovery copy.
 
 If the file and current tasks differ, the app asks which to keep. **Use file tasks** replaces the tasks currently shown. **Use current tasks** writes the current list to the selected file. **Cancel** preserves both copies. Download current tasks before choosing if you need to keep both. Invalid JSON files are never overwritten by the app.
 
