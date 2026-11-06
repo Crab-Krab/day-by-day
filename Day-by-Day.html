@@ -267,6 +267,8 @@ h1 span { color: var(--muted); }
 .task-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 10px; margin-bottom: 6px; }
 .task-heading .task-name { margin: 0; }
 .time-badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--subtle); color: var(--secondary); font-size: 11px; white-space: nowrap; }
+.reminder-badge { display: inline-flex; align-items: center; color: var(--secondary); }
+.reminder-badge svg { width: 14px; height: 14px; }
 .time-badge.timed { background: var(--active); color: var(--active-ink); font-weight: 600; }
 .reminder-meta { margin-top: 4px; font-size: 12px; }
 .task-name { font-size: 17px; font-weight: 500; overflow-wrap: anywhere; margin: 0 0 5px; line-height: 1.5; }
@@ -276,8 +278,8 @@ h1 span { color: var(--muted); }
 .task-row.done .task-name { text-decoration: line-through; color: var(--done-ink); }
 .task-row .edit-task { color: var(--secondary); flex-shrink: 0; width: 40px; height: 40px; touch-action: manipulation; }
 .task-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.task-order { display: flex; gap: 8px; flex-shrink: 0; }
-.task-order .move-task { width: 44px; height: 44px; padding: 0; border-radius: 6px; }
+.task-order { display: grid; gap: 2px; flex-shrink: 0; }
+.task-order .move-task { width: 32px; height: 28px; padding: 0; border-radius: 6px; }
 .move-task svg { width: 17px; height: 17px; }
 .move-up svg { transform: rotate(90deg); }
 .move-down svg { transform: rotate(-90deg); }
@@ -382,7 +384,6 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .task-menu-content { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; width: 240px; max-width: 75vw; padding: 14px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0002; }
 .task-menu-content>.text-button { display: flex; min-height: 44px; margin: 0; padding: 8px 0; font-size: 13px; }
-.task-menu-content .order-scope { margin: 10px 0 8px; }
 .task-menu-content .reminder-meta { margin-bottom: 10px; }
 .task-row .edit-task { height: 44px; }
 .task-meta { color: var(--secondary); font-size: 12px; }
@@ -500,7 +501,7 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
   .check-button { width: 44px; height: 44px; }
   .task-row .edit-task { width: 34px; height: 44px; }
   .task-actions { gap: 3px; }
-  .task-order .move-task { width: 44px; height: 44px; }
+  .task-order .move-task { width: 36px; height: 34px; }
   .empty-state { padding: 34px 18px; }
   .empty-state h3 { font-size: 26px; }
   .empty-state p { font-size: 14px; }
@@ -1610,7 +1611,14 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
     meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
-    heading.append(name, time); copy.append(heading, meta);
+    heading.append(name, time);
+    if (task.reminders?.length) {
+      // A small bell shows at a glance that a task will remind you. Details stay under More.
+      const when = task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ');
+      const bell = el('span', 'reminder-badge'); bell.title = `Reminder ${when} before`;
+      bell.append(icon('bell'), el('span', 'sr-only', `Reminder ${when} before`)); heading.append(bell);
+    }
+    copy.append(heading, meta);
     if (task.movedFrom) {
       // A task carried over by Move to tomorrow links back to the day it came from.
       const origin = el('button', 'text-button moved-link', `Moved from ${fmt(task.movedFrom.date, { weekday: 'short', month: 'short', day: 'numeric' })}`); origin.type = 'button';
@@ -1655,7 +1663,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
         if (!save()) return; focusTask(task.id);
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
-      secondary.append(moveToday);
+      // Rescheduling is the main reason to look at an overdue task, so it stays visible.
+      copy.append(moveToday);
     }
     if (inOverdue && !done && occurrenceDate === today && validDate(dateKey(plusDays(parseDate(today), 1)))) {
       const moveTomorrow = el('button', 'text-button move-tomorrow', 'Move to tomorrow'); moveTomorrow.type = 'button';
@@ -1690,7 +1699,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
           data.tasks = data.tasks.filter(item => original.kind === 'once' || item.id !== deferredId).map(item => item.id === original.id ? original : item);
         });
       };
-      secondary.append(moveTomorrow);
+      copy.append(moveTomorrow);
     }
     if (!routine && task.kind === 'weekly' && !done && occurrenceDate >= today) {
       const skip = el('button', 'text-button skip-task', 'Skip this occurrence'); skip.type = 'button';
@@ -1726,17 +1735,15 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
         const container = routine ? $('routineList') : overdue ? $('overdueList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
         const control = movedRow?.querySelector(`[data-move="${direction}"]`);
-        const menu = movedRow?.querySelector('.task-menu');
-        if (menu) { menu.open = true; openTaskMenuKey = menu.dataset.key; }
         if (control && !control.disabled) control.focus({ preventScroll: true }); else movedRow?.focus({ preventScroll: true });
         notify(routine ? `Routine moved ${direction}. Daily orders are unchanged.` : `Task moved ${direction}. This order repeats on ${DAYS[weekday]}.`);
       };
       ordering.append(move);
     }
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
-    if (!overdue || occurrenceDate === selected) {
-      secondary.append(el('p', 'order-scope', routine ? 'Reorder the routine catalog only.' : `Reordering repeats every ${DAYS[parseDate(occurrenceDate).getDay()]}.`), ordering);
-    }
+    // The reorder arrows sit to the left of the task, so moving it never needs the More menu.
+    // The line above the list explains what a move affects.
+    if (!overdue || occurrenceDate === selected) row.prepend(ordering);
     const menu = el('details', 'task-menu'), summary = el('summary', 'task-menu-toggle', 'More');
     const menuKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
     menu.dataset.key = menuKey; menu.open = openTaskMenuKey === menuKey;

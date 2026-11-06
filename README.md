@@ -16,7 +16,7 @@ The app opens to today. Select another day from the week strip, the month calend
 
 - **Plan your day:** All-day tasks or specific due times, with optional descriptions, notes, and clickable web links.
 - **Repeat weekly:** Each scheduled date gets its own checkbox. Completing a routine today leaves future occurrences unchecked.
-- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. **More** beside each task contains reordering arrows and other secondary actions. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
+- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows beside each task rearrange it, and **More** holds Skip and reminder details. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
 - **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
 - **Keep the list focused:** Collapse **Completed** to hide finished tasks; its count and your progress remain visible.
 - **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.
@@ -63,7 +63,7 @@ Keep the file open and your computer awake. Reminders are **best effort**: backg
 
 In-app reminders need no notification permission and have no action-confirmation timeout. Desktop alerts depend on browser support and workplace policies. Completing a task suppresses its reminders.
 
-**Known Edge issue:** The checklist has intermittently stopped accepting clicks or focus. This branch closes the task dialog immediately and keeps the checklist usable during startup file reconnection; these changes address possible causes but do not establish a long-term fix. Resizing the window or opening **Add task** may restore it; a long-term resolution has not been confirmed.
+**Known Edge issue:** The checklist has intermittently stopped accepting clicks or focus. The task dialog now closes immediately, and the checklist stays usable while the app reconnects your task file at startup. Both address possible causes, but a long-term fix has not been confirmed. Resizing the window or opening **Add task** may restore it.
 
 ## Development
 
@@ -90,7 +90,7 @@ npm run build
 
 The build writes `Day-by-Day.html` and refreshes `SHA256SUMS.txt`. It stops with an error if `src/index.html` no longer contains a tag it needs to inline. Edit `src/`, preserve existing saved data, and commit the rebuilt HTML and checksums alongside code changes.
 
-For checks in a real browser, run `npm run preview` and follow [docs/TESTING.md](docs/TESTING.md), which also has the manual checklist to use before a release. GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers. See [UI testing](docs/UI-TESTING.md) for the optional browser suite and its limits.
+For checks in a real browser, run `npm run preview` and follow [docs/TESTING.md](docs/TESTING.md), which also has the manual checklist to use before a release. GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers. The same guide explains the optional interface browser tests, which GitHub runs in Chrome and Edge.
 
 To publish a release, set the version in `package.json`, add its `CHANGELOG.md` section and `docs/releases/vX.Y.Z.md` notes, and merge to `main`. Then open **Actions**, choose **Release**, and select **Run workflow** with the version. Leave **Dry run** on the first time to check everything without publishing. The workflow repeats the checks, creates the tag, and attaches the HTML, guides, license, and checksums.
 

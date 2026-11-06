@@ -271,7 +271,7 @@ async function verifyReliability() {
   assert.equal(work.ids.undoNotice.hidden,false);assert.equal(work.ids.toast.hidden,true);
   work.ids.prevMonth.onclick();assert.equal(work.ids.undoNotice.hidden,false);work.ids.undoAction.onclick();assert.equal(work.state().tasks.some(task=>task.id==='current'),true);
   assert.equal(work.ids.statusAnnouncement.textContent,'Change undone.');assert.equal(work.ids.statusAnnouncement.hidden,false);
-  assert.equal(work.documentListeners.keydown.length,1);
+  for(const fn of work.documentListeners.keydown)fn({key:'n',target:work.context.document.body,preventDefault(){}});assert.equal(work.ids.taskDialog.open,false); // pressing N no longer opens Add task
   const moving=boot(new Map([['day-by-day.v1',JSON.stringify({version:4,tasks:[tasks[0]],completed:{}})]]),clock);
   moving.ids.overdueList.querySelector('.move-today').onclick();assert.equal(moving.state().tasks[0].date,'2026-10-28');assert.equal(moving.state().tasks[0].description,'Keep these notes');assert.equal(moving.ids.reminderPanel.hidden,true);
   moving.ids.undoAction.onclick();assert.equal(moving.state().tasks[0].date,'2026-10-27');assert.equal(moving.state().tasks[0].reminderFrom,0);
@@ -935,3 +935,19 @@ async function verifyRecoveryCopies() {
   console.log('Recovery copies passed: off by default, first copy, hourly limit, copies before deleting, ending, restoring and which-copy choices, confirmed restore, unreadable copies, newest 20 kept, other files untouched, paused without blocking saving, reopening, and turning off.');
 }
 verifyRecoveryCopies().catch(error=>{console.error(error);process.exitCode=1;});
+function verifyVisibleOverdueActionsAndBell() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,19).getTime();
+  const tasks=[{id:'late',kind:'once',title:'Late call',date:'2026-11-04',time:'18:00',reminders:[15]},{id:'older',kind:'once',title:'Old chore',date:'2026-11-02'},{id:'plain',kind:'once',title:'Plain',date:'2026-11-04'}];
+  const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]),wed);
+  const row=(id,list)=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const inMenu=(row,selector)=>Boolean(row.querySelector('.task-menu').querySelector(selector));
+  // Rescheduling stays visible on overdue rows instead of hiding under More.
+  assert.ok(row('late','overdueList').querySelector('.move-tomorrow'));assert.equal(inMenu(row('late','overdueList'),'.move-tomorrow'),false);
+  assert.ok(row('older','overdueList').querySelector('.move-today'));assert.equal(inMenu(row('older','overdueList'),'.move-today'),false);
+  // A bell beside the time shows which tasks have reminders, with the details read aloud.
+  const bell=row('late','overdueList').querySelector('.reminder-badge');
+  assert.ok(bell);assert.equal(bell.title,'Reminder 15 min before');assert.match(bell.textContent,/Reminder 15 min before/);
+  assert.equal(row('plain','taskList').querySelector('.reminder-badge'),null);
+  console.log('Visible overdue actions and reminder bell passed: Move to today and Move to tomorrow outside More, and a bell only on tasks with reminders.');
+}
+verifyVisibleOverdueActionsAndBell();

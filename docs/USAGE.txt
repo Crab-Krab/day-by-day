@@ -54,8 +54,7 @@ own checkbox. Completing one occurrence does not check off other occurrences.
 Existing single-day tasks and older backups keep their schedules and history.
 Existing tasks remain All day until you assign a specific time.
 MOVE TODAY'S OVERDUE TASK TO TOMORROW
-After a task's due time has passed today, choose More in its Overdue row,
-then Move to tomorrow.
+After a task's due time has passed today, its Overdue row offers Move to tomorrow.
 For example, a task due at 6:30 can be moved at 7:00. The task keeps the same due
 time, notes, and reminder settings on the next calendar day and starts unchecked.
 You stay on today's page, and Undo restores the original date.
@@ -120,9 +119,8 @@ Tasks default to due-time order, earliest first, with All day tasks at the end.
 Tasks with the same time sort alphabetically by name, ignoring capitalization;
 the All day group also sorts alphabetically. Numbered titles use natural order
 (Task 2 before Task 10). Custom ordering takes precedence over these defaults.
-Choose More beside a task to find Skip, rescheduling actions, reminder details,
-and the up/down arrows. The ordering scope appears before you move anything.
-Use the arrows to move any task in its section,
+Choose More beside a task to find Skip and reminder details. Use the small
+up/down arrows beside the checkbox to move any task in its section,
 regardless of due time. The first move switches to custom ordering, starting from
 the current due-time order. The custom order is saved for that weekday and reused
 in future weeks; other weekdays are unchanged. New tasks follow ranked tasks in

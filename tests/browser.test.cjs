@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 async function main() {
   let chromium;
   try { ({ chromium } = require(process.env.DAY_BY_DAY_PLAYWRIGHT_PATH || 'playwright')); }
-  catch { throw Error('Browser tests need Playwright. Install it separately, or set DAY_BY_DAY_PLAYWRIGHT_PATH to its module directory. See docs/UI-TESTING.md.'); }
+  catch { throw Error('Browser tests need Playwright. Install it separately, or set DAY_BY_DAY_PLAYWRIGHT_PATH to its module directory. See docs/TESTING.md.'); }
   const root = path.resolve(__dirname, '..');
   const server = http.createServer((req, res) => {
     const file = req.url === '/Day-by-Day.html' ? 'Day-by-Day.html' : req.url === '/' ? 'tests/ui-browser.html' : req.url === '/legacy' ? 'tests/browser.html' : null;

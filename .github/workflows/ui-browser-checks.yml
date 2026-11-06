@@ -2,7 +2,8 @@ name: UI browser checks
 
 on:
   push:
-    branches: [codex/ui-ux-improvements]
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:

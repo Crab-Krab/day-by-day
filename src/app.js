@@ -320,7 +320,14 @@
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
     meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
-    heading.append(name, time); copy.append(heading, meta);
+    heading.append(name, time);
+    if (task.reminders?.length) {
+      // A small bell shows at a glance that a task will remind you. Details stay under More.
+      const when = task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ');
+      const bell = el('span', 'reminder-badge'); bell.title = `Reminder ${when} before`;
+      bell.append(icon('bell'), el('span', 'sr-only', `Reminder ${when} before`)); heading.append(bell);
+    }
+    copy.append(heading, meta);
     if (task.movedFrom) {
       // A task carried over by Move to tomorrow links back to the day it came from.
       const origin = el('button', 'text-button moved-link', `Moved from ${fmt(task.movedFrom.date, { weekday: 'short', month: 'short', day: 'numeric' })}`); origin.type = 'button';
@@ -365,7 +372,8 @@
         if (!save()) return; focusTask(task.id);
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
-      secondary.append(moveToday);
+      // Rescheduling is the main reason to look at an overdue task, so it stays visible.
+      copy.append(moveToday);
     }
     if (inOverdue && !done && occurrenceDate === today && validDate(dateKey(plusDays(parseDate(today), 1)))) {
       const moveTomorrow = el('button', 'text-button move-tomorrow', 'Move to tomorrow'); moveTomorrow.type = 'button';
@@ -400,7 +408,7 @@
           data.tasks = data.tasks.filter(item => original.kind === 'once' || item.id !== deferredId).map(item => item.id === original.id ? original : item);
         });
       };
-      secondary.append(moveTomorrow);
+      copy.append(moveTomorrow);
     }
     if (!routine && task.kind === 'weekly' && !done && occurrenceDate >= today) {
       const skip = el('button', 'text-button skip-task', 'Skip this occurrence'); skip.type = 'button';
@@ -436,17 +444,15 @@
         const container = routine ? $('routineList') : overdue ? $('overdueList') : $('taskList');
         const movedRow = [...container.querySelectorAll('.task-row')].find(item => item.dataset.id === task.id);
         const control = movedRow?.querySelector(`[data-move="${direction}"]`);
-        const menu = movedRow?.querySelector('.task-menu');
-        if (menu) { menu.open = true; openTaskMenuKey = menu.dataset.key; }
         if (control && !control.disabled) control.focus({ preventScroll: true }); else movedRow?.focus({ preventScroll: true });
         notify(routine ? `Routine moved ${direction}. Daily orders are unchanged.` : `Task moved ${direction}. This order repeats on ${DAYS[weekday]}.`);
       };
       ordering.append(move);
     }
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
-    if (!overdue || occurrenceDate === selected) {
-      secondary.append(el('p', 'order-scope', routine ? 'Reorder the routine catalog only.' : `Reordering repeats every ${DAYS[parseDate(occurrenceDate).getDay()]}.`), ordering);
-    }
+    // The reorder arrows sit to the left of the task, so moving it never needs the More menu.
+    // The line above the list explains what a move affects.
+    if (!overdue || occurrenceDate === selected) row.prepend(ordering);
     const menu = el('details', 'task-menu'), summary = el('summary', 'task-menu-toggle', 'More');
     const menuKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
     menu.dataset.key = menuKey; menu.open = openTaskMenuKey === menuKey;

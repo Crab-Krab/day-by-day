@@ -61,8 +61,8 @@ run.onclick=async()=>{
       await click($('cancelDialog'));check(!doc.querySelector(':modal'),label('cancel immediately releases the native modal'));
       check(!row('routine').querySelector('.task-menu').open,label('secondary actions start hidden'));
       await click(row('routine').querySelector('summary'));check(row('routine').querySelector('.task-menu').open,label('More reveals the secondary actions'));
-      check(row('routine').querySelector('.task-menu-content').textContent.includes('Reordering repeats every')&&$('dayOrderScope').textContent.includes('reordering repeats every'),label('reordering scope is visible before moving a task'));
-      await click(row('routine').querySelector('.move-up'));check(row('routine').querySelector('.task-menu').open&&$('dayOrderScope').textContent.includes('Custom order'),label('reorder retains its open controls and updates the scope label'));
+      check(!row('routine').querySelector('.task-menu').contains(row('routine').querySelector('.move-up'))&&row('routine').querySelector('.move-up').getBoundingClientRect().width>0&&$('dayOrderScope').textContent.includes('reordering repeats every'),label('reorder arrows sit beside the task outside More, and the scope shows above the list'));
+      await click(row('routine').querySelector('.move-up'));check($('dayOrderScope').textContent.includes('Custom order'),label('reorder updates the scope label'));
       await click($('dayTitle'));check(!row('routine').querySelector('.task-menu').open,label('outside click dismisses the action menu'));
       await click($('sortDay'));check($('sortDay').hidden&&doc.activeElement===$('dayOrderScope'),label('reset restores due-time sorting and visible focus'));
       let group=doc.querySelector('.completed-tasks');await click(group.querySelector('summary'));check(!group.open,label('completed tasks collapse'));

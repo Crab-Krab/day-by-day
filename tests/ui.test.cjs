@@ -43,11 +43,11 @@ const app = boot(saved(), clock);
 assert.match(app.ids.dayOrderScope.textContent, /Due time.*every Wednesday/);
 assert.equal(row(app, 'a').querySelector('.move-down').getAttribute('aria-describedby'), 'dayOrderScope');
 const menu = row(app, 'a').querySelector('.task-menu');
-assert.equal(menu.open, false); assert.match(menu.textContent, /Reordering repeats every Wednesday/);
+assert.equal(menu.open, false); assert.equal(menu.querySelector('.move-up'), null); assert.ok(row(app, 'a').children[0].className.includes('task-order')); // arrows sit left of the task, outside More
 assert.ok(menu.querySelector('.skip-task')); assert.ok(row(app, 'b').querySelector('.task-menu').querySelector('.reminder-meta'));
 row(app, 'a').querySelector('.move-up').onclick();
 assert.match(app.ids.dayOrderScope.textContent, /Custom order.*every Wednesday/);
-assert.equal(row(app, 'a').querySelector('.task-menu').open, true);
+assert.equal(row(app, 'a').querySelector('.task-menu').open, false); // moving never opens More
 app.ids.sortDay.onclick();
 assert.match(app.ids.dayOrderScope.textContent, /^Due time/);
 assert.equal(app.context.document.activeElement, app.ids.dayOrderScope);
