@@ -236,6 +236,7 @@
   function chooseDate(date) {
     if (!validDate(date)) return;
     const previousView = view, changed = selected !== date || view !== 'day';
+    if (changed) openTaskMenuKey = null;
     selected = date; month = parseDate(date); view = 'day'; render();
     if (changed) { if (previousView !== 'day') revealView($('dailyView')); else fadeDayContent(); }
   }
@@ -617,7 +618,7 @@
     const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
-    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { setTaskOptions(true); $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
     // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
     const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
@@ -662,7 +663,7 @@
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
-      if (!validDate(effective) || effective < today) { $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
       task.snapshots = completedSnapshots(task, data.completed, effective);

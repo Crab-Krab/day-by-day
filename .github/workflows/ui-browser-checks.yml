@@ -25,6 +25,7 @@ jobs:
         env:
           DAY_BY_DAY_PLAYWRIGHT_PATH: ${{ runner.temp }}/day-by-day-browser/node_modules/playwright
           DAY_BY_DAY_BROWSER_OUTPUT: ${{ runner.temp }}/day-by-day-browser-results
+          DAY_BY_DAY_BROWSER_EMIT_PREVIEW: 'true'
         run: npm run test:browser
       - name: Save browser screenshots
         if: always()

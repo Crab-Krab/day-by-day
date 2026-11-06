@@ -177,6 +177,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 @media (max-width: 860px) { .task-file-panel { margin-inline: 24px; } }
 @media (max-width: 560px) { .task-file-panel { margin: 12px 18px 0; padding: 8px 12px; } }
 .saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
+.saved-label>.status-dot { display: none; }
 .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }
 .storage-area p { font-size: 12px; color: var(--secondary); margin: 8px 0 13px; }
 .text-button { border: 0; background: none; font-size: 12px; color: var(--secondary); padding: 5px 0; display: inline-flex; align-items: center; gap: 5px; margin-right: 12px; }
@@ -1362,6 +1363,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   function chooseDate(date) {
     if (!validDate(date)) return;
     const previousView = view, changed = selected !== date || view !== 'day';
+    if (changed) openTaskMenuKey = null;
     selected = date; month = parseDate(date); view = 'day'; render();
     if (changed) { if (previousView !== 'day') revealView($('dailyView')); else fadeDayContent(); }
   }
@@ -1743,7 +1745,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
-    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { setTaskOptions(true); $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
     // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
     const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
@@ -1788,7 +1790,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
-      if (!validDate(effective) || effective < today) { $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
       task.snapshots = completedSnapshots(task, data.completed, effective);
