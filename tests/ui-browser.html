@@ -59,6 +59,14 @@ run.onclick=async()=>{
       check(state().tasks.some(task=>task.title==='Quick entry task'&&task.time===null),label('quick entry saves without optional fields'));
       await click(row('report').querySelector('.edit-task'));check(!$('taskOptions').hidden&&$('taskTime').value==='23:59'&&$('taskDescription').value.includes('https://example.com'),label('full editor retains notes, time, and reminders'));
       await click($('cancelDialog'));check(!doc.querySelector(':modal'),label('cancel immediately releases the native modal'));
+      await click(row('routine').querySelector('.edit-task'));
+      const effective=$('taskEffectiveDate').value, yesterday=win.DayByDay.dateKey(win.DayByDay.plusDays(win.DayByDay.parseDate(effective),-1));
+      $('taskEffectiveDate').value=yesterday;await click($('toggleTaskOptions'));
+      check($('taskOptions').hidden,label('routine options can collapse before native date validation'));
+      await click($('saveTask'));
+      check($('taskDialog').open&&!$('taskOptions').hidden&&doc.activeElement===$('taskEffectiveDate')&&$('taskEffectiveDate').validity.rangeUnderflow,label('Save reveals and focuses an invalid date inside collapsed options'));
+      $('taskEffectiveDate').value=effective;await click($('saveTask'));
+      check(!$('taskDialog').open,label('correcting the revealed date allows the routine to save'));
       check(!row('routine').querySelector('.task-menu').open,label('secondary actions start hidden'));
       await click(row('routine').querySelector('summary'));check(row('routine').querySelector('.task-menu').open,label('More reveals the secondary actions'));
       check(!row('routine').querySelector('.task-menu').contains(row('routine').querySelector('.move-up'))&&row('routine').querySelector('.move-up').getBoundingClientRect().width>0&&$('dayOrderScope').textContent.includes('reordering repeats every'),label('reorder arrows sit beside the task outside More, and the scope shows above the list'));

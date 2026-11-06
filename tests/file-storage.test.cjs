@@ -142,6 +142,41 @@ async function main() {
   assert.equal(JSON.parse(realFile.raw).completed['2026-11-01'].length,1);
   integrated=harness.boot(cache,new Date(2026,10,2,10).getTime(),options);await settle();
   assert.equal(integrated.state().tasks[0].title,'Form autosave');assert.match(integrated.ids.taskFileStatus.textContent,/Saved to/);
+  // Startup must not replace data underneath an editor, including a task deleted
+  // from the file. Save asks which copy to keep; Cancel follows the latest file.
+  for (const deleted of [false,true]) for (const saveDraft of [false,true]) {
+    const before=sample('Cached task'),latest=deleted?empty():sample('Updated on disk');
+    const startupFile=disk(JSON.stringify(before));
+    let release;startupFile.queryPermission=()=>new Promise(resolve=>release=resolve);
+    const startupCache=new Map([['day-by-day.v1',JSON.stringify(before)]]);
+    const editing=harness.boot(startupCache,new Date(2026,10,1,10).getTime(),{
+      fileWindow:{isSecureContext:true,showSaveFilePicker:async()=>startupFile,showOpenFilePicker:async()=>[startupFile]},
+      indexedDB:idb({value:{handle:startupFile,baseline:JSON.stringify(before)}})
+    });
+    await settle();editing.ids.taskList.querySelector('.edit-task').onclick();
+    editing.ids.taskTitle.value='Draft while connecting';release('granted');await settle();
+    assert.equal(editing.ids.taskDialog.open,true);
+    assert.equal(editing.ids.fileChoiceDialog.open,false);
+    assert.equal(editing.state().tasks[0].title,'Cached task');
+    assert.match(editing.ids.taskFileStatus.textContent,/Finish editing/);
+    startupFile.raw=JSON.stringify(latest); // change after the first file read
+    if (saveDraft) {
+      editing.ids.taskForm.dispatch('submit');await settle();
+      assert.equal(editing.ids.fileChoiceDialog.open,true);
+      assert.equal(editing.state().tasks[0].title,'Draft while connecting');
+      assert.equal(startupFile.raw,JSON.stringify(latest));
+      editing.ids.fileChoiceCurrent.onclick();await settle();
+      assert.equal(JSON.parse(startupFile.raw).tasks[0].title,'Draft while connecting');
+    } else {
+      editing.ids.cancelDialog.onclick();await settle();
+      assert.equal(JSON.stringify(editing.state().tasks),JSON.stringify(latest.tasks));
+      assert.equal(startupFile.writes,0);
+    }
+    assert.equal(editing.ids.taskDialog.open,false);
+    assert.match(editing.ids.taskFileStatus.textContent,/^Saved to/);
+    assert.equal(editing.context.document.querySelector('.app-shell').inert,false);
+  }
+  console.log('Startup editor safety passed: updated/deleted file tasks wait for Save or Cancel, the latest file is reread, and saved drafts require an explicit conflict choice.');
   const noCache=harness.boot(new Map(),new Date(2026,10,2,10).getTime(),{...options,indexedDB:idb({}),storageWriteFails:true});await settle();
   noCache.context.crypto.randomUUID=()=> 'fresh_after_cleanup';
   await noCache.ids.openTaskFile.onclick();noCache.ids.addTask.onclick();noCache.ids.taskTitle.value='Works without cache';noCache.ids.taskForm.dispatch('submit');await settle();

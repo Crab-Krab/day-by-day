@@ -603,6 +603,11 @@
     $('toggleTaskOptions').setAttribute('aria-expanded', String(expanded));
     $('taskOptionsLabel').textContent = expanded ? 'Fewer options' : 'More options';
   }
+  // Native validation runs before submit. Reveal invalid optional controls while
+  // the browser can still focus them and show its validation message.
+  $('taskForm').addEventListener('invalid', event => {
+    if ($('taskOptions').contains(event.target)) setTaskOptions(true);
+  }, true);
   $('toggleTaskOptions').onclick = () => {
     if (!$('taskOptions').hidden && $('taskForm').elements.timing.value === 'timed' && !validTime($('taskTime').value)) {
       $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return;
@@ -1012,6 +1017,7 @@
   void recovery.init();
   fileStore = window.createTaskFileStorage({
     getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
+    waitForEditor: () => $('taskDialog').open ? new Promise(resolve => $('taskDialog').addEventListener('close', resolve, { once: true })) : null,
     applyData(next) {
       data = validate(next); undoNotice.hide();
       persistent = true; loadFailed = false; originalSavedData = null;

@@ -1,7 +1,7 @@
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {} }) {
+window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -146,7 +146,16 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     else void flush();
   }
   async function attach(target, { creating = false, automatic = false, knownBaseline = null } = {}) {
-    const disk = await readFile(target, creating);
+    let disk;
+    for (;;) {
+      disk = await readFile(target, creating);
+      const editorClosed = automatic && waitForEditor();
+      if (!editorClosed) break;
+      status('Finish editing to reconnect ' + target.name, 'Save or cancel the open task first. Your current tasks remain available while the file waits.', 'connecting');
+      await editorClosed;
+      // Both the file and the browser copy may have changed during editing.
+      // Read again, and check for another editor opened before that read finished.
+    }
     const current = snapshot();
     const currentHasTasks = getData().tasks.length > 0 || Object.keys(getData().completed).length > 0;
     let decision = creating ? 'current' : 'disk';
@@ -230,7 +239,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       initialized = true; return;
     }
     // The remembered connection may be slow. Keep the checklist usable; attach()
-    // compares the latest browser copy before loading or replacing any file data.
+    // waits for an open editor, then compares the latest browser and file copies.
     setBusy(true, false);
     status('Looking for your task file…', 'Checking the connection saved in this browser.');
     let failed = false;

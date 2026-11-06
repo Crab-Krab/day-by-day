@@ -35,7 +35,7 @@ function boot(storage, initialClock, options = {}) {
     scrollIntoView() {}
     getBoundingClientRect() { return {top:0,left:0,width:1}; }
     showModal() { this.open = true; }
-    close() { this.open = false; }
+    close() { this.open = false; queueMicrotask(() => this.dispatch('close')); }
     click() { if(this.tagName==='A'&&this.download)downloads.push({name:this.download,blob:blobURLs.get(this.href)});this.onclick?.(); }
     remove() { this.detached=true; if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); }
     reset() { for (const input of inputs) { input.value = input.initialValue || ''; input.checked = input.initialChecked || false; } }
