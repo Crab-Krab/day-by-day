@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add real-browser checks (`tests/browser.html`, run with `npm run preview`) that use the built app for adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links. Add `docs/TESTING.md` with a manual checklist for file permissions and other behavior that can't be automated. No app changes.
+
 - Move between days on the month calendar with the arrow keys, including across months and years. Tab reaches exactly one day: the selected day or today when shown, otherwise the 1st, so the calendar stays reachable after changing month. Add **Go to date** below the calendar to open any date directly.
 
 - Make **Moved from** on a task carried over by Move to tomorrow a link to its original day, and show a matching **Moved to** link on that day's skipped list. Each link opens the other day and moves keyboard focus there.

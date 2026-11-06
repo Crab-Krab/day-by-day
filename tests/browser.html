@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day by Day browser checks</title>
+<style>
+  body { font: 16px system-ui, sans-serif; max-width: 1000px; margin: 36px auto; padding: 0 20px; background: #f6f7f2; color: #243c34; }
+  button { padding: 12px 20px; font: inherit; }
+  li { padding: 4px 0; }
+  .pass { color: #236653; }
+  .fail { color: #a12626; font-weight: 600; }
+  /* Full width keeps the app above 860px, where its desktop layout shows the calendar. */
+  #frames { display: grid; gap: 12px; margin-top: 16px; }
+  iframe { width: 100%; height: 520px; border: 1px solid #ccd6c8; background: white; }
+</style>
+</head>
+<body>
+<h1>Day by Day browser checks</h1>
+<p>These checks use the real <code>Day-by-Day.html</code> in this browser, which the automated Node tests can't do. Start the preview with <code>npm run preview</code> and open this page from the address it prints. File pickers are turned off inside the test frames, so file permissions still use the manual checklist in <code>docs/TESTING.md</code>.</p>
+<p>The checks only touch this test page's own storage, and they put back whatever was there before. Your everyday tasks are never used.</p>
+<button type="button" id="run">Run browser checks</button>
+<p id="status" role="status">Ready</p>
+<ol id="results"></ol>
+<div id="frames"></div>
+<script>
+'use strict';
+const run = document.getElementById('run'), statusLine = document.getElementById('status'), results = document.getElementById('results');
+const KEYS = ['day-by-day.v1', 'day-by-day.backup.v1', 'day-by-day.reminders.v1', 'day-by-day.theme'];
+let passed = 0;
+function check(value, message) {
+  if (!value) throw new Error(message);
+  const item = document.createElement('li'); item.className = 'pass'; item.textContent = 'PASS: ' + message; results.append(item); passed++;
+}
+async function waitFor(predicate, what) {
+  const end = performance.now() + 5000;
+  while (!predicate()) {
+    if (performance.now() > end) throw new Error('Timed out waiting for ' + what);
+    await new Promise(requestAnimationFrame);
+  }
+}
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+function dayKey(offset) {
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+let html = '';
+// Each frame runs the real built app. File pickers are removed so no permission prompt can appear.
+async function openApp(frame) {
+  frame.srcdoc = html;
+  await new Promise((resolve, reject) => { const timer = setTimeout(() => reject(new Error('the app to load')), 5000); frame.onload = () => { clearTimeout(timer); resolve(); }; });
+  await waitFor(() => frame.contentWindow.DayByDay, 'the app to start');
+  const doc = frame.contentDocument;
+  return { doc, win: frame.contentWindow, $: id => doc.getElementById(id) };
+}
+async function addTask(app, title, description = '') {
+  app.$('addTask').click();
+  app.$('taskTitle').value = title; app.$('taskDescription').value = description;
+  app.$('taskForm').requestSubmit();
+  await waitFor(() => !app.$('taskDialog').open, 'the task dialog to close');
+}
+// Make browser saving fail in one frame only, then put it back.
+function breakSaving(app) {
+  const proto = app.win.Storage.prototype, original = proto.setItem;
+  proto.setItem = function (key, value) { if (key === 'day-by-day.v1') throw new app.win.DOMException('Full', 'QuotaExceededError'); return original.call(this, key, value); };
+  return () => { proto.setItem = original; };
+}
+run.onclick = async () => {
+  run.disabled = true; results.replaceChildren(); passed = 0; statusLine.textContent = 'Running…';
+  const saved = new Map(KEYS.map(key => [key, localStorage.getItem(key)]));
+  const holder = document.getElementById('frames'); holder.replaceChildren();
+  const frameA = document.createElement('iframe'), frameB = document.createElement('iframe');
+  frameA.title = 'App under test'; frameB.title = 'Second tab under test'; holder.append(frameA, frameB);
+  try {
+    KEYS.forEach(key => localStorage.removeItem(key));
+    const response = await fetch('../Day-by-Day.html', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Could not load Day-by-Day.html. Start the preview with npm run preview.');
+    html = (await response.text()).replace('<head>', '<head><script>window.showOpenFilePicker = undefined; window.showSaveFilePicker = undefined; window.showDirectoryPicker = undefined;<\/script>');
+
+    // Adding, completing, editing, and reloading.
+    let app = await openApp(frameA);
+    check(app.$('dayTitle').textContent.length > 1, 'The built app starts');
+    await addTask(app, 'Browser check task', 'Notes stay plain text <strong>bold?</strong> https://example.com/page');
+    check(app.$('taskList').textContent.includes('Browser check task'), 'Add task shows the new task');
+    check(!app.$('taskList').querySelector('.description-body strong'), 'Descriptions show as plain text, not HTML');
+    check(app.$('taskList').querySelector('.description-body a')?.rel.includes('noopener'), 'Links in descriptions open safely');
+    app.$('taskList').querySelector('.check-button').click();
+    check(app.$('completionText').textContent.includes('1 of 1'), 'Checking a task updates progress');
+    app = await openApp(frameA);
+    check(app.$('taskList').querySelector('.check-button')?.getAttribute('aria-pressed') === 'true', 'The task and its checkmark survive a reload');
+    app.$('taskList').querySelector('.edit-task').click();
+    app.$('taskTitle').value = 'Edited in a real browser'; app.$('taskForm').requestSubmit();
+    await waitFor(() => !app.$('taskDialog').open, 'the task dialog to close');
+    check(app.$('taskList').textContent.includes('Edited in a real browser'), 'Editing updates the task');
+
+    // Calendar keyboard and Go to date.
+    app.$('nextMonth').click(); app.$('nextMonth').click();
+    check(app.$('calendarGrid').querySelectorAll('button[tabindex="0"]').length === 1, 'After changing month, exactly one calendar day can be reached with Tab');
+    app.$('jumpDate').value = '2026-12-31'; app.$('jumpDate').dispatchEvent(new Event('change', { bubbles: true }));
+    check(app.$('dateEyebrow').textContent.includes('DECEMBER 31, 2026'), 'Go to date opens the typed date');
+    const lastDay = app.$('calendarGrid').querySelector('[data-date="2026-12-31"]');
+    lastDay.focus(); lastDay.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    check(app.doc.activeElement.dataset.date === '2027-01-01', 'Arrow keys move into the next year and keep focus');
+
+    // Theme.
+    const theme = app.$('themeToggle'), wasDark = theme.getAttribute('aria-pressed');
+    theme.click();
+    check(theme.getAttribute('aria-pressed') !== wasDark, 'The theme button switches appearance');
+
+    // Retry saving after the browser refuses a save.
+    app.$('jumpToday').click();
+    const restoreSaving = breakSaving(app);
+    app.$('taskList').querySelector('.check-button').click();
+    check(!app.$('storageWarning').hidden && !app.$('retrySave').hidden, 'A failed save shows the warning with Retry saving');
+    restoreSaving(); app.$('retrySave').click();
+    check(app.$('storageWarning').hidden, 'Retry saving saves and clears the warning');
+
+    // Two tabs: unsaved changes are never silently replaced.
+    localStorage.setItem('day-by-day.v1', JSON.stringify({ version: 5, tasks: [{ id: 'mine', kind: 'once', title: 'Shared task', date: dayKey(0) }], completed: {} }));
+    const tab1 = await openApp(frameA), tab2 = await openApp(frameB);
+    const restoreTab1 = breakSaving(tab1);
+    tab1.$('taskList').querySelector('.check-button').click();
+    await addTask(tab2, 'Added in the other tab');
+    await waitFor(() => tab1.$('tabChoiceDialog').open, 'the which-copy question');
+    check(tab1.$('taskList').querySelector('.check-button').getAttribute('aria-pressed') === 'true', 'Another tab saving asks which copy to keep, and this tab keeps its change meanwhile');
+    restoreTab1(); tab1.$('tabChoiceKeep').click();
+    await waitFor(() => !tab2.$('taskList').textContent.includes('Added in the other tab'), 'the other tab to update');
+    check(Object.values(JSON.parse(localStorage.getItem('day-by-day.v1')).completed).flat().includes('mine'), 'Keep this tab\'s tasks saves them, and the other tab follows');
+    frameB.remove();
+
+    // Move to tomorrow and the links between both days.
+    localStorage.setItem('day-by-day.v1', JSON.stringify({ version: 5, tasks: [{ id: 'run', kind: 'weekly', title: 'Overdue routine', weekdays: [0, 1, 2, 3, 4, 5, 6], startDate: dayKey(-30), time: '00:00' }], completed: {} }));
+    app = await openApp(frameA);
+    await waitFor(() => app.$('overdueList').querySelector('.move-tomorrow'), 'Move to tomorrow');
+    app.$('overdueList').querySelector('.move-tomorrow').click();
+    const movedTo = app.$('skippedList').querySelector('.moved-link');
+    check(movedTo?.textContent.startsWith('Moved to'), 'Move to tomorrow leaves a Moved to link on today');
+    movedTo.click();
+    check(app.doc.activeElement.classList.contains('edit-task'), 'Moved to opens tomorrow with the moved task focused');
+    app.$('taskList').querySelector('.moved-link').click();
+    check(app.doc.activeElement === app.$('skippedTitle'), 'Moved from comes back to the original day');
+
+    statusLine.textContent = `All ${passed} browser checks passed`;
+  } catch (error) {
+    const item = document.createElement('li'); item.className = 'fail'; item.textContent = 'FAIL: ' + error.message; results.append(item);
+    statusLine.textContent = `Browser checks failed after ${passed} passed`;
+  } finally {
+    await pause(50);
+    holder.replaceChildren();
+    for (const [key, value] of saved) value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value);
+    run.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
