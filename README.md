@@ -70,7 +70,9 @@ Use **Node.js 20 or newer**. There are no packages to install.
 | `src/` | Editable HTML, CSS, app logic, and theme handling. `schedule.js` holds the scheduling, history, reminder, and validation logic that the tests load directly |
 | `scripts/build.mjs` | Builds the standalone HTML and its checksums |
 | `scripts/release-files.mjs` | Prepares the files attached to a GitHub release |
-| `tests/` | Scheduling, history/migration, theme, runtime, and file-storage checks |
+| `scripts/preview.mjs` | Serves the app and browser checks on this computer |
+| `docs/TESTING.md` | Browser checks and the manual checklist before a release |
+| `tests/` | Scheduling, history/migration, theme, runtime, and file-storage checks, plus `browser.html` for real-browser checks |
 | `.github/workflows/` | Automated checks on every push and pull request, and the release publisher |
 | `docs/USAGE.txt` | Detailed user guide |
 | `Day-by-Day.html` | Ready-to-use app generated from the source |
@@ -84,7 +86,7 @@ npm run build
 
 The build writes `Day-by-Day.html` and refreshes `SHA256SUMS.txt`. It stops with an error if `src/index.html` no longer contains a tag it needs to inline. Edit `src/`, preserve existing saved data, and commit the rebuilt HTML and checksums alongside code changes.
 
-GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers.
+For checks in a real browser, run `npm run preview` and follow [docs/TESTING.md](docs/TESTING.md), which also has the manual checklist to use before a release. GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers.
 
 To publish a release, set the version in `package.json`, add its `CHANGELOG.md` section and `docs/releases/vX.Y.Z.md` notes, and merge to `main`. Then open **Actions**, choose **Release**, and select **Run workflow** with the version. Leave **Dry run** on the first time to check everything without publishing. The workflow repeats the checks, creates the tag, and attaches the HTML, guides, license, and checksums.
 
