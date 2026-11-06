@@ -24,7 +24,7 @@
   function fadeDayContent() {
     playMotion($('dayTitle'), [{ opacity: .8 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
   }
-  let dialogCycle = 0, dialogFocusTarget = null;
+  let dialogCycle = 0, dialogFocusTarget = null, taskFormStart = '';
   function focusTask(id) {
     const containers = [view === 'routines' ? $('routineList') : $('taskList')];
     if (view === 'day' && selected === today && !$('overdueSection').hidden) containers.push($('overdueList'));
@@ -648,6 +648,7 @@
       $('scheduleHint').textContent = 'This routine has ended. Saved occurrences and completion history are kept for reference.';
     }
     $('taskDialog').showModal();
+    taskFormStart = taskFormState();
     playMotion($('taskDialog'), [{ opacity: 0 }, { opacity: 1 }], { duration: 180 });
     (editingReadOnly ? $('cancelDialog') : $('taskTitle')).focus();
   }
@@ -736,6 +737,26 @@
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
   $('taskDialog').addEventListener('cancel', event => { event.preventDefault(); closeTaskDialog(); });
+  // Clicking outside the task window closes it, like Cancel. If anything was typed or changed,
+  // ask first, so a stray click never throws away a draft.
+  function taskFormState() {
+    const form = $('taskForm').elements;
+    return JSON.stringify([...['taskTitle', 'taskDescription', 'taskDate', 'taskTime', 'taskEffectiveDate'].map(id => $(id).value),
+      form.kind.value, form.timing.value, ...weekdayInputs.map(input => input.checked), ...reminderInputs.map(input => input.checked)]);
+  }
+  function outsideTaskDialog(event) {
+    const box = $('taskDialog').getBoundingClientRect();
+    return event.target === $('taskDialog') && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom);
+  }
+  let pressStartedOutside = false;
+  // Only a press that starts and ends outside counts, so selecting text and dragging past the edge is safe.
+  $('taskDialog').addEventListener('pointerdown', event => { pressStartedOutside = outsideTaskDialog(event); });
+  $('taskDialog').addEventListener('click', event => {
+    const outside = pressStartedOutside && outsideTaskDialog(event); pressStartedOutside = false;
+    if (!outside) return;
+    if (!editingReadOnly && taskFormState() !== taskFormStart && !window.confirm('Discard your changes to this task?')) return;
+    closeTaskDialog();
+  });
   document.addEventListener('click', event => {
     // A row action may have just rebuilt the list. Keep its replacement menu open.
     if (!event.target.isConnected) return;

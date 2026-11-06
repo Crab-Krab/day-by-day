@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Close the Add or Edit task window by clicking outside it. If anything was typed or changed, the app asks before discarding it. Selecting text and dragging past the window's edge keeps it open.
 - Wait for an open task editor before reconnecting a remembered file, then reread the file and ask which copy to keep when needed. This prevents stale edits from overwriting newer file details or disappearing after a task was deleted from the file.
 - Reveal collapsed task options when browser validation finds an invalid field, so Save can focus the field and explain what needs correcting.
 

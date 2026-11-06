@@ -996,3 +996,21 @@ function verifyComingUp() {
   console.log('Coming up passed: 7 days after the selected day, counts, names in list order with +more, empty and all-done days, skipped occurrences left out, and opening a day.');
 }
 verifyComingUp();
+function verifyClickOutsideTaskDialog() {
+  const app=boot(new Map(),new Date(2026,10,6,10).getTime()),dialog=app.ids.taskDialog;
+  const press=(target,x)=>{for(const fn of dialog.listeners.pointerdown)fn({target,clientX:x,clientY:x});for(const fn of dialog.listeners.click)fn({target,clientX:x,clientY:x});};
+  let asked=0;app.context.window.confirm=()=>{asked++;return false;};
+  // Nothing typed: a click outside closes the window, like Cancel.
+  app.ids.addTask.onclick();press(dialog,-20);assert.equal(dialog.open,false);assert.equal(asked,0);
+  // A click on the window itself, or a press that starts inside and ends outside, keeps it open.
+  app.ids.addTask.onclick();press(dialog,10);assert.equal(dialog.open,true);
+  for(const fn of dialog.listeners.pointerdown)fn({target:app.ids.taskTitle,clientX:10,clientY:10});
+  for(const fn of dialog.listeners.click)fn({target:dialog,clientX:-20,clientY:-20});
+  assert.equal(dialog.open,true);
+  // Something typed: it asks first. Keep editing leaves it open; Discard closes without adding a task.
+  app.ids.taskTitle.value='Half-typed task';press(dialog,-20);assert.equal(asked,1);assert.equal(dialog.open,true);
+  app.context.window.confirm=()=>true;press(dialog,-20);assert.equal(dialog.open,false);
+  assert.equal(app.ids.taskList.querySelectorAll('.task-row').length,0);
+  console.log('Click outside task window passed: closes when untouched, asks before discarding typed changes, and ignores clicks inside or drags that start inside.');
+}
+verifyClickOutsideTaskDialog();

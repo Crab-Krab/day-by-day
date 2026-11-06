@@ -60,6 +60,8 @@ After a task's due time has passed today, its Overdue row offers Move to tomorro
 For example, a task due at 6:30 can be moved at 7:00. The task keeps the same due
 time, notes, and reminder settings on the next calendar day and starts unchecked.
 You stay on today's page, and Undo restores the original date.
+Click outside the task window to close it, like Cancel. If you have typed or
+changed anything, the app asks before discarding it.
 
 For weekly routines, only today's occurrence moves: today is skipped and a
 separate one-time task is created for tomorrow. Future weekly repeats keep their
