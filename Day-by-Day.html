@@ -214,32 +214,7 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .theme-moon { opacity: 0; transform: rotate(-75deg) scale(.45); }
 [data-theme=dark] .theme-sun { opacity: 0; transform: rotate(75deg) scale(.45); }
 [data-theme=dark] .theme-moon { opacity: 1; transform: rotate(0) scale(1); }
-.content { width: 100%; max-width: var(--content-max, 1380px); margin: 0 auto; padding: 28px 40px 32px; }
-/* The Coming up column appears only on wide screens, beside the checklist. */
-.coming-up { display: none; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); padding: 18px 14px 8px; }
-.coming-up h2 { margin: 0 6px; font-size: 16px; }
-.coming-up-hint { margin: 2px 6px 10px; font-size: 12px; color: var(--secondary); }
-.coming-up-list { list-style: none; margin: 0; padding: 0; }
-.coming-up-day { border-top: 1px solid var(--line); }
-.coming-up-open { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 10px; width: 100%; margin: 4px 0; padding: 8px 6px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
-.coming-up-open:hover { background: var(--hover); }
-.coming-up-date { font-size: 13px; font-weight: 600; }
-.coming-up-count { font-size: 12px; color: var(--secondary); white-space: nowrap; }
-.coming-up-tasks { grid-column: 1 / -1; overflow: hidden; font-size: 12px; color: var(--secondary); text-overflow: ellipsis; white-space: nowrap; }
-.coming-up-open.empty .coming-up-date { font-weight: 500; color: var(--secondary); }
-@media (min-width: 1151px) {
-  /* Notices and the saving panels line up with the content below them instead of running edge to edge. */
-  .task-file-panel, .recovery-panel, .backup-notice, .undo-notice, .warning { margin-inline: max(40px, calc((100% - var(--content-max, 1380px)) / 2 + 40px)); }
-}
-@media (min-width: 1360px) {
-  :root { --content-max: 1680px; }
-  /* Wide screens: the day title sits beside the week strip, and Coming up sits beside the checklist. */
-  #dailyView:not([hidden]) { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(260px, 320px); column-gap: 28px; align-items: start; }
-  #dailyView > .page-heading { grid-column: 1; }
-  #dailyView > .week-section { grid-column: 2 / 4; align-self: end; }
-  #dailyView > .day-main { grid-column: 1 / 3; min-width: 0; }
-  #dailyView > .coming-up { display: block; grid-column: 3; position: sticky; top: 20px; }
-}
+.content { width: 100%; max-width: 1380px; margin: 0 auto; padding: 28px 40px 32px; }
 .page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 18px; }
 .eyebrow { font-size: 11px; font-weight: 650; letter-spacing: 1.7px; color: var(--accent); margin: 0 0 13px; line-height: 1.6; }
 h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 48px; letter-spacing: -1.5px; font-weight: 400; margin: 0 0 8px; line-height: 1.12; }
@@ -633,11 +608,10 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
       <section id="dailyView" class="content">
         <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="primary-button">Back to today</button></div>
         <section class="week-section" aria-label="Select a day"><div class="week-heading"><span id="weekLabel"></span><div class="arrow-group"><button id="prevWeek" class="icon-button" aria-label="Previous week"><svg><use href="#i-arrow"/></svg></button><button id="nextWeek" class="icon-button" aria-label="Next week"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div><div id="weekStrip" class="week-strip"></div></section>
-        <div class="day-main"><section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Overdue <span id="overdueCount">0</span></h2></div><p class="overdue-hint">Unfinished tasks past their due time today, plus one-time tasks from earlier dates.</p><div id="overdueList"></div></section>
+        <section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Overdue <span id="overdueCount">0</span></h2></div><p class="overdue-hint">Unfinished tasks past their due time today, plus one-time tasks from earlier dates.</p><div id="overdueList"></div></section>
         <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div class="list-order"><span id="dayOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortDay" class="sort-button" hidden>Reset to due time</button></div><div id="taskList"></div></section>
         <section id="skippedSection" class="checklist-card skipped-section" aria-labelledby="skippedTitle" hidden><div class="checklist-header"><h2 id="skippedTitle" tabindex="-1">Skipped for this date</h2></div><div id="skippedList"></div></section>
-        <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div></div>
-        <aside id="comingUp" class="coming-up" aria-labelledby="comingUpTitle"><h2 id="comingUpTitle">Coming up</h2><p id="comingUpHint" class="coming-up-hint">Next 7 days</p><ol id="comingUpList" class="coming-up-list"></ol></aside>
+        <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div>
       </section>
       <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1 id="routinesTitle">Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span id="routineOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortRoutines" class="sort-button" hidden>Reset to due time</button></div></div><div id="routineList"></div></section><details id="endedRoutines" class="ended-routines" hidden><summary>Ended routines <span id="endedCount">0</span></summary><div id="endedRoutineList"></div></details><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
       <footer class="main-footer"><span>Less remembering. More doing.</span><span>day by day.</span></footer>
@@ -1790,27 +1764,6 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     });
     actions.append(edit, menu); row.append(actions); return row;
   }
-  // The Coming up column lists the 7 days after the selected day. It only shows on wide screens.
-  function renderComingUp() {
-    const start = parseDate(selected);
-    $('comingUpHint').textContent = selected === today ? 'Next 7 days' : `7 days after ${fmt(selected, { weekday: 'short', month: 'short', day: 'numeric' })}`;
-    const days = [];
-    for (let offset = 1; offset <= 7; offset++) {
-      const key = dateKey(plusDays(start, offset));
-      if (!validDate(key)) break;
-      // Only days with two or more tasks need sorting into the order your list uses.
-      const found = data.tasks.filter(task => scheduled(task, key)).map(task => resolveTask(task, key));
-      const tasks = found.length > 1 ? orderedTasks(found, key) : found, open = tasks.filter(task => !isDone(task.id, key));
-      const button = el('button', 'coming-up-open' + (tasks.length ? '' : ' empty')); button.type = 'button';
-      const count = !tasks.length ? 'Nothing planned' : !open.length ? 'All done' : `${open.length} task${open.length === 1 ? '' : 's'}`;
-      button.append(el('span', 'coming-up-date', fmt(key, { weekday: 'short', month: 'short', day: 'numeric' })), el('span', 'coming-up-count', count));
-      const shown = (open.length ? open : tasks).slice(0, 3), more = (open.length ? open : tasks).length - shown.length;
-      if (shown.length) button.append(el('span', 'coming-up-tasks', shown.map(task => task.title).join(' · ') + (more > 0 ? ` · +${more} more` : '')));
-      button.onclick = () => chooseDate(key);
-      const item = el('li', 'coming-up-day'); item.append(button); days.push(item);
-    }
-    $('comingUpList').replaceChildren(...days);
-  }
   function render() {
     calendarCounts.clear();
     const overdue = overdueTasks(data.tasks, data.completed, today);
@@ -1884,7 +1837,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       history.onclick = () => chooseDate(lastRoutineDate(task, task.endedOn) || task.endedOn);
       item.append(history); return item;
     }));
-    renderComingUp(); renderCalendar(); renderWeek();
+    renderCalendar(); renderWeek();
   }
   const weekdayInputs = [...document.querySelectorAll('input[name="weekdays"]')];
   weekdayInputs.forEach(input => {
