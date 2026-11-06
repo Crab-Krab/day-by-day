@@ -2,17 +2,16 @@
 
 ## Unreleased
 
+## 1.5.0 — 2026-11-06
+
 - Add optional **Recovery copies** in desktop Chrome/Edge: up to 20 earlier versions of your tasks in a folder you choose. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. **Show copies** lists them in local time, and **Restore** asks first and saves the current tasks before replacing them. Copies never block saving: if the folder can't be used, copies pause and tasks keep saving. Only the app's own copy files are ever removed.
-
-- Add real-browser checks (`tests/browser.html`, run with `npm run preview`) that use the built app for adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links. Add `docs/TESTING.md` with a manual checklist for file permissions and other behavior that can't be automated. No app changes.
-
-- Move between days on the month calendar with the arrow keys, including across months and years. Tab reaches exactly one day: the selected day or today when shown, otherwise the 1st, so the calendar stays reachable after changing month. Add **Go to date** below the calendar to open any date directly.
-
-- Make **Moved from** on a task carried over by Move to tomorrow a link to its original day, and show a matching **Moved to** link on that day's skipped list. Each link opens the other day and moves keyboard focus there.
-
 - Add **Retry saving** to the browser-storage warning, and **Retry file save** to the task-file panel after a failed write. Both try again right away without another edit. File retry resumes only when nothing else changed the file, otherwise Reconnect still asks which copy to keep. No retry is offered over saved data that could not be loaded.
-
+- Move between days on the month calendar with the arrow keys, including across months and years. Tab reaches exactly one day: the selected day or today when shown, otherwise the 1st, so the calendar stays reachable after changing month. Add **Go to date** below the calendar to open any date directly.
+- Make **Moved from** on a task carried over by Move to tomorrow a link to its original day, and show a matching **Moved to** link on that day's skipped list. Each link opens the other day and moves keyboard focus there.
+- Add real-browser checks (`tests/browser.html`, run with `npm run preview`) that use the built app for adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links. Add `docs/TESTING.md` with a manual checklist for file permissions and other behavior that can't be automated. No app changes.
 - Move the scheduling, history, reminder, and validation logic from `app.js` into `src/schedule.js`. Tests now load that file directly instead of cutting code out of `app.js` by searching for marker text, so reorganizing the app can't silently break them. App behavior is unchanged.
+
+Saved-data format remains 5, so v1.4.x and v1.5.0 can read each other's tasks and backups.
 
 ## 1.4.1 — 2026-11-05
 
