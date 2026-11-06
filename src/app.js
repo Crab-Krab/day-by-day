@@ -247,6 +247,10 @@
     const first = new Date(month.getFullYear(), month.getMonth(), 1, 12), start = monday(first);
     const grid = $('calendarGrid'), monthKey = `${month.getFullYear()}-${month.getMonth()}`;
     if (grid.dataset.monthKey !== monthKey) { grid.replaceChildren(); grid.dataset.monthKey = monthKey; }
+    // Exactly one day is reachable with Tab: the selected day or today when shown in this month,
+    // otherwise the 1st. The arrow keys then move between days.
+    const inMonth = key => parseDate(key).getMonth() === month.getMonth() && parseDate(key).getFullYear() === month.getFullYear();
+    const tabKey = inMonth(selected) ? selected : inMonth(today) ? today : dateKey(first);
     for (let i = 0; i < 42; i++) {
       const date = plusDays(start, i), key = dateKey(date), count = taskCountOn(key);
       let button = grid.children[i];
@@ -255,8 +259,21 @@
       button.type = 'button'; button.setAttribute('aria-label', `${fmt(key, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}, ${count} task${count === 1 ? '' : 's'}`);
       button.setAttribute('aria-current', key === today ? 'date' : 'false');
       button.setAttribute('aria-pressed', String(key === selected)); button.onclick = () => chooseDate(key);
+      button.dataset.date = key; button.tabIndex = key === tabKey ? 0 : -1;
+      button.onkeydown = event => {
+        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
+        if (!step) return;
+        event.preventDefault();
+        const next = dateKey(plusDays(parseDate(key), step));
+        if (!validDate(next)) return;
+        chooseDate(next);
+        [...$('calendarGrid').children].find(day => day.dataset.date === next)?.focus();
+      };
     }
+    // Show the selected day in Go to date, unless someone is typing in it.
+    if (document.activeElement !== $('jumpDate')) $('jumpDate').value = selected;
   }
+  $('jumpDate').onchange = () => chooseDate($('jumpDate').value);
   function renderWeek() {
     const start = monday(parseDate(selected)), end = plusDays(start, 6);
     $('weekLabel').textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;

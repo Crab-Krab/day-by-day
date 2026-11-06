@@ -128,6 +128,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .calendar-grid .has-tasks:after { position: absolute; content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); bottom: 2px; left: calc(50% - 2px); }
 .calendar-grid .selected.has-tasks:after { background: #d6e8c6; }
 .calendar-key { position: relative; display: flex; align-items: center; padding-inline-start: var(--calendar-label-inset); font-size: 12px; color: var(--secondary); margin-top: 15px; }
+.jump-date { margin-top: 18px; }
+.jump-date label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--secondary); }
+.jump-date input:not([type=radio]):not([type=checkbox]) { min-height: 36px; padding: 6px 10px; font-size: 13px; }
 .calendar-key span { position: absolute; inset-inline-start: calc(var(--calendar-label-inset) - 11px); top: 50%; margin-top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
 .backup-status { line-height: 1.6; }
 .backup-notice, .undo-notice { margin: 16px 48px 0; padding: 14px 18px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--subtle); color: var(--ink); font-size: 13px; }
@@ -540,8 +543,8 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       <section class="calendar-panel" aria-label="Calendar">
         <div class="calendar-heading"><h2 id="monthLabel"></h2><div class="arrow-group"><button id="prevMonth" class="icon-button" aria-label="Previous month"><svg><use href="#i-arrow"/></svg></button><button id="nextMonth" class="icon-button" aria-label="Next month"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div>
         <div class="calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-        <div id="calendarGrid" class="calendar-grid"></div>
-        <div class="calendar-key"><span></span>Tasks planned</div>
+        <div id="calendarGrid" class="calendar-grid" aria-describedby="calendarHint"></div><p id="calendarHint" class="sr-only">Use the arrow keys to move between days.</p>
+        <div class="calendar-key"><span></span>Tasks planned</div><div class="jump-date"><label for="jumpDate">Go to date</label><input type="date" id="jumpDate" min="1900-01-01" max="9999-12-31"></div>
       </section>
       <div class="sidebar-note"><svg><use href="#i-leaf"/></svg><p>Make room for what matters.<br><span>One checkbox at a time.</span></p></div>
       <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
@@ -1328,6 +1331,10 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const first = new Date(month.getFullYear(), month.getMonth(), 1, 12), start = monday(first);
     const grid = $('calendarGrid'), monthKey = `${month.getFullYear()}-${month.getMonth()}`;
     if (grid.dataset.monthKey !== monthKey) { grid.replaceChildren(); grid.dataset.monthKey = monthKey; }
+    // Exactly one day is reachable with Tab: the selected day or today when shown in this month,
+    // otherwise the 1st. The arrow keys then move between days.
+    const inMonth = key => parseDate(key).getMonth() === month.getMonth() && parseDate(key).getFullYear() === month.getFullYear();
+    const tabKey = inMonth(selected) ? selected : inMonth(today) ? today : dateKey(first);
     for (let i = 0; i < 42; i++) {
       const date = plusDays(start, i), key = dateKey(date), count = taskCountOn(key);
       let button = grid.children[i];
@@ -1336,8 +1343,21 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       button.type = 'button'; button.setAttribute('aria-label', `${fmt(key, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}, ${count} task${count === 1 ? '' : 's'}`);
       button.setAttribute('aria-current', key === today ? 'date' : 'false');
       button.setAttribute('aria-pressed', String(key === selected)); button.onclick = () => chooseDate(key);
+      button.dataset.date = key; button.tabIndex = key === tabKey ? 0 : -1;
+      button.onkeydown = event => {
+        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
+        if (!step) return;
+        event.preventDefault();
+        const next = dateKey(plusDays(parseDate(key), step));
+        if (!validDate(next)) return;
+        chooseDate(next);
+        [...$('calendarGrid').children].find(day => day.dataset.date === next)?.focus();
+      };
     }
+    // Show the selected day in Go to date, unless someone is typing in it.
+    if (document.activeElement !== $('jumpDate')) $('jumpDate').value = selected;
   }
+  $('jumpDate').onchange = () => chooseDate($('jumpDate').value);
   function renderWeek() {
     const start = monday(parseDate(selected)), end = plusDays(start, 6);
     $('weekLabel').textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;

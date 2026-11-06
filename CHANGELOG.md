@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Move between days on the month calendar with the arrow keys, including across months and years. Tab reaches exactly one day: the selected day or today when shown, otherwise the 1st, so the calendar stays reachable after changing month. Add **Go to date** below the calendar to open any date directly.
+
 - Make **Moved from** on a task carried over by Move to tomorrow a link to its original day, and show a matching **Moved to** link on that day's skipped list. Each link opens the other day and moves keyboard focus there.
 
 - Add **Retry saving** to the browser-storage warning, and **Retry file save** to the task-file panel after a failed write. Both try again right away without another edit. File retry resumes only when nothing else changed the file, otherwise Reconnect still asks which copy to keep. No retry is offered over saved data that could not be loaded.
