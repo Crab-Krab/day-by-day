@@ -96,6 +96,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .calendar-grid .has-tasks:after { position: absolute; content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); bottom: 2px; left: calc(50% - 2px); }
 .calendar-grid .selected.has-tasks:after { background: #d6e8c6; }
 .calendar-key { position: relative; display: flex; align-items: center; padding-inline-start: var(--calendar-label-inset); font-size: 12px; color: var(--secondary); margin-top: 15px; }
+.jump-date { margin-top: 18px; }
+.jump-date label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--secondary); }
+.jump-date input:not([type=radio]):not([type=checkbox]) { min-height: 36px; padding: 6px 10px; font-size: 13px; }
 .calendar-key span { position: absolute; inset-inline-start: calc(var(--calendar-label-inset) - 11px); top: 50%; margin-top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
 .backup-status { line-height: 1.6; }
 .backup-notice, .undo-notice { margin: 16px 48px 0; padding: 14px 18px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--subtle); color: var(--ink); font-size: 13px; }
@@ -144,6 +147,18 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 @media (max-width: 1150px) { .task-file-panel { margin-inline: 30px; } }
 @media (max-width: 860px) { .task-file-panel { margin-inline: 24px; } }
 @media (max-width: 560px) { .task-file-panel { margin: 12px 18px 0; padding: 8px 12px; } }
+/* Optional recovery copies, collapsed under the task-file panel. */
+.recovery-panel { margin: 12px 36px 0; padding: 12px 18px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
+.recovery-panel[data-state="paused"] { border-color: #b97835; }
+.recovery-panel summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; color: var(--secondary); }
+.recovery-intro, .recovery-status { margin: 8px 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
+.recovery-status:empty { display: none; }
+.recovery-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.recovery-actions button, .recovery-list button { font-size: 12px; }
+.recovery-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.recovery-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+@media (max-width: 700px) { .recovery-panel { margin: 12px 16px 0; padding: 12px 14px; } }
 .saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
 .saved-label>.status-dot { display: none; }
 .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }

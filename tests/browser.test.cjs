@@ -9,7 +9,7 @@ async function main() {
   catch { throw Error('Browser tests need Playwright. Install it separately, or set DAY_BY_DAY_PLAYWRIGHT_PATH to its module directory. See docs/UI-TESTING.md.'); }
   const root = path.resolve(__dirname, '..');
   const server = http.createServer((req, res) => {
-    const file = req.url === '/Day-by-Day.html' ? 'Day-by-Day.html' : req.url === '/' ? 'tests/browser.html' : null;
+    const file = req.url === '/Day-by-Day.html' ? 'Day-by-Day.html' : req.url === '/' ? 'tests/ui-browser.html' : req.url === '/legacy' ? 'tests/browser.html' : null;
     if (!file) { res.writeHead(404); res.end(); return; }
     res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end(fs.readFileSync(path.join(root, file)));
   });
@@ -92,6 +92,15 @@ async function main() {
           }
         }
       }
+      const legacy = await context.newPage();
+      legacy.on('pageerror', error => errors.push(error.message));
+      await legacy.clock.install({ time: new Date('2026-11-06T14:00:00Z') });
+      await legacy.goto(`http://127.0.0.1:${server.address().port}/legacy`);
+      await legacy.getByRole('button', { name: 'Run browser checks' }).click();
+      await legacy.waitForFunction(() => !document.getElementById('run').disabled, { timeout: 120000 });
+      const legacyStatus = await legacy.locator('#status').innerText();
+      assert.match(legacyStatus, /^All \d+ browser checks passed$/, await legacy.locator('#results').innerText());
+      console.log(`${reducedMotion}: v1.5.0 regression: ${legacyStatus}`);
       assert.deepEqual(errors, []);
       await context.close();
     }

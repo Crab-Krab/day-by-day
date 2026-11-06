@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="theme.js"></script>
   <script src="schedule.js" defer></script>
+<script src="recovery.js" defer></script>
   <script src="file-storage.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -27,8 +28,8 @@
       <section class="calendar-panel" aria-label="Calendar">
         <div class="calendar-heading"><h2 id="monthLabel"></h2><div class="arrow-group"><button id="prevMonth" class="icon-button" aria-label="Previous month"><svg><use href="#i-arrow"/></svg></button><button id="nextMonth" class="icon-button" aria-label="Next month"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div>
         <div class="calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-        <div id="calendarGrid" class="calendar-grid"></div>
-        <div class="calendar-key"><span></span>Tasks planned</div>
+        <div id="calendarGrid" class="calendar-grid" aria-describedby="calendarHint"></div><p id="calendarHint" class="sr-only">Use the arrow keys to move between days.</p>
+        <div class="calendar-key"><span></span>Tasks planned</div><div class="jump-date"><label for="jumpDate">Go to date</label><input type="date" id="jumpDate" min="1900-01-01" max="9999-12-31"></div>
       </section>
       <div class="sidebar-note"><svg><use href="#i-leaf"/></svg><p>Make room for what matters.<br><span>One checkbox at a time.</span></p></div>
     </aside>
@@ -41,6 +42,7 @@
       <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
         </div>
       </section>
+      <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="retrySave" class="outline-button" hidden>Retry saving</button><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
       <aside id="backupNotice" class="backup-notice" hidden><p id="backupNoticeText"></p><div><button type="button" id="backupNow" class="outline-button">Back up now</button><button type="button" id="backupLater" class="text-button">Remind me tomorrow</button></div></aside>
       <div id="undoNotice" class="undo-notice" role="group" aria-label="Undo last change" hidden><span id="undoMessage"></span><button type="button" id="undoAction" class="outline-button">Undo</button><button type="button" id="dismissUndo" class="text-button">Dismiss</button></div>

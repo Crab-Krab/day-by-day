@@ -128,6 +128,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .calendar-grid .has-tasks:after { position: absolute; content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); bottom: 2px; left: calc(50% - 2px); }
 .calendar-grid .selected.has-tasks:after { background: #d6e8c6; }
 .calendar-key { position: relative; display: flex; align-items: center; padding-inline-start: var(--calendar-label-inset); font-size: 12px; color: var(--secondary); margin-top: 15px; }
+.jump-date { margin-top: 18px; }
+.jump-date label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--secondary); }
+.jump-date input:not([type=radio]):not([type=checkbox]) { min-height: 36px; padding: 6px 10px; font-size: 13px; }
 .calendar-key span { position: absolute; inset-inline-start: calc(var(--calendar-label-inset) - 11px); top: 50%; margin-top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
 .backup-status { line-height: 1.6; }
 .backup-notice, .undo-notice { margin: 16px 48px 0; padding: 14px 18px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--subtle); color: var(--ink); font-size: 13px; }
@@ -176,6 +179,18 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 @media (max-width: 1150px) { .task-file-panel { margin-inline: 30px; } }
 @media (max-width: 860px) { .task-file-panel { margin-inline: 24px; } }
 @media (max-width: 560px) { .task-file-panel { margin: 12px 18px 0; padding: 8px 12px; } }
+/* Optional recovery copies, collapsed under the task-file panel. */
+.recovery-panel { margin: 12px 36px 0; padding: 12px 18px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
+.recovery-panel[data-state="paused"] { border-color: #b97835; }
+.recovery-panel summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; color: var(--secondary); }
+.recovery-intro, .recovery-status { margin: 8px 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
+.recovery-status:empty { display: none; }
+.recovery-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.recovery-actions button, .recovery-list button { font-size: 12px; }
+.recovery-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.recovery-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+@media (max-width: 700px) { .recovery-panel { margin: 12px 16px 0; padding: 12px 14px; } }
 .saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
 .saved-label>.status-dot { display: none; }
 .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }
@@ -552,6 +567,7 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
 })();
 </script>
   
+
   
   
 </head>
@@ -569,8 +585,8 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
       <section class="calendar-panel" aria-label="Calendar">
         <div class="calendar-heading"><h2 id="monthLabel"></h2><div class="arrow-group"><button id="prevMonth" class="icon-button" aria-label="Previous month"><svg><use href="#i-arrow"/></svg></button><button id="nextMonth" class="icon-button" aria-label="Next month"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div>
         <div class="calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-        <div id="calendarGrid" class="calendar-grid"></div>
-        <div class="calendar-key"><span></span>Tasks planned</div>
+        <div id="calendarGrid" class="calendar-grid" aria-describedby="calendarHint"></div><p id="calendarHint" class="sr-only">Use the arrow keys to move between days.</p>
+        <div class="calendar-key"><span></span>Tasks planned</div><div class="jump-date"><label for="jumpDate">Go to date</label><input type="date" id="jumpDate" min="1900-01-01" max="9999-12-31"></div>
       </section>
       <div class="sidebar-note"><svg><use href="#i-leaf"/></svg><p>Make room for what matters.<br><span>One checkbox at a time.</span></p></div>
     </aside>
@@ -583,6 +599,7 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
       <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
         </div>
       </section>
+      <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="retrySave" class="outline-button" hidden>Retry saving</button><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
       <aside id="backupNotice" class="backup-notice" hidden><p id="backupNoticeText"></p><div><button type="button" id="backupNow" class="outline-button">Back up now</button><button type="button" id="backupLater" class="text-button">Remind me tomorrow</button></div></aside>
       <div id="undoNotice" class="undo-notice" role="group" aria-label="Undo last change" hidden><span id="undoMessage"></span><button type="button" id="undoAction" class="outline-button">Undo</button><button type="button" id="dismissUndo" class="text-button">Dismiss</button></div>
@@ -863,9 +880,153 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
 });
 
 'use strict';
+// Optional recovery copies: earlier versions of your tasks, kept in a folder you choose.
+// Copies never stop your tasks from saving. If the folder can't be used, copies pause and the panel says so.
+window.createRecoveryCopies = function ({ validate, getData, restore, now = () => Date.now() }) {
+  const $ = id => document.getElementById(id);
+  const FOLDER = 'Day-by-Day recovery copies', KEEP = 20, HOUR = 3600000;
+  const LABELS = { first: 'when copies were turned on', hourly: 'hourly copy', delete: 'before deleting a task', 'end-routine': 'before ending a routine', restore: 'before restoring', choice: 'before choosing which copy to keep' };
+  // Only files with this exact name pattern are ever listed, restored, or removed.
+  const NAME = /^day-by-day-copy-(\d{13})-([a-z-]+)\.json$/;
+  const supported = Boolean(window.isSecureContext) && typeof window.showDirectoryPicker === 'function';
+  let folder = null, state = 'off', remembered = true, lastCopyAt = 0, lastStamp = 0, queue = Promise.resolve(), dbPromise = null;
+
+  const when = stamp => new Date(stamp).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  function show(message) {
+    $('recoveryPanel').hidden = !supported;
+    $('recoveryPanel').dataset.state = state;
+    $('recoveryState').textContent = state === 'on' ? 'On' : state === 'paused' ? 'Paused' : 'Off';
+    $('chooseRecoveryFolder').hidden = state === 'on';
+    $('chooseRecoveryFolder').textContent = state === 'paused' ? 'Turn copies back on' : 'Choose a folder';
+    $('showRecoveryCopies').hidden = state !== 'on';
+    $('stopRecoveryCopies').hidden = state === 'off';
+    if (state !== 'on') $('recoveryList').replaceChildren();
+    if (message !== undefined) $('recoveryStatus').textContent = message;
+  }
+
+  // The chosen folder is remembered in browser storage, separately from the task file connection.
+  function db() {
+    if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
+      if (typeof indexedDB === 'undefined') { reject(new Error('Browser storage unavailable')); return; }
+      const request = indexedDB.open('day-by-day.recovery.v1', 1);
+      const timer = setTimeout(() => reject(new Error('Browser storage timed out')), 4000);
+      request.onupgradeneeded = () => request.result.createObjectStore('folder');
+      request.onerror = request.onblocked = () => { clearTimeout(timer); reject(request.error || new Error('Browser storage blocked')); };
+      request.onsuccess = () => { clearTimeout(timer); resolve(request.result); };
+    }).catch(error => { dbPromise = null; throw error; });
+    return dbPromise;
+  }
+  async function stored(action, value) {
+    const database = await db();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction('folder', action === 'get' ? 'readonly' : 'readwrite'), store = tx.objectStore('folder');
+      const request = action === 'get' ? store.get('active') : action === 'put' ? store.put(value, 'active') : store.delete('active');
+      tx.oncomplete = () => resolve(request.result);
+      tx.onerror = tx.onabort = () => reject(tx.error || new Error('Browser storage unavailable'));
+    });
+  }
+
+  async function directory() {
+    if (await folder.queryPermission({ mode: 'readwrite' }) !== 'granted') throw Object.assign(new Error('Folder access ended'), { name: 'NotAllowedError' });
+    return folder.getDirectoryHandle(FOLDER, { create: true });
+  }
+  async function list(dir) {
+    const copies = [];
+    for await (const [name, handle] of dir.entries()) {
+      const match = NAME.exec(name);
+      if (match && handle.kind === 'file' && LABELS[match[2]]) copies.push({ name, handle, stamp: Number(match[1]), reason: match[2] });
+    }
+    return copies.sort((a, b) => b.stamp - a.stamp);
+  }
+  function pause(error) {
+    state = 'paused';
+    show(error?.name === 'NotAllowedError'
+      ? 'Recovery copies are paused because the browser no longer allows access to the folder. Your tasks still save normally. Choose Turn copies back on.'
+      : 'Recovery copies are paused because a copy could not be saved. Your tasks still save normally. Choose Turn copies back on to try again.');
+    $('recoveryPanel').open = true;
+  }
+  async function write(stamp, reason, text) {
+    if (state !== 'on') return;
+    const dir = await directory(), name = `day-by-day-copy-${stamp}-${reason}.json`;
+    const file = await dir.getFileHandle(name, { create: true }), stream = await file.createWritable();
+    try { await stream.write(text); await stream.close(); }
+    catch (error) { try { await stream.abort(); } catch (_) {} try { await dir.removeEntry(name); } catch (_) {} throw error; }
+    // Keep the newest copies only. Other files in the folder are never touched.
+    for (const old of (await list(dir)).slice(KEEP)) await dir.removeEntry(old.name);
+    show(`Last copy: ${when(stamp)}, ${LABELS[reason]}.`);
+  }
+  // Takes the copy's contents right away, so a copy made "before" a change really has the earlier tasks.
+  function keep(reason, value = getData()) {
+    if (state !== 'on' || !LABELS[reason]) return;
+    let text;
+    try { text = JSON.stringify(validate(value), null, 2) + '\n'; } catch (_) { return; }
+    const stamp = lastStamp = Math.max(now(), lastStamp + 1);
+    lastCopyAt = stamp;
+    queue = queue.then(() => write(stamp, reason, text)).catch(pause);
+  }
+  function afterSave() { if (state === 'on' && now() - lastCopyAt >= HOUR) keep('hourly'); }
+
+  async function newestStamp() {
+    try { return (await list(await directory()))[0]?.stamp || 0; } catch (_) { return 0; }
+  }
+  $('chooseRecoveryFolder').onclick = async () => {
+    try {
+      // Turning copies back on asks about the same folder. Otherwise choose one.
+      const next = state === 'paused' && folder ? folder : await window.showDirectoryPicker({ id: 'day-by-day-recovery', mode: 'readwrite' });
+      if (await next.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Allow editing access to the folder to keep recovery copies.');
+      folder = next; state = 'on';
+      try { await stored('put', folder); remembered = true; } catch (_) { remembered = false; }
+      lastCopyAt = await newestStamp();
+      show(`Recovery copies are on, in ${folder.name} / ${FOLDER}.` + (remembered ? '' : ' This browser could not remember the folder, so choose it again next visit.'));
+      keep('first');
+    } catch (error) { if (error?.name !== 'AbortError') show(error.message); }
+  };
+  $('stopRecoveryCopies').onclick = async () => {
+    folder = null; state = 'off';
+    try { await stored('delete'); } catch (_) { /* Nothing is remembered to forget. */ }
+    show('Recovery copies are off. Copies already saved stay in the folder.');
+  };
+  $('showRecoveryCopies').onclick = async () => {
+    try {
+      const copies = await list(await directory());
+      $('recoveryList').replaceChildren(...copies.map(copy => {
+        const item = document.createElement('li'), label = document.createElement('span'), button = document.createElement('button');
+        label.textContent = `${when(copy.stamp)}, ${LABELS[copy.reason]}`;
+        button.type = 'button'; button.className = 'text-button'; button.textContent = 'Restore';
+        button.setAttribute('aria-label', `Restore the copy from ${label.textContent}`);
+        button.onclick = async () => {
+          try {
+            const file = await copy.handle.getFile();
+            if (file.size > 10000000) throw new Error('too large');
+            const next = validate(JSON.parse(await file.text()));
+            await restore(next, `${when(copy.stamp)}, ${LABELS[copy.reason]}`);
+          } catch (_) { show('This copy could not be read, so nothing was changed. Choose another copy.'); }
+        };
+        item.append(label, button); return item;
+      }));
+      show(copies.length ? 'Choose a copy to restore. You will be asked before anything is replaced.' : 'No copies yet. The first one is saved after your next change.');
+    } catch (error) { pause(error); }
+  };
+
+  async function init() {
+    if (!supported) { show(); return; }
+    try {
+      const saved = await stored('get');
+      if (saved) {
+        folder = saved;
+        state = await folder.queryPermission({ mode: 'readwrite' }) === 'granted' ? 'on' : 'paused';
+        if (state === 'on') lastCopyAt = await newestStamp();
+      }
+    } catch (_) { folder = null; state = 'off'; }
+    show(state === 'paused' ? 'Recovery copies are paused until you allow the folder again. Your tasks still save normally. Choose Turn copies back on.' : state === 'on' ? `Recovery copies are on, in ${folder.name} / ${FOLDER}.` : '');
+  }
+  return { init, keep, afterSave, isOn: () => state === 'on', settle: () => queue };
+};
+
+'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery }) {
+window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {} }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -1023,6 +1184,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       decision = await choose('“' + target.name + '” and the tasks currently shown are different. ' + (automatic ? 'There may be changes that did not finish saving last time.' : 'Choose the copy you want to continue with.'));
       if (decision === 'cancel') return false;
     }
+    // Whichever copy is about to be replaced gets a recovery copy first, when those are on.
+    if (disk.canonical !== null && disk.canonical !== current) keepCopy('choice', decision === 'disk' ? getData() : disk.data);
     handle = target; rawBaseline = disk.raw; baseline = disk.canonical;
     paused = false; dirty = decision === 'current' && current !== disk.canonical;
     if (decision === 'disk') applyData(disk.data);
@@ -1128,7 +1291,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
 'use strict';
 (() => {
   const KEY = 'day-by-day.v1';
-  let fileStore = null;
+  let fileStore = null, recovery = null;
   const $ = id => document.getElementById(id);
   const { DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate } = window.DayByDayCore;
   const activeMotion = new WeakMap();
@@ -1346,6 +1509,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (!backupStatus.firstChangeAt) backupStatus.firstChangeAt = Date.now();
     persistBackupStatus();
     fileStore?.changed();
+    recovery?.afterSave();
     render();
     renderBackupStatus();
     checkReminders();
@@ -1372,6 +1536,10 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const first = new Date(month.getFullYear(), month.getMonth(), 1, 12), start = monday(first);
     const grid = $('calendarGrid'), monthKey = `${month.getFullYear()}-${month.getMonth()}`;
     if (grid.dataset.monthKey !== monthKey) { grid.replaceChildren(); grid.dataset.monthKey = monthKey; }
+    // Exactly one day is reachable with Tab: the selected day or today when shown in this month,
+    // otherwise the 1st. The arrow keys then move between days.
+    const inMonth = key => parseDate(key).getMonth() === month.getMonth() && parseDate(key).getFullYear() === month.getFullYear();
+    const tabKey = inMonth(selected) ? selected : inMonth(today) ? today : dateKey(first);
     for (let i = 0; i < 42; i++) {
       const date = plusDays(start, i), key = dateKey(date), count = taskCountOn(key);
       let button = grid.children[i];
@@ -1380,8 +1548,21 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       button.type = 'button'; button.setAttribute('aria-label', `${fmt(key, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}, ${count} task${count === 1 ? '' : 's'}`);
       button.setAttribute('aria-current', key === today ? 'date' : 'false');
       button.setAttribute('aria-pressed', String(key === selected)); button.onclick = () => chooseDate(key);
+      button.dataset.date = key; button.tabIndex = key === tabKey ? 0 : -1;
+      button.onkeydown = event => {
+        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
+        if (!step) return;
+        event.preventDefault();
+        const next = dateKey(plusDays(parseDate(key), step));
+        if (!validDate(next)) return;
+        chooseDate(next);
+        [...$('calendarGrid').children].find(day => day.dataset.date === next)?.focus();
+      };
     }
+    // Show the selected day in Go to date, unless someone is typing in it.
+    if (document.activeElement !== $('jumpDate')) $('jumpDate').value = selected;
   }
+  $('jumpDate').onchange = () => chooseDate($('jumpDate').value);
   function renderWeek() {
     const start = monday(parseDate(selected)), end = plusDays(start, 6);
     $('weekLabel').textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
@@ -1791,6 +1972,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
       if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      recovery?.keep('end-routine');
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
       task.snapshots = completedSnapshots(task, data.completed, effective);
@@ -1802,6 +1984,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       return;
     }
     dialogFocusTarget = { taskId: data.tasks[index + 1]?.id || data.tasks[index - 1]?.id };
+    recovery?.keep('delete');
     data.tasks.splice(index, 1); if (!save()) return; closeTaskDialog(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
@@ -1860,9 +2043,12 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   $('dismissUndo').onclick = () => { undoNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   $('dismissToast').onclick = () => { toastNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   let restoreDecision = null, restoreFocusTarget = null;
-  function confirmRestore() {
+  function confirmRestore(copyLabel = null) {
     restoreFocusTarget = document.activeElement;
-    $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
+    $('restoreTitle').textContent = copyLabel ? 'Restore this recovery copy?' : 'Restore backup?';
+    $('confirmRestore').textContent = copyLabel ? 'Restore copy' : 'Restore backup';
+    $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : copyLabel ? `This replaces your tasks and completion history with the copy from ${copyLabel}.` : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
+    if (recovery?.isOn()) $('restoreMessage').textContent += ' A recovery copy of your current tasks is saved first.';
     if (fileStore?.isConnected()) $('restoreMessage').textContent += ' Restored tasks will also be automatically saved to your connected JSON file.';
     $('restoreDialog').showModal(); $('cancelRestore').focus();
     return new Promise(resolve => { restoreDecision = resolve; });
@@ -1880,20 +2066,26 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const file = $('restoreFile').files[0]; if (!file) return;
     try {
       if (file.size > 10000000) throw new Error('This file is too large. Choose a Day by Day backup under 10 MB.');
-      const next = validate(JSON.parse(await file.text()));
-      if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore()) return;
-      undoNotice.hide();
-      data = next;
-      // A rejected backup leaves current tasks, and any unreadable original, untouched.
-      if (!save({ replaceUnreadable: true })) return;
-      if (persistent) {
-        loadFailed = false; originalSavedData = null;
-        $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
-        notify('Backup restored.');
-      } else notify(fileStore?.isConnected() ? 'Backup loaded. Check the task-file status above for the automatic save.' : 'Backup loaded for this session, but browser storage could not save it.');
+      await replaceAllTasks(validate(JSON.parse(await file.text())));
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
   };
+  // Backups and recovery copies restore the same way: ask first, keep a copy of the current tasks, then replace.
+  async function replaceAllTasks(next, copyLabel = null) {
+    if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore(copyLabel)) return false;
+    undoNotice.hide();
+    recovery?.keep('restore');
+    data = next;
+    // A rejected restore leaves current tasks, and any unreadable original, untouched.
+    if (!save({ replaceUnreadable: true })) return false;
+    const what = copyLabel ? 'Recovery copy' : 'Backup';
+    if (persistent) {
+      loadFailed = false; originalSavedData = null;
+      $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
+      notify(`${what} restored.`);
+    } else notify(fileStore?.isConnected() ? `${what} loaded. Check the task-file status above for the automatic save.` : `${what} loaded for this session, but browser storage could not save it.`);
+    return true;
+  }
   // Reminder history is separate from tasks, so local alerts do not change backups or manual order.
   const REMINDER_KEY = 'day-by-day.reminders.v1';
   let reminderLogStorage = true, reminderPanelOpen = true;
@@ -2000,6 +2192,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   $('tabChoiceKeep').onclick = () => {
     $('tabChoiceDialog').close();
+    try { recovery?.keep('choice', otherTabValue ? JSON.parse(otherTabValue) : empty()); } catch (_) { /* Unreadable tasks can't be copied. */ }
     // The other tab already replaced any unreadable original in storage, so this tab may write again.
     loadFailed = false;
     writeBrowserCopy(false);
@@ -2012,6 +2205,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   };
   $('tabChoiceOther').onclick = () => {
     $('tabChoiceDialog').close();
+    recovery?.keep('choice');
     try { loadOtherTab(otherTabValue); notify("Loaded the other tab's tasks."); }
     catch (_) { notify("The other tab's tasks could not be read. This tab's tasks were kept."); }
   };
@@ -2072,8 +2266,10 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
+  recovery = window.createRecoveryCopies({ validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label) });
+  void recovery.init();
   fileStore = window.createTaskFileStorage({
-    getData: () => data, validate, backup, hasRecovery: () => loadFailed,
+    getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
     applyData(next) {
       data = validate(next); undoNotice.hide();
       persistent = true; loadFailed = false; originalSavedData = null;

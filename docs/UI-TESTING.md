@@ -24,7 +24,7 @@ Alternatively set `DAY_BY_DAY_PLAYWRIGHT_PATH` to an existing Playwright module 
 
 The runner serves only the test page and built app on a temporary loopback port. The test frame uses disposable sample tasks, simulated file handles, and simulated file permissions. It restores any original task/preference values on that test origin. It does not open a real task file. The normal app needs no packages or server.
 
-To inspect the same checks interactively, serve this checkout locally and open `tests/browser.html`, then choose **Run browser checks**.
+To inspect the same checks interactively, serve this checkout locally and open `tests/ui-browser.html`, then choose **Run browser checks**.
 
 ## Manual follow-up
 
