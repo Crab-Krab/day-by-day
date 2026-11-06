@@ -15,11 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - browser: Chromium
-            install: chromium
-            channel: ''
+          - browser: Chrome
+            channel: chrome
           - browser: Edge
-            install: msedge
             channel: msedge
     timeout-minutes: 10
     steps:
@@ -30,12 +28,10 @@ jobs:
       - name: Install isolated browser test tools
         run: |
           npm install --prefix "$RUNNER_TEMP/day-by-day-browser" --no-save --package-lock=false playwright@1.62.1
-          node "$RUNNER_TEMP/day-by-day-browser/node_modules/playwright/cli.js" install --with-deps ${{ matrix.install }}
       - name: Check standalone browser interactions and layout
         env:
           DAY_BY_DAY_PLAYWRIGHT_PATH: ${{ runner.temp }}/day-by-day-browser/node_modules/playwright
           DAY_BY_DAY_BROWSER_OUTPUT: ${{ runner.temp }}/day-by-day-browser-results
-          DAY_BY_DAY_BROWSER_EMIT_PREVIEW: 'true'
           DAY_BY_DAY_BROWSER_CHANNEL: ${{ matrix.channel }}
         run: npm run test:browser
       - name: Save browser screenshots
