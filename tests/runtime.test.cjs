@@ -787,3 +787,22 @@ async function verifySecondReviewFixes() {
   console.log('Second review fixes passed: done-and-skipped history, reminder edits against the effective routine version, 10 MB save limit with shrinking allowed, protected originals after a rejected restore, and asking which tab copy to keep.');
 }
 verifySecondReviewFixes().catch(error=>{console.error(error);process.exitCode=1;});
+function verifyRetryButtons() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime(),options={storageWriteFails:true};
+  const store=tasks=>new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]);
+  const warns=app=>{let prevented=false;for(const fn of app.windowListeners.beforeunload||[])fn({preventDefault(){prevented=true;}});return prevented;};
+  // Retry saving tries the browser copy again without needing another edit.
+  let app=boot(store([{id:'a',kind:'once',title:'Mine',date:'2026-11-04'}]),wed,options);
+  assert.equal(app.ids.retrySave.hidden,true);
+  app.ids.taskList.querySelector('.check-button').onclick();
+  assert.equal(app.ids.storageWarning.hidden,false);assert.equal(app.ids.retrySave.hidden,false);assert.equal(warns(app),true);
+  app.ids.retrySave.onclick();assert.equal(app.ids.storageWarning.hidden,false);assert.match(app.ids.toastMessage.textContent,/still could not save/);
+  options.storageWriteFails=false;app.ids.retrySave.onclick();
+  assert.equal(app.ids.storageWarning.hidden,true);assert.deepEqual(app.state().completed['2026-11-04'],['a']);assert.equal(warns(app),false);
+  assert.equal(app.ids.saveStatus.textContent,'Saved in this browser');assert.equal(app.context.document.activeElement,app.ids.inlineAdd);
+  // Unreadable saved data is never written over, so no retry is offered for it.
+  app=boot(new Map([[key,'{not json']]),wed);
+  assert.equal(app.ids.storageWarning.hidden,false);assert.equal(app.ids.retrySave.hidden,true);
+  console.log('Retry buttons passed: browser retry without another edit, repeated failure, warning cleared on success, and no retry over unreadable saved data.');
+}
+verifyRetryButtons();

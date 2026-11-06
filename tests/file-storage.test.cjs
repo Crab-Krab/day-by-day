@@ -139,6 +139,17 @@ async function main() {
   deferring.ids.undoAction.onclick();await settle();assert.equal(JSON.parse(deferFile.raw).tasks[0].date,'2026-11-04');
   deferring.ids.overdueList.querySelector('.move-tomorrow').onclick();await settle();
   deferring=harness.boot(deferCache,new Date(2026,10,5,10).getTime(),deferOptions);await settle();assert.equal(deferring.state().tasks[0].date,'2026-11-05');assert.equal(deferring.ids.taskList.querySelector('.task-name').textContent,'Carry forward');
-  console.log('File persistence passed: creation, autosave, automatic reopening, cleanup/reconnect, permission renewal, queued edits, failed writes, pending recovery, external conflict, invalid files, blocked browser storage, cancellation, unsupported browser, missing file and disconnect.');
+  // Retry file save resumes after a failed write without asking which copy to keep, but never over outside changes.
+  const retryFile=disk(),retryApp=boot({data:sample('Before retry'),file:retryFile});await retryApp.controller.init();await retryApp.click('createTaskFile');
+  assert.equal(retryApp.nodes.retryTaskFile.hidden,true);
+  retryFile.writeFails=true;retryApp.change(sample('Waiting edit'));await retryApp.controller.flush();
+  assert.match(retryApp.title(),/not saved/);assert.equal(retryApp.nodes.retryTaskFile.hidden,false);assert.equal(JSON.parse(retryFile.raw).tasks[0].title,'Before retry');
+  await retryApp.click('retryTaskFile');assert.match(retryApp.title(),/not saved/);assert.equal(retryApp.nodes.retryTaskFile.hidden,false); // still failing
+  delete retryFile.writeFails;await retryApp.click('retryTaskFile');
+  assert.match(retryApp.title(),/^Saved to/);assert.equal(JSON.parse(retryFile.raw).tasks[0].title,'Waiting edit');assert.equal(retryApp.nodes.retryTaskFile.hidden,true);assert.equal(retryApp.nodes.fileChoiceDialog.open,undefined);
+  retryFile.writeFails=true;retryApp.change(sample('Second edit'));await retryApp.controller.flush();delete retryFile.writeFails;
+  retryFile.raw=JSON.stringify(sample('Changed elsewhere'));await retryApp.click('retryTaskFile');
+  assert.match(retryApp.nodes.taskFileDetail.textContent,/changed elsewhere/);assert.equal(JSON.parse(retryFile.raw).tasks[0].title,'Changed elsewhere');assert.equal(retryApp.controller.isPending(),true);
+  console.log('File persistence passed: creation, autosave, automatic reopening, cleanup/reconnect, permission renewal, queued edits, failed writes, pending recovery, external conflict, invalid files, blocked browser storage, cancellation, unsupported browser, missing file, disconnect, and retrying a failed file save.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

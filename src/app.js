@@ -62,6 +62,8 @@
     if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
     persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
     $('downloadOriginalData').hidden = originalSavedData === null;
+    // Retrying only helps when a write failed. Unreadable saved data is never written over.
+    $('retrySave').hidden = loadFailed;
     $('saveStatus').textContent = fileStore?.isConnected() ? 'Browser copy unavailable' : loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
   }
   try {
@@ -189,6 +191,14 @@
       storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.');
     }
   }
+  // Try the browser copy again without needing another edit.
+  $('retrySave').onclick = () => {
+    writeBrowserCopy(false);
+    renderBackupStatus();
+    if (browserUnsaved) { notify('The browser still could not save your tasks. Use Back up tasks to keep a copy before closing.'); return; }
+    $('inlineAdd').focus({ preventScroll: true });
+    notify('Saved in this browser.');
+  };
   function save({ replaceUnreadable = false } = {}) {
     // A new data change supersedes the previous one-step Undo.
     undoNotice.hide();
@@ -803,7 +813,7 @@
     loadFailed = false;
     writeBrowserCopy(false);
     if (!browserUnsaved && originalSavedData !== null) {
-      $('storageWarning').hidden = false; $('downloadOriginalData').hidden = false;
+      $('storageWarning').hidden = false; $('downloadOriginalData').hidden = false; $('retrySave').hidden = true;
       $('storageWarningText').textContent = 'Your tasks are saved in this browser. The earlier saved data that could not be loaded is no longer stored, but you can still download it here.';
     }
     render(); renderBackupStatus();

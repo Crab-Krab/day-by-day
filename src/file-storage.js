@@ -14,13 +14,15 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
+    // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
+    $('retryTaskFile').hidden = !handle || !paused || !dirty || rawBaseline === null;
     $('reconnectTaskFile').hidden = !handle || !paused;
     $('disconnectTaskFile').hidden = !handle;
     $('createTaskFile').hidden = Boolean(handle);
     $('openTaskFile').textContent = handle && !paused ? 'Change file' : 'Open task file';
     refreshControls();
   }
-  function refreshControls() { for (const id of ['reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
+  function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
   function idleStatus() { status('Keep your tasks in a file', 'Set up autosave once, or open your existing JSON task file. The file stays on your computer when browser data is cleared.'); }
   function setBusy(value) {
@@ -173,6 +175,19 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       if (handle && !paused) { if (dirty) await flush(); else savedStatus(); }
     }
   }
+  async function retry() {
+    if (!handle || busy || writing) return;
+    setBusy(true);
+    let ready = false;
+    try {
+      if (await handle.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Allow editing access to resume automatic saving.');
+      // Resume directly only when nothing else changed the file. Otherwise Reconnect asks which copy to keep.
+      if ((await readFile(handle, true)).raw !== rawBaseline) throw new Error('This file changed elsewhere. Reconnect to choose which tasks to keep.');
+      paused = false; ready = true;
+    } catch (error) { fail(error); }
+    finally { setBusy(false); }
+    if (ready) await flush();
+  }
   async function reconnect() {
     if (!handle || busy || writing) return;
     setBusy(true);
@@ -224,12 +239,13 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   $('createTaskFile').onclick = () => pick(true);
   $('openTaskFile').onclick = () => pick(false);
+  $('retryTaskFile').onclick = retry;
   $('reconnectTaskFile').onclick = reconnect;
   $('disconnectTaskFile').onclick = disconnect;
   window.addEventListener('beforeunload', event => {
     if (dirty || writing || busy) { event.preventDefault(); event.returnValue = ''; }
   });
   // Do not poll or write on unload: writes happen immediately after each edit.
-  return { init, changed, flush, ownsCache: () => Boolean(handle) || !initialized,
+  return { init, changed, flush, retry, ownsCache: () => Boolean(handle) || !initialized,
     isConnected: () => Boolean(handle), isPending: () => dirty || Boolean(writing) };
 };
