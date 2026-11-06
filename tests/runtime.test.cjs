@@ -940,7 +940,7 @@ function verifyVisibleOverdueActionsAndBell() {
   const tasks=[{id:'late',kind:'once',title:'Late call',date:'2026-11-04',time:'18:00',reminders:[15]},{id:'older',kind:'once',title:'Old chore',date:'2026-11-02'},{id:'plain',kind:'once',title:'Plain',date:'2026-11-04'}];
   const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]),wed);
   const row=(id,list)=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
-  const inMenu=(row,selector)=>Boolean(row.querySelector('.task-menu').querySelector(selector));
+  const inMenu=(row,selector)=>Boolean(row.querySelector('.task-menu')?.querySelector(selector));
   // Rescheduling stays visible on overdue rows instead of hiding under More.
   assert.ok(row('late','overdueList').querySelector('.move-tomorrow'));assert.equal(inMenu(row('late','overdueList'),'.move-tomorrow'),false);
   assert.ok(row('older','overdueList').querySelector('.move-today'));assert.equal(inMenu(row('older','overdueList'),'.move-today'),false);
@@ -951,3 +951,20 @@ function verifyVisibleOverdueActionsAndBell() {
   console.log('Visible overdue actions and reminder bell passed: Move to today and Move to tomorrow outside More, and a bell only on tasks with reminders.');
 }
 verifyVisibleOverdueActionsAndBell();
+function verifyMoreOnlyWhenNeeded() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime();
+  const tasks=[{id:'plain',kind:'once',title:'Plain task',date:'2026-11-04'},{id:'timed',kind:'once',title:'With reminder',date:'2026-11-04',time:'21:00',reminders:[15]},{id:'routine',kind:'weekly',title:'Routine',weekdays:[3],startDate:'2026-10-01'}];
+  const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]),wed);
+  const row=id=>app.ids.taskList.querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  // A task with nothing extra gets no More button, only an invisible stand-in that keeps Edit aligned.
+  assert.equal(row('plain').querySelector('.task-menu'),null);
+  const spacer=row('plain').querySelector('.task-menu-spacer');assert.ok(spacer);assert.equal(spacer.getAttribute('aria-hidden'),'true');assert.equal(spacer.tagName,'SPAN');
+  // Reminder details and Skip still get a real More menu.
+  assert.ok(row('timed').querySelector('.task-menu').querySelector('.reminder-meta'));assert.equal(row('timed').querySelector('.task-menu-spacer'),null);
+  assert.ok(row('routine').querySelector('.task-menu').querySelector('.skip-task'));
+  // Completing the routine removes Skip, so its row drops More too.
+  row('routine').querySelector('.check-button').onclick();
+  assert.equal(row('routine').querySelector('.task-menu'),null);assert.ok(row('routine').querySelector('.task-menu-spacer'));
+  console.log('More only when needed passed: no empty menu on plain tasks, an aligned invisible stand-in, and real menus for reminders and Skip.');
+}
+verifyMoreOnlyWhenNeeded();

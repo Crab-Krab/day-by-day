@@ -348,6 +348,7 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 .task-menu { position: relative; }
 .task-menu-toggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; border-radius: 8px; list-style: none; cursor: pointer; color: var(--secondary); font-size: 12px; }
 .task-menu-toggle::-webkit-details-marker { display: none; }
+.task-menu-spacer { visibility: hidden; pointer-events: none; }
 .task-menu-toggle:hover, .task-menu[open] .task-menu-toggle { background: var(--hover); color: var(--ink); }
 summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .task-menu-content { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; width: 240px; max-width: 75vw; padding: 14px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0002; }

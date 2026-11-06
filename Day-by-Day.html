@@ -380,6 +380,7 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 .task-menu { position: relative; }
 .task-menu-toggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; border-radius: 8px; list-style: none; cursor: pointer; color: var(--secondary); font-size: 12px; }
 .task-menu-toggle::-webkit-details-marker { display: none; }
+.task-menu-spacer { visibility: hidden; pointer-events: none; }
 .task-menu-toggle:hover, .task-menu[open] .task-menu-toggle { background: var(--hover); color: var(--ink); }
 summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .task-menu-content { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; width: 240px; max-width: 75vw; padding: 14px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0002; }
@@ -1744,6 +1745,11 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     // The reorder arrows sit to the left of the task, so moving it never needs the More menu.
     // The line above the list explains what a move affects.
     if (!overdue || occurrenceDate === selected) row.prepend(ordering);
+    // Offer More only when it has something in it. An invisible copy keeps the Edit buttons lined up.
+    if (!secondary.children.length) {
+      const spacer = el('span', 'task-menu-toggle task-menu-spacer', 'More'); spacer.setAttribute('aria-hidden', 'true');
+      actions.append(edit, spacer); row.append(actions); return row;
+    }
     const menu = el('details', 'task-menu'), summary = el('summary', 'task-menu-toggle', 'More');
     const menuKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
     menu.dataset.key = menuKey; menu.open = openTaskMenuKey === menuKey;

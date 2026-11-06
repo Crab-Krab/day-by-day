@@ -453,6 +453,11 @@
     // The reorder arrows sit to the left of the task, so moving it never needs the More menu.
     // The line above the list explains what a move affects.
     if (!overdue || occurrenceDate === selected) row.prepend(ordering);
+    // Offer More only when it has something in it. An invisible copy keeps the Edit buttons lined up.
+    if (!secondary.children.length) {
+      const spacer = el('span', 'task-menu-toggle task-menu-spacer', 'More'); spacer.setAttribute('aria-hidden', 'true');
+      actions.append(edit, spacer); row.append(actions); return row;
+    }
     const menu = el('details', 'task-menu'), summary = el('summary', 'task-menu-toggle', 'More');
     const menuKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
     menu.dataset.key = menuKey; menu.open = openTaskMenuKey === menuKey;

@@ -16,7 +16,7 @@ The app opens to today. Select another day from the week strip, the month calend
 
 - **Plan your day:** All-day tasks or specific due times, with optional descriptions, notes, and clickable web links.
 - **Repeat weekly:** Each scheduled date gets its own checkbox. Completing a routine today leaves future occurrences unchecked.
-- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows beside each task rearrange it, and **More** holds Skip and reminder details. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
+- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows beside each task rearrange it, and **More** holds Skip and reminder details when a task has them. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
 - **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
 - **Keep the list focused:** Collapse **Completed** to hide finished tasks; its count and your progress remain visible.
 - **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.

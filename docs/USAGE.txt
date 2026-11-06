@@ -119,8 +119,8 @@ Tasks default to due-time order, earliest first, with All day tasks at the end.
 Tasks with the same time sort alphabetically by name, ignoring capitalization;
 the All day group also sorts alphabetically. Numbered titles use natural order
 (Task 2 before Task 10). Custom ordering takes precedence over these defaults.
-Choose More beside a task to find Skip and reminder details. Use the small
-up/down arrows beside the checkbox to move any task in its section,
+Choose More beside a task to find Skip and reminder details. More appears only
+when a task has one of these. Use the small up/down arrows beside the checkbox to move any task in its section,
 regardless of due time. The first move switches to custom ordering, starting from
 the current due-time order. The custom order is saved for that weekday and reused
 in future weeks; other weekdays are unchanged. New tasks follow ranked tasks in
