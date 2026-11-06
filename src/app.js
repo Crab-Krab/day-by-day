@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const KEY = 'day-by-day.v1';
-  let fileStore = null;
+  let fileStore = null, recovery = null;
   const $ = id => document.getElementById(id);
   const { DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate } = window.DayByDayCore;
   const activeMotion = new WeakMap();
@@ -222,6 +222,7 @@
     if (!backupStatus.firstChangeAt) backupStatus.firstChangeAt = Date.now();
     persistBackupStatus();
     fileStore?.changed();
+    recovery?.afterSave();
     render();
     renderBackupStatus();
     checkReminders();
@@ -640,6 +641,7 @@
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
       if (!validDate(effective) || effective < today) { $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      recovery?.keep('end-routine');
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
       task.snapshots = completedSnapshots(task, data.completed, effective);
@@ -651,6 +653,7 @@
       return;
     }
     dialogFocusTarget = { taskId: data.tasks[index + 1]?.id || data.tasks[index - 1]?.id };
+    recovery?.keep('delete');
     data.tasks.splice(index, 1); if (!save()) return; closeTaskDialog(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
@@ -698,9 +701,12 @@
   $('dismissUndo').onclick = () => { undoNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   $('dismissToast').onclick = () => { toastNotice.hide(); $('inlineAdd').focus({ preventScroll: true }); };
   let restoreDecision = null, restoreFocusTarget = null;
-  function confirmRestore() {
+  function confirmRestore(copyLabel = null) {
     restoreFocusTarget = document.activeElement;
-    $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
+    $('restoreTitle').textContent = copyLabel ? 'Restore this recovery copy?' : 'Restore backup?';
+    $('confirmRestore').textContent = copyLabel ? 'Restore copy' : 'Restore backup';
+    $('restoreMessage').textContent = loadFailed && originalSavedData !== null ? 'This replaces the original saved data that could not be loaded. Download the original saved data from the warning before continuing if you want to keep a recovery copy.' : copyLabel ? `This replaces your tasks and completion history with the copy from ${copyLabel}.` : 'This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.';
+    if (recovery?.isOn()) $('restoreMessage').textContent += ' A recovery copy of your current tasks is saved first.';
     if (fileStore?.isConnected()) $('restoreMessage').textContent += ' Restored tasks will also be automatically saved to your connected JSON file.';
     $('restoreDialog').showModal(); $('cancelRestore').focus();
     return new Promise(resolve => { restoreDecision = resolve; });
@@ -718,20 +724,26 @@
     const file = $('restoreFile').files[0]; if (!file) return;
     try {
       if (file.size > 10000000) throw new Error('This file is too large. Choose a Day by Day backup under 10 MB.');
-      const next = validate(JSON.parse(await file.text()));
-      if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore()) return;
-      undoNotice.hide();
-      data = next;
-      // A rejected backup leaves current tasks, and any unreadable original, untouched.
-      if (!save({ replaceUnreadable: true })) return;
-      if (persistent) {
-        loadFailed = false; originalSavedData = null;
-        $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
-        notify('Backup restored.');
-      } else notify(fileStore?.isConnected() ? 'Backup loaded. Check the task-file status above for the automatic save.' : 'Backup loaded for this session, but browser storage could not save it.');
+      await replaceAllTasks(validate(JSON.parse(await file.text())));
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
   };
+  // Backups and recovery copies restore the same way: ask first, keep a copy of the current tasks, then replace.
+  async function replaceAllTasks(next, copyLabel = null) {
+    if ((data.tasks.length || originalSavedData !== null) && !await confirmRestore(copyLabel)) return false;
+    undoNotice.hide();
+    recovery?.keep('restore');
+    data = next;
+    // A rejected restore leaves current tasks, and any unreadable original, untouched.
+    if (!save({ replaceUnreadable: true })) return false;
+    const what = copyLabel ? 'Recovery copy' : 'Backup';
+    if (persistent) {
+      loadFailed = false; originalSavedData = null;
+      $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
+      notify(`${what} restored.`);
+    } else notify(fileStore?.isConnected() ? `${what} loaded. Check the task-file status above for the automatic save.` : `${what} loaded for this session, but browser storage could not save it.`);
+    return true;
+  }
   // Reminder history is separate from tasks, so local alerts do not change backups or manual order.
   const REMINDER_KEY = 'day-by-day.reminders.v1';
   let reminderLogStorage = true, reminderPanelOpen = true;
@@ -838,6 +850,7 @@
   }
   $('tabChoiceKeep').onclick = () => {
     $('tabChoiceDialog').close();
+    try { recovery?.keep('choice', otherTabValue ? JSON.parse(otherTabValue) : empty()); } catch (_) { /* Unreadable tasks can't be copied. */ }
     // The other tab already replaced any unreadable original in storage, so this tab may write again.
     loadFailed = false;
     writeBrowserCopy(false);
@@ -850,6 +863,7 @@
   };
   $('tabChoiceOther').onclick = () => {
     $('tabChoiceDialog').close();
+    recovery?.keep('choice');
     try { loadOtherTab(otherTabValue); notify("Loaded the other tab's tasks."); }
     catch (_) { notify("The other tab's tasks could not be read. This tab's tasks were kept."); }
   };
@@ -912,8 +926,10 @@
   localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
+  recovery = window.createRecoveryCopies({ validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label) });
+  void recovery.init();
   fileStore = window.createTaskFileStorage({
-    getData: () => data, validate, backup, hasRecovery: () => loadFailed,
+    getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
     applyData(next) {
       data = validate(next); undoNotice.hide();
       persistent = true; loadFailed = false; originalSavedData = null;

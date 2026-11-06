@@ -34,6 +34,18 @@ Avoid using multiple copies of the app to edit the same JSON simultaneously. Wri
 
 Firefox and unsupported browsers continue to offer browser saving and manual backup/restore, but cannot use this direct-file autosave feature. If a browser copy cannot be saved, file autosaving can still work. The app explains when it cannot remember the connection for the next visit.
 
+## Recovery copies (optional)
+
+Recovery copies keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake long after Undo has gone. They work in desktop Chrome and Edge, with or without file autosave.
+
+1. Open **Recovery copies** under the task-file panel and choose **Choose a folder**. Pick a private folder that stays on your computer, then allow editing.
+2. The app saves a first copy right away. After that, it saves a copy at most once an hour while you work, and right before you delete a task, end a routine, restore, or choose which copy to keep.
+3. To go back, choose **Show copies**, then **Restore** beside the time you want. The app asks first, and saves a copy of your current tasks before replacing them.
+
+Copies go in a **Day-by-Day recovery copies** folder inside the folder you picked. When there are more than 20, the oldest is removed. The app only ever touches its own copies there, never your other files.
+
+Copies never stop your tasks from saving. If the browser stops allowing the folder, for example after browser cleanup, the panel shows **Paused** and your tasks keep saving as usual. Choose **Turn copies back on** to allow the folder again. **Turn off** stops new copies and leaves existing copies in the folder.
+
 ## Updating the app
 
 Wait for a completed file save, then close the old app tab. Replace the HTML in its usual folder with the updated HTML, and reopen it. Select the existing JSON with **Open task file** if needed. No task-data format conversion is required: the app still reads formats 1–5 and writes format 5.

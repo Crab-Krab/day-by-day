@@ -32,7 +32,7 @@ function idb(store, fail = false) {
     });return request;
   }};
 }
-function boot({data=empty(),store={},file=disk(),supported=true,storageFails=false,recovery=false,locks}={}) {
+function boot({data=empty(),store={},file=disk(),supported=true,storageFails=false,recovery=false,locks,keepCopy}={}) {
   let state=data;
   const nodes={}, listeners={}, shell={};
   const node=id=>nodes[id] ||= {hidden:false,disabled:false,textContent:'',dataset:{},listeners:{},addEventListener(key,fn){this.listeners[key]=fn;},showModal(){this.open=true;},close(){this.open=false;}};
@@ -40,7 +40,7 @@ function boot({data=empty(),store={},file=disk(),supported=true,storageFails=fal
     showSaveFilePicker:async()=>file, showOpenFilePicker:async()=>[file]};
   const context={window,document:{getElementById:node,querySelector:()=>shell},indexedDB:idb(store,storageFails),setTimeout,clearTimeout,console,Blob,navigator:{locks}};
   vm.createContext(context);vm.runInContext(source,context);
-  const controller=window.createTaskFileStorage({getData:()=>state,validate:valid,applyData:value=>state=valid(value),backup:()=>{},hasRecovery:()=>recovery});
+  const controller=window.createTaskFileStorage({getData:()=>state,validate:valid,applyData:value=>state=valid(value),backup:()=>{},hasRecovery:()=>recovery,keepCopy});
   return {controller,nodes,window,store,file,listeners,shell,state:()=>state,change(value){state=value;controller.changed();},click:id=>nodes[id].onclick(),title:()=>nodes.taskFileStatus.textContent};
 }
 async function main() {
@@ -150,6 +150,14 @@ async function main() {
   retryFile.writeFails=true;retryApp.change(sample('Second edit'));await retryApp.controller.flush();delete retryFile.writeFails;
   retryFile.raw=JSON.stringify(sample('Changed elsewhere'));await retryApp.click('retryTaskFile');
   assert.match(retryApp.nodes.taskFileDetail.textContent,/changed elsewhere/);assert.equal(JSON.parse(retryFile.raw).tasks[0].title,'Changed elsewhere');assert.equal(retryApp.controller.isPending(),true);
-  console.log('File persistence passed: creation, autosave, automatic reopening, cleanup/reconnect, permission renewal, queued edits, failed writes, pending recovery, external conflict, invalid files, blocked browser storage, cancellation, unsupported browser, missing file, disconnect, and retrying a failed file save.');
+  // Choosing which copy to keep first saves a recovery copy of the one being replaced.
+  for(const [answer,expected] of [['fileChoiceDisk','Shown tasks'],['fileChoiceCurrent','File tasks']]){
+    const kept=[],choiceApp=boot({data:sample('Shown tasks'),file:disk(JSON.stringify(sample('File tasks'))),keepCopy:(reason,value)=>kept.push([reason,value.tasks[0].title])});
+    await choiceApp.controller.init();const opening=choiceApp.click('openTaskFile');await settle();choiceApp.click(answer);await opening;
+    assert.deepEqual(kept,[['choice',expected]]);
+  }
+  const quiet=[],sameApp=boot({data:sample('Same'),file:disk(JSON.stringify(sample('Same'))),keepCopy:(...args)=>quiet.push(args)});
+  await sameApp.controller.init();await sameApp.click('openTaskFile');assert.equal(quiet.length,0); // nothing replaced, nothing copied
+  console.log('File persistence passed: creation, autosave, automatic reopening, cleanup/reconnect, permission renewal, queued edits, failed writes, pending recovery, external conflict, invalid files, blocked browser storage, cancellation, unsupported browser, missing file, disconnect, retrying a failed file save, and recovery copies before which-copy choices.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

@@ -167,6 +167,16 @@ exports a separate session file; recover the original using the warning button.
 These exports do not mark the original tasks as successfully backed up. Restore
 warns before replacing unreadable data; cancel keeps the original untouched.
 
+RECOVERY COPIES (OPTIONAL, CHROME / EDGE)
+Recovery copies keep up to 20 earlier versions of your tasks in a folder you
+choose. Open Recovery copies under the task-file panel and choose a folder. A
+copy is saved at most once an hour while you work, and right before deleting a
+task, ending a routine, restoring, or choosing which copy to keep. Show copies
+lists them by date and time. Restore asks first and saves a copy of your current
+tasks before replacing them. Copies never stop your tasks from saving: if the
+folder can't be used, the panel shows Paused and saving carries on. The app only
+removes its own copy files, never other files in the folder.
+
 If the browser cannot save a change, a warning appears and the app tries again
 with every later change. Retry saving tries again right away, without another
 edit. The warning clears once a save succeeds. Until then,

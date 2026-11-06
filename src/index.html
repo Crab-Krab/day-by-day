@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="theme.js"></script>
   <script src="schedule.js" defer></script>
+  <script src="recovery.js" defer></script>
   <script src="file-storage.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -39,6 +40,7 @@
         <div class="task-file-copy"><strong id="taskFileStatus" role="status" aria-live="polite">Keep your tasks in a file</strong><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p></div>
         <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Set up autosave</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div>
       </section>
+      <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="retrySave" class="outline-button" hidden>Retry saving</button><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
       <aside id="backupNotice" class="backup-notice" hidden><p id="backupNoticeText"></p><div><button type="button" id="backupNow" class="outline-button">Back up now</button><button type="button" id="backupLater" class="text-button">Remind me tomorrow</button></div></aside>
       <div id="undoNotice" class="undo-notice" role="group" aria-label="Undo last change" hidden><span id="undoMessage"></span><button type="button" id="undoAction" class="outline-button">Undo</button><button type="button" id="dismissUndo" class="text-button">Dismiss</button></div>

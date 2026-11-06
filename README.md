@@ -19,6 +19,7 @@ The app opens to today. Select another day from the week strip, the month calend
 - **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows let you rearrange tasks. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
 - **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
 - **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.
+- **Recovery copies:** Optional in desktop Chrome/Edge. Up to 20 earlier versions of your tasks in a folder you choose, saved hourly and before risky changes, with one-click restore.
 - **Save locally:** Automatic saving to a selected JSON file in desktop Chrome/Edge, remembered-file reopening, browser saving, and separate JSON backups.
 
 Calendar weeks start Monday. Dates and times use your computer's local timezone. Confirmations and Undo banners dismiss after 10 seconds, pausing while hovered, keyboard-focused, or the tab is hidden. The next data change also ends Undo.

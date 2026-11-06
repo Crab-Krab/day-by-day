@@ -1,7 +1,7 @@
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery }) {
+window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {} }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -150,6 +150,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       decision = await choose('“' + target.name + '” and the tasks currently shown are different. ' + (automatic ? 'There may be changes that did not finish saving last time.' : 'Choose the copy you want to continue with.'));
       if (decision === 'cancel') return false;
     }
+    // Whichever copy is about to be replaced gets a recovery copy first, when those are on.
+    if (disk.canonical !== null && disk.canonical !== current) keepCopy('choice', decision === 'disk' ? getData() : disk.data);
     handle = target; rawBaseline = disk.raw; baseline = disk.canonical;
     paused = false; dirty = decision === 'current' && current !== disk.canonical;
     if (decision === 'disk') applyData(disk.data);

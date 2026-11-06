@@ -139,6 +139,18 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .task-file-panel[data-state="error"] { border-color: #b97835; }
 .task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--green); }
 #fileChoiceDialog .restore-actions { flex-wrap: wrap; }
+/* Optional recovery copies, collapsed under the task-file panel. */
+.recovery-panel { margin: 12px 36px 0; padding: 12px 18px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
+.recovery-panel[data-state="paused"] { border-color: #b97835; }
+.recovery-panel summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; color: var(--secondary); }
+.recovery-intro, .recovery-status { margin: 8px 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
+.recovery-status:empty { display: none; }
+.recovery-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.recovery-actions button, .recovery-list button { font-size: 12px; }
+.recovery-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.recovery-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+@media (max-width: 700px) { .recovery-panel { margin: 12px 16px 0; padding: 12px 14px; } }
 @media (max-width: 700px) { .task-file-panel { margin: 14px 16px 0; padding: 14px; } .task-file-copy { flex-basis: 100%; } }
 .saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
 .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }

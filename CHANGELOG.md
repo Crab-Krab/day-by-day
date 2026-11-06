@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add optional **Recovery copies** in desktop Chrome/Edge: up to 20 earlier versions of your tasks in a folder you choose. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. **Show copies** lists them in local time, and **Restore** asks first and saves the current tasks before replacing them. Copies never block saving: if the folder can't be used, copies pause and tasks keep saving. Only the app's own copy files are ever removed.
+
 - Add real-browser checks (`tests/browser.html`, run with `npm run preview`) that use the built app for adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links. Add `docs/TESTING.md` with a manual checklist for file permissions and other behavior that can't be automated. No app changes.
 
 - Move between days on the month calendar with the arrow keys, including across months and years. Tab reaches exactly one day: the selected day or today when shown, otherwise the 1st, so the calendar stays reachable after changing month. Add **Go to date** below the calendar to open any date directly.
