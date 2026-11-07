@@ -35,7 +35,7 @@ function boot(storage, initialClock, options = {}) {
     scrollIntoView() {}
     getBoundingClientRect() { return {top:0,left:0,width:1}; }
     showModal() { this.open = true; }
-    close() { this.open = false; }
+    close() { this.open = false; queueMicrotask(() => this.dispatch('close')); }
     click() { if(this.tagName==='A'&&this.download)downloads.push({name:this.download,blob:blobURLs.get(this.href)});this.onclick?.(); }
     remove() { this.detached=true; if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); }
     reset() { for (const input of inputs) { input.value = input.initialValue || ''; input.checked = input.initialChecked || false; } }
@@ -115,7 +115,7 @@ console.log('Runtime passed: form controls, saving, reminder panel delivery, dup
 async function verifyMotion() {
   const moving = boot(new Map(),clock,{motion:true});
   moving.ids.addTask.onclick(); assert.equal(moving.ids.taskDialog.open,true);
-  moving.ids.cancelDialog.onclick(); assert.equal(moving.ids.taskDialog.open,true);
+  moving.ids.cancelDialog.onclick(); assert.equal(moving.ids.taskDialog.open,false);
   moving.animations.filter(animation=>animation.node===moving.ids.taskDialog).at(-1).finish();
   await new Promise(resolve=>setImmediate(resolve)); assert.equal(moving.ids.taskDialog.open,false);
   assert.equal(moving.animations.every(animation=>animation.node!==moving.ids.taskDialog || animation.cancelled),true);
@@ -167,7 +167,7 @@ async function verifyDescriptions() {
   const id=notesApp.state().tasks[0].id;
   assert.equal(notesApp.state().tasks[0].description,notes); assert.equal(notesApp.state().tasks[0].weekdays.length,5);
   let row=notesApp.ids.taskList.querySelector('.task-row'), body=row.querySelector('.description-body');
-  assert.equal(row.querySelector('details'),null); assert.equal(row.querySelector('.description-toggle'),null); assert.equal(body.textContent,notes); assert.equal(body.querySelector('script'),null);
+  assert.equal(row.querySelector('.task-description').querySelector('details'),null); assert.equal(row.querySelector('.description-toggle'),null); assert.equal(body.textContent,notes); assert.equal(body.querySelector('script'),null);
   const link=body.querySelector('a'); assert.equal(link.href,'https://example.com/guide'); assert.equal(link.target,'_blank'); assert.equal(link.rel,'noopener noreferrer');
   row.querySelector('.check-button').onclick();
   assert.equal(notesApp.ids.taskList.querySelector('.description-body').textContent,notes);
@@ -271,7 +271,7 @@ async function verifyReliability() {
   assert.equal(work.ids.undoNotice.hidden,false);assert.equal(work.ids.toast.hidden,true);
   work.ids.prevMonth.onclick();assert.equal(work.ids.undoNotice.hidden,false);work.ids.undoAction.onclick();assert.equal(work.state().tasks.some(task=>task.id==='current'),true);
   assert.equal(work.ids.statusAnnouncement.textContent,'Change undone.');assert.equal(work.ids.statusAnnouncement.hidden,false);
-  assert.equal(work.documentListeners.keydown,undefined);
+  for(const fn of work.documentListeners.keydown)fn({key:'n',target:work.context.document.body,preventDefault(){}});assert.equal(work.ids.taskDialog.open,false); // pressing N no longer opens Add task
   const moving=boot(new Map([['day-by-day.v1',JSON.stringify({version:4,tasks:[tasks[0]],completed:{}})]]),clock);
   moving.ids.overdueList.querySelector('.move-today').onclick();assert.equal(moving.state().tasks[0].date,'2026-10-28');assert.equal(moving.state().tasks[0].description,'Keep these notes');assert.equal(moving.ids.reminderPanel.hidden,true);
   moving.ids.undoAction.onclick();assert.equal(moving.state().tasks[0].date,'2026-10-27');assert.equal(moving.state().tasks[0].reminderFrom,0);
@@ -935,3 +935,82 @@ async function verifyRecoveryCopies() {
   console.log('Recovery copies passed: off by default, first copy, hourly limit, copies before deleting, ending, restoring and which-copy choices, confirmed restore, unreadable copies, newest 20 kept, other files untouched, paused without blocking saving, reopening, and turning off.');
 }
 verifyRecoveryCopies().catch(error=>{console.error(error);process.exitCode=1;});
+function verifyVisibleOverdueActionsAndBell() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,19).getTime();
+  const tasks=[{id:'late',kind:'once',title:'Late call',date:'2026-11-04',time:'18:00',reminders:[15]},{id:'older',kind:'once',title:'Old chore',date:'2026-11-02'},{id:'plain',kind:'once',title:'Plain',date:'2026-11-04'}];
+  const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]),wed);
+  const row=(id,list)=>app.ids[list].querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const inMenu=(row,selector)=>Boolean(row.querySelector('.task-menu')?.querySelector(selector));
+  // Rescheduling stays visible on overdue rows instead of hiding under More.
+  assert.ok(row('late','overdueList').querySelector('.move-tomorrow'));assert.equal(inMenu(row('late','overdueList'),'.move-tomorrow'),false);
+  assert.ok(row('older','overdueList').querySelector('.move-today'));assert.equal(inMenu(row('older','overdueList'),'.move-today'),false);
+  // A bell beside the time shows which tasks have reminders, with the details read aloud.
+  const bell=row('late','overdueList').querySelector('.reminder-badge');
+  assert.ok(bell);assert.equal(bell.title,'Reminder 15 min before');assert.match(bell.textContent,/Reminder 15 min before/);
+  assert.equal(row('plain','taskList').querySelector('.reminder-badge'),null);
+  console.log('Visible overdue actions and reminder bell passed: Move to today and Move to tomorrow outside More, and a bell only on tasks with reminders.');
+}
+verifyVisibleOverdueActionsAndBell();
+function verifyMoreOnlyWhenNeeded() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime();
+  const tasks=[{id:'plain',kind:'once',title:'Plain task',date:'2026-11-04'},{id:'timed',kind:'once',title:'With reminder',date:'2026-11-04',time:'21:00',reminders:[15]},{id:'routine',kind:'weekly',title:'Routine',weekdays:[3],startDate:'2026-10-01'}];
+  const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]),wed);
+  const row=id=>app.ids.taskList.querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  // A task with nothing extra gets no More button, only an invisible stand-in that keeps Edit aligned.
+  assert.equal(row('plain').querySelector('.task-menu'),null);
+  const spacer=row('plain').querySelector('.task-menu-spacer');assert.ok(spacer);assert.equal(spacer.getAttribute('aria-hidden'),'true');assert.equal(spacer.tagName,'SPAN');
+  // Reminder details and Skip still get a real More menu.
+  assert.ok(row('timed').querySelector('.task-menu').querySelector('.reminder-meta'));assert.equal(row('timed').querySelector('.task-menu-spacer'),null);
+  assert.ok(row('routine').querySelector('.task-menu').querySelector('.skip-task'));
+  // Completing the routine removes Skip, so its row drops More too.
+  row('routine').querySelector('.check-button').onclick();
+  assert.equal(row('routine').querySelector('.task-menu'),null);assert.ok(row('routine').querySelector('.task-menu-spacer'));
+  console.log('More only when needed passed: no empty menu on plain tasks, an aligned invisible stand-in, and real menus for reminders and Skip.');
+}
+verifyMoreOnlyWhenNeeded();
+function verifyComingUp() {
+  const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime();
+  const tasks=[
+    {id:'gym',kind:'weekly',title:'Gym',weekdays:[4,6],startDate:'2026-10-01',exceptions:['2026-11-12']},
+    ...['A','B','C','D','E'].map((letter,index)=>({id:'t'+letter,kind:'once',title:'Task '+letter,date:'2026-11-07',time:`0${index+1}:00`})),
+    {id:'done',kind:'once',title:'Finished early',date:'2026-11-09'}];
+  const app=boot(new Map([[key,JSON.stringify({version:5,tasks,completed:{'2026-11-09':['done']}})]]),wed);
+  const days=()=>app.ids.comingUpList.children.map(item=>item.querySelector('button'));
+  const text=button=>button.textContent;
+  const names=button=>(button.querySelector('.coming-up-tasks')?.children||[]).map(name=>name.textContent);
+  // Seven days after today, each with a count and the first few task names in list order.
+  assert.equal(days().length,7);assert.equal(app.ids.comingUpHint.textContent,'Next 7 days');
+  assert.match(text(days()[0]),/^Thu, Nov 5.*1 task/);assert.deepEqual(names(days()[0]),['Gym']);
+  // Up to six names, each on its own line, in list order. Gym is all day, so it sorts after the timed tasks.
+  assert.match(text(days()[2]),/Sat, Nov 7.*6 tasks/);assert.deepEqual(names(days()[2]),['Task A','Task B','Task C','Task D','Task E','Gym']);
+  assert.match(text(days()[3]),/Sun, Nov 8.*Nothing planned/);assert.ok(days()[3].className.includes('empty'));
+  assert.match(text(days()[4]),/Mon, Nov 9.*All done/);assert.deepEqual(names(days()[4]),['Finished early']);
+  // Clicking a day opens it, and the column then follows that day.
+  days()[2].onclick();
+  assert.equal(app.ids.dayTitle.textContent,'Saturday.');assert.equal(app.ids.comingUpHint.textContent,'7 days after Sat, Nov 7');
+  // A skipped routine occurrence is left out (Gym is skipped on Thu, Nov 12).
+  assert.match(text(days()[4]),/Thu, Nov 12.*Nothing planned/);
+  // A seventh task on a day shows as "+1 more" after six names.
+  app.ids.addTask.onclick();app.ids.taskTitle.value='Task F';app.ids.taskDate.value='2026-11-07';app.ids.taskForm.dispatch('submit');app.ids.jumpToday.onclick();
+  assert.deepEqual(names(days()[2]).slice(-2),['Gym','+1 more']);
+  console.log('Coming up passed: 7 days after the selected day, counts, names in list order with +more, empty and all-done days, skipped occurrences left out, and opening a day.');
+}
+verifyComingUp();
+function verifyClickOutsideTaskDialog() {
+  const app=boot(new Map(),new Date(2026,10,6,10).getTime()),dialog=app.ids.taskDialog;
+  const press=(target,x)=>{for(const fn of dialog.listeners.pointerdown)fn({target,clientX:x,clientY:x});for(const fn of dialog.listeners.click)fn({target,clientX:x,clientY:x});};
+  let asked=0;app.context.window.confirm=()=>{asked++;return false;};
+  // Nothing typed: a click outside closes the window, like Cancel.
+  app.ids.addTask.onclick();press(dialog,-20);assert.equal(dialog.open,false);assert.equal(asked,0);
+  // A click on the window itself, or a press that starts inside and ends outside, keeps it open.
+  app.ids.addTask.onclick();press(dialog,10);assert.equal(dialog.open,true);
+  for(const fn of dialog.listeners.pointerdown)fn({target:app.ids.taskTitle,clientX:10,clientY:10});
+  for(const fn of dialog.listeners.click)fn({target:dialog,clientX:-20,clientY:-20});
+  assert.equal(dialog.open,true);
+  // Something typed: it asks first. Keep editing leaves it open; Discard closes without adding a task.
+  app.ids.taskTitle.value='Half-typed task';press(dialog,-20);assert.equal(asked,1);assert.equal(dialog.open,true);
+  app.context.window.confirm=()=>true;press(dialog,-20);assert.equal(dialog.open,false);
+  assert.equal(app.ids.taskList.querySelectorAll('.task-row').length,0);
+  console.log('Click outside task window passed: closes when untouched, asks before discarding typed changes, and ignores clicks inside or drags that start inside.');
+}
+verifyClickOutsideTaskDialog();

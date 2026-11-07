@@ -157,20 +157,28 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .restore-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 @media (max-width: 860px) { .backup-notice, .undo-notice { margin-inline: 24px; } }
 @media (max-width: 560px) { .backup-notice, .undo-notice { margin-inline: 18px; } .overdue-hint { margin-inline: 18px; } }
-.sidebar-note { display: flex; gap: 10px; align-items: flex-start; margin: 32px 0; color: var(--secondary); }
+.sidebar-note { margin-top: auto; display: flex; gap: 10px; align-items: flex-start; margin: 32px 0 0; color: var(--secondary); }
 .sidebar-note svg { width: 20px; height: 20px; margin-top: 2px; }
 .sidebar-note p { font-size: 13px; line-height: 1.8; margin: 0; }
 .sidebar-note p span { color: var(--muted); }
 .storage-area { margin-top: auto; border-top: 1px solid var(--line); padding-top: 22px; }
-.task-file-panel { margin: 20px 36px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, transparent); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.task-file-copy { flex: 1 1 280px; min-width: 0; }
-.task-file-copy strong { font-size: 14px; overflow-wrap: anywhere; }
-.task-file-copy p { margin: 5px 0 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
+.task-file-panel { margin: 16px 40px 0; padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.task-file-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.task-file-copy { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.task-file-copy strong { font-size: 13px; font-weight: 550; overflow-wrap: anywhere; }
+.task-file-summary .text-button { margin: 0; padding: 8px 0; flex-shrink: 0; }
+.task-file-details>p { margin: 10px 0 12px; color: var(--secondary); font-size: 13px; line-height: 1.6; }
 .task-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .task-file-actions button { font-size: 12px; }
-.task-file-panel[data-state="error"] { border-color: #b97835; }
-.task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--green); }
+.task-file-panel[data-state="error"] { border-color: var(--danger); }
+.task-file-panel[data-state="error"] .status-dot { background: var(--danger); }
+.task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--active-ink); }
+.task-file-panel[data-state="idle"] .status-dot, .task-file-panel[data-state="unsupported"] .status-dot { background: var(--accent); }
+.task-file-panel .storage-area { margin-top: 14px; padding-top: 14px; }
 #fileChoiceDialog .restore-actions { flex-wrap: wrap; }
+@media (max-width: 1150px) { .task-file-panel { margin-inline: 30px; } }
+@media (max-width: 860px) { .task-file-panel { margin-inline: 24px; } }
+@media (max-width: 560px) { .task-file-panel { margin: 12px 18px 0; padding: 8px 12px; } }
 /* Optional recovery copies, collapsed under the task-file panel. */
 .recovery-panel { margin: 12px 36px 0; padding: 12px 18px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
 .recovery-panel[data-state="paused"] { border-color: #b97835; }
@@ -183,15 +191,15 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .recovery-list { list-style: none; margin: 8px 0 0; padding: 0; }
 .recovery-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
 @media (max-width: 700px) { .recovery-panel { margin: 12px 16px 0; padding: 12px 14px; } }
-@media (max-width: 700px) { .task-file-panel { margin: 14px 16px 0; padding: 14px; } .task-file-copy { flex-basis: 100%; } }
 .saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
+.saved-label>.status-dot { display: none; }
 .status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }
 .storage-area p { font-size: 12px; color: var(--secondary); margin: 8px 0 13px; }
 .text-button { border: 0; background: none; font-size: 12px; color: var(--secondary); padding: 5px 0; display: inline-flex; align-items: center; gap: 5px; margin-right: 12px; }
 .text-button:hover { text-decoration: underline; color: var(--ink); }
 .text-button svg { width: 14px; height: 14px; }
 main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.topbar { min-height: 92px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 48px; border-bottom: 1px solid var(--line); }
+.topbar { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 40px; border-bottom: 1px solid var(--line); }
 .breadcrumb { font-size: 11px; letter-spacing: 1.5px; color: var(--secondary); display: flex; gap: 18px; align-items: center; }
 .breadcrumb-divider { color: var(--muted); }
 .breadcrumb b { font-size: 14px; letter-spacing: 0; font-weight: 500; color: var(--ink); }
@@ -206,20 +214,46 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .theme-moon { opacity: 0; transform: rotate(-75deg) scale(.45); }
 [data-theme=dark] .theme-sun { opacity: 0; transform: rotate(75deg) scale(.45); }
 [data-theme=dark] .theme-moon { opacity: 1; transform: rotate(0) scale(1); }
-.content { width: 100%; max-width: 1380px; margin: 0 auto; padding: 46px 48px 38px; }
-.page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 18px; }
+.content { width: 100%; max-width: var(--content-max, 1380px); margin: 0 auto; padding: 28px 40px 32px; }
+/* The Coming up column appears only on wide screens, beside the checklist. */
+.coming-up { display: none; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); padding: 18px 14px 8px; }
+.coming-up h2 { margin: 0 6px; font-size: 16px; }
+.coming-up-hint { margin: 2px 6px 10px; font-size: 12px; color: var(--secondary); }
+.coming-up-list { list-style: none; margin: 0; padding: 0; }
+.coming-up-day { border-top: 1px solid var(--line); }
+.coming-up-open { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 10px; width: 100%; margin: 4px 0; padding: 8px 6px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.coming-up-open:hover { background: var(--hover); }
+.coming-up-date { font-size: 13px; font-weight: 600; }
+.coming-up-count { font-size: 12px; color: var(--secondary); white-space: nowrap; }
+.coming-up-tasks { grid-column: 1 / -1; display: grid; gap: 3px; margin-top: 3px; font-size: 13px; color: var(--secondary); }
+.coming-up-tasks span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coming-up-open.empty .coming-up-date { font-weight: 500; color: var(--secondary); }
+@media (min-width: 1151px) {
+  /* Notices and the saving panels line up with the content below them instead of running edge to edge. */
+  .task-file-panel, .recovery-panel, .backup-notice, .undo-notice, .warning { margin-inline: max(40px, calc((100% - var(--content-max, 1380px)) / 2 + 40px)); }
+}
+@media (min-width: 1360px) {
+  /* No width cap: the content fills the screen beside the sidebar. */
+  :root { --content-max: 99999px; }
+  /* The day title and week strip stay stacked full width; Coming up sits beside the checklist below them. */
+  #dailyView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); column-gap: 28px; align-items: start; }
+  #dailyView > .page-heading, #dailyView > .week-section { grid-column: 1 / -1; }
+  #dailyView > .day-main { grid-column: 1; min-width: 0; }
+  #dailyView > .coming-up { display: block; grid-column: 2; position: sticky; top: 20px; }
+}
+.page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 18px; }
 .eyebrow { font-size: 11px; font-weight: 650; letter-spacing: 1.7px; color: var(--accent); margin: 0 0 13px; line-height: 1.6; }
-h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 58px; letter-spacing: -2px; font-weight: 400; margin: 0 0 14px; line-height: 1.12; }
+h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 48px; letter-spacing: -1.5px; font-weight: 400; margin: 0 0 8px; line-height: 1.12; }
 h1 span { color: var(--muted); }
 .subtitle { font-size: 16px; color: var(--secondary); margin: 0; line-height: 1.7; }
 .outline-button { background: transparent; border: 1px solid var(--field-border); border-radius: 8px; min-height: 42px; padding: 10px 15px; font-size: 13px; white-space: nowrap; color: var(--secondary); }
 .outline-button:hover { background: var(--hover); color: var(--ink); }
 #jumpToday { min-height: 42px; font-size: 13px; padding: 10px 15px; }
-.week-section { margin-bottom: 28px; }
+.week-section { margin-bottom: 20px; }
 .week-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .week-heading>span { font-size: 14px; color: var(--secondary); }
 .week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
-.week-day { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; flex-direction: column; justify-content: center; min-height: 108px; padding: 17px 4px 21px; gap: 9px; transition: background .15s, border-color .15s; }
+.week-day { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; flex-direction: column; justify-content: center; min-height: 78px; padding: 10px 4px 16px; gap: 5px; transition: background .15s, border-color .15s; }
 .week-day:hover { background: var(--hover); border-color: var(--field-border); }
 .week-day .weekday { font-size: 14px; color: var(--secondary); }
 .week-day .number { font-size: 26px; line-height: 1.2; font-weight: 500; color: var(--ink); }
@@ -231,7 +265,7 @@ h1 span { color: var(--muted); }
 .week-day.active .day-dot { background: #d2e7ba; }
 .checklist-card { border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
 .routines-card #routineList, #taskList>:last-child, .routines-card .task-row:last-child { border-radius: 0 0 14px 14px; }
-.checklist-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 20px; gap: 16px; }
+.checklist-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px 14px; gap: 16px; }
 .checklist-header h2 { font-size: 18px; font-weight: 600; margin: 0; display: flex; gap: 11px; align-items: center; }
 .checklist-header h2>span { font-size: 12px; background: var(--subtle); color: var(--secondary); min-width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }
 .checklist-header>span { color: var(--secondary); font-size: 13px; }
@@ -242,13 +276,14 @@ h1 span { color: var(--muted); }
 .sort-button:hover { color: var(--ink); }
 .progress-track { height: 4px; background: var(--subtle); margin: 0 28px; border-radius: 4px; overflow: hidden; }
 .progress-track>div { height: 100%; background: #85a970; transition: width .3s; width: 0; }
-.task-row { display: flex; align-items: flex-start; gap: 16px; padding: 22px 28px; border-bottom: 1px solid var(--line); min-height: 98px; }
+.task-row { display: flex; align-items: flex-start; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); min-height: 80px; }
 .task-row:last-child { border-bottom: 0; }
-.check-button { width: 28px; height: 28px; flex-shrink: 0; border: 1.5px solid var(--field-border); border-radius: 8px; background: var(--field); padding: 2px; display: grid; place-items: center; }
-.check-button:hover { border-color: var(--green); background: var(--hover); }
-.check-button svg { width: 20px; height: 20px; stroke-width: 2; color: white; }
-.check-button[aria-pressed=true] { background: var(--green); border-color: var(--green); }
-.task-copy { flex: 1; min-width: 0; }
+.check-button { position: relative; width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 8px; background: transparent; padding: 0; display: grid; place-items: center; touch-action: manipulation; }
+.check-button:before { content: ''; position: absolute; width: 26px; height: 26px; border: 1.5px solid var(--field-border); border-radius: 8px; background: var(--field); }
+.check-button:hover:before { border-color: var(--green); background: var(--hover); }
+.check-button svg { position: relative; width: 20px; height: 20px; stroke-width: 2; color: white; }
+.check-button[aria-pressed=true]:before { background: var(--green); border-color: var(--green); }
+.task-copy { flex: 1; min-width: 0; padding-top: 8px; }
 .task-description { margin-top: 12px; color: var(--secondary); font-size: 14px; }
 .description-toggle { display: block; border: 0; background: transparent; color: var(--secondary); cursor: pointer; padding: 6px 0; margin-top: 3px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 .description-toggle:hover { color: var(--ink); }
@@ -258,6 +293,8 @@ h1 span { color: var(--muted); }
 .task-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 10px; margin-bottom: 6px; }
 .task-heading .task-name { margin: 0; }
 .time-badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--subtle); color: var(--secondary); font-size: 11px; white-space: nowrap; }
+.reminder-badge { display: inline-flex; align-items: center; color: var(--secondary); }
+.reminder-badge svg { width: 14px; height: 14px; }
 .time-badge.timed { background: var(--active); color: var(--active-ink); font-weight: 600; }
 .reminder-meta { margin-top: 4px; font-size: 12px; }
 .task-name { font-size: 17px; font-weight: 500; overflow-wrap: anywhere; margin: 0 0 5px; line-height: 1.5; }
@@ -363,6 +400,29 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 .reminder-card .text-button { font-size: 12px; margin: 0; }
 .reminder-panel-note { margin: 0; padding: 11px 18px; background: var(--subtle); color: var(--secondary); font-size: 11px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.list-order { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; padding: 10px 24px; }
+.order-scope { color: var(--secondary); font-size: 12px; line-height: 1.6; }
+.order-scope:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+.task-menu { position: relative; }
+.task-menu-toggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; border-radius: 8px; list-style: none; cursor: pointer; color: var(--secondary); font-size: 12px; }
+.task-menu-toggle::-webkit-details-marker { display: none; }
+.task-menu-spacer { visibility: hidden; pointer-events: none; }
+.task-menu-toggle:hover, .task-menu[open] .task-menu-toggle { background: var(--hover); color: var(--ink); }
+summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.task-menu-content { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; width: 240px; max-width: 75vw; padding: 14px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0002; }
+.task-menu-content>.text-button { display: flex; min-height: 44px; margin: 0; padding: 8px 0; font-size: 13px; }
+.task-menu-content .reminder-meta { margin-bottom: 10px; }
+.task-row .edit-task { height: 44px; }
+.task-meta { color: var(--secondary); font-size: 12px; }
+.completed-tasks>summary { cursor: pointer; text-transform: none; font-size: 12px; letter-spacing: .3px; }
+.completed-tasks:not([open])>summary { border-bottom: 0; border-radius: 0 0 14px 14px; }
+.completed-tasks .task-row:last-child { border-bottom: 0; border-radius: 0 0 14px 14px; }
+#scheduleDateRow { margin-top: 20px; }
+.options-toggle { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; width: 100%; min-height: 54px; margin-top: 18px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--subtle); color: var(--active-ink); font-size: 14px; text-align: left; }
+.options-toggle:hover { background: var(--hover); }
+.options-hint { font-size: 12px; font-weight: 400; color: var(--secondary); }
+.dialog-actions { position: sticky; bottom: -32px; margin-bottom: -32px; padding-bottom: 24px; background: var(--surface); z-index: 2; }
+@media (max-width: 560px) { .list-order { padding-inline: 18px; } .task-actions { gap: 0; } .task-row .edit-task { width: 34px; height: 44px; } .dialog-actions { bottom: -24px; margin-bottom: -24px; padding-bottom: 20px; } }
 /* Quiet feedback for navigation and task edits; content updates immediately. */
 :root, .sidebar, .topbar, .checklist-card, .task-row, .time-badge, .section-label, .reminder-panel {
   transition: background-color .2s ease, color .2s ease, border-color .2s ease;
@@ -374,13 +434,10 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 .icon-button:not(:disabled):active, .check-button:active { transform: scale(.94); }
 .week-day { transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease; }
 dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
-dialog.is-closing { pointer-events: none; }
-dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
 .check-button[aria-pressed=true] svg { animation: check-enter .17s ease-out both; }
 .toast:not([hidden]), .reminder-panel:not([hidden]) { animation: notice-enter .18s ease-out both; }
 #weeklyDays:not([hidden]), #taskTimingFields:not([hidden]) { animation: field-enter .16s ease-out both; }
 @keyframes backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
-@keyframes backdrop-leave { from { opacity: 1; } to { opacity: 0; } }
 @keyframes check-enter { from { opacity: 0; transform: scale(.65); } to { opacity: 1; transform: scale(1); } }
 @keyframes notice-enter { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
 @keyframes field-enter { from { opacity: .3; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
@@ -394,17 +451,17 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
 [data-theme=dark] .toast { background: #3b6046; }
 @media (min-width: 1800px) {
   .sidebar { width: 308px; padding: 40px 30px 28px; }
-  .content { padding-top: 54px; }
+  .content { padding-top: 34px; }
 }
 @media (max-width: 1150px) {
   .sidebar { width: 260px; padding: 30px 20px 22px; }
   .topbar { padding-inline: 30px; }
   .breadcrumb-prefix, .breadcrumb-divider { display: none; }
-  .content { padding: 38px 30px 32px; }
+  .content { padding: 28px 30px 32px; }
   .main-footer { margin-inline: 30px; }
-  h1 { font-size: 50px; }
+  h1 { font-size: 46px; }
   .week-strip { gap: 8px; }
-  .week-day { min-height: 96px; }
+  .week-day { min-height: 76px; }
   .checklist-header, .task-row { padding-inline: 22px; }
 }
 @media (max-width: 860px) {
@@ -412,7 +469,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .sidebar { position: relative; width: 100%; min-height: 0; padding: 22px 24px 0; border-right: 0; border-bottom: 1px solid var(--line); display: block; }
   .brand { font-size: 25px; }
   .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
-  .tagline, .sidebar-note, .storage-area, .calendar-panel { display: none; }
+  .tagline, .sidebar-note, .calendar-panel { display: none; }
   .main-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 19px -8px 0; }
   .nav-item { width: auto; padding: 11px 12px; border-radius: 8px 8px 0 0; min-height: 46px; font-size: 14px; gap: 9px; }
   .nav-count, .quiet-count { margin-left: 8px; }
@@ -422,11 +479,11 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .calendar-grid button { height: 40px; font-size: 14px; }
   .topbar { min-height: 78px; padding: 15px 24px; }
   .topbar-actions { gap: 16px; }
-  .content { padding: 32px 24px; }
-  .page-heading { margin-bottom: 26px; }
-  h1 { font-size: 47px; }
+  .content { padding: 24px; }
+  .page-heading { margin-bottom: 18px; }
+  h1 { font-size: 42px; }
   .subtitle { font-size: 15px; }
-  .week-day { min-height: 94px; }
+  .week-day { min-height: 74px; }
   .week-day .weekday { font-size: 13px; }
   .week-day .number { font-size: 24px; }
   .main-footer { margin-inline: 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; }
@@ -446,7 +503,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .topbar-actions { gap: 12px; }
   .theme-toggle { width: 44px; height: 44px; }
   .topbar .primary-button { font-size: 13px; padding-inline: 13px; }
-  .content { padding: 30px 18px; }
+  .content { padding: 22px 18px; }
   .page-heading { align-items: flex-start; gap: 10px; }
   .eyebrow { font-size: 10px; letter-spacing: 1.3px; }
   h1 { font-size: 42px; letter-spacing: -1.5px; }
@@ -454,7 +511,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .page-heading #jumpToday { font-size: 11px; padding: 8px 10px; margin-top: 29px; }
   .week-heading>span { font-size: 12px; }
   .week-strip { gap: 5px; }
-  .week-day { min-height: 84px; border-radius: 9px; padding: 13px 1px 18px; gap: 8px; }
+  .week-day { min-height: 68px; border-radius: 9px; padding: 9px 1px 14px; gap: 5px; }
   .week-day .weekday { font-size: 11px; }
   .week-day .number { font-size: 22px; }
   .checklist-header { padding: 20px 18px 18px; gap: 8px; }
@@ -465,13 +522,13 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
   .daily-checklist-header .checklist-header-actions { max-width: 100%; margin-left: auto; }
   .completion-summary { font-size: 12px; }
   .progress-track { margin-inline: 18px; }
-  .task-row { padding: 18px; gap: 12px; }
+  .task-row { padding: 12px; gap: 8px; }
   .task-name { font-size: 16px; }
   .task-meta { font-size: 12px; }
-  .check-button { width: 27px; height: 27px; }
-  .task-row .edit-task { width: 34px; height: 40px; }
+  .check-button { width: 44px; height: 44px; }
+  .task-row .edit-task { width: 34px; height: 44px; }
   .task-actions { gap: 3px; }
-  .task-order .move-task { width: 30px; height: 32px; }
+  .task-order .move-task { width: 36px; height: 34px; }
   .empty-state { padding: 34px 18px; }
   .empty-state h3 { font-size: 26px; }
   .empty-state p { font-size: 14px; }
@@ -538,7 +595,7 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
 })();
 </script>
   
-  
+
   
   
 </head>
@@ -560,13 +617,15 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
         <div class="calendar-key"><span></span>Tasks planned</div><div class="jump-date"><label for="jumpDate">Go to date</label><input type="date" id="jumpDate" min="1900-01-01" max="9999-12-31"></div>
       </section>
       <div class="sidebar-note"><svg><use href="#i-leaf"/></svg><p>Make room for what matters.<br><span>One checkbox at a time.</span></p></div>
-      <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
     </aside>
     <main>
       <header class="topbar"><div class="breadcrumb"><span class="breadcrumb-prefix">YOUR EVERYDAY SPACE</span><span class="breadcrumb-divider">/</span><b id="viewBreadcrumb">My day</b></div><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span>Add task</span></button></div></header>
-      <section id="taskFilePanel" class="task-file-panel" aria-label="Task file">
-        <div class="task-file-copy"><strong id="taskFileStatus" role="status" aria-live="polite">Keep your tasks in a file</strong><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p></div>
+      <section id="taskFilePanel" class="task-file-panel" aria-label="Saving and backups">
+        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Keep your tasks in a file</strong></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="true" aria-controls="taskFileDetails">Hide details</button></div>
+        <div id="taskFileDetails" class="task-file-details"><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
         <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Set up autosave</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div>
+      <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
+        </div>
       </section>
       <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="retrySave" class="outline-button" hidden>Retry saving</button><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
@@ -575,26 +634,31 @@ dialog.is-closing::backdrop { animation: backdrop-leave .13s ease-in both; }
       <section id="dailyView" class="content">
         <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="primary-button">Back to today</button></div>
         <section class="week-section" aria-label="Select a day"><div class="week-heading"><span id="weekLabel"></span><div class="arrow-group"><button id="prevWeek" class="icon-button" aria-label="Previous week"><svg><use href="#i-arrow"/></svg></button><button id="nextWeek" class="icon-button" aria-label="Next week"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div><div id="weekStrip" class="week-strip"></div></section>
-        <section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Overdue <span id="overdueCount">0</span></h2></div><p class="overdue-hint">Unfinished tasks past their due time today, plus one-time tasks from earlier dates.</p><div id="overdueList"></div></section>
-        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button><button type="button" id="sortDay" class="sort-button" hidden>Sort by due time</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div id="taskList"></div></section>
+        <div class="day-main"><section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Overdue <span id="overdueCount">0</span></h2></div><p class="overdue-hint">Unfinished tasks past their due time today, plus one-time tasks from earlier dates.</p><div id="overdueList"></div></section>
+        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div class="list-order"><span id="dayOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortDay" class="sort-button" hidden>Reset to due time</button></div><div id="taskList"></div></section>
         <section id="skippedSection" class="checklist-card skipped-section" aria-labelledby="skippedTitle" hidden><div class="checklist-header"><h2 id="skippedTitle" tabindex="-1">Skipped for this date</h2></div><div id="skippedList"></div></section>
-        <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div>
+        <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div></div>
+        <aside id="comingUp" class="coming-up" aria-labelledby="comingUpTitle"><h2 id="comingUpTitle">Coming up</h2><p id="comingUpHint" class="coming-up-hint">Next 7 days</p><ol id="comingUpList" class="coming-up-list"></ol></aside>
       </section>
-      <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1 id="routinesTitle">Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span>Repeat every week</span><button type="button" id="sortRoutines" class="sort-button" hidden>Sort by due time</button></div></div><div id="routineList"></div></section><details id="endedRoutines" class="ended-routines" hidden><summary>Ended routines <span id="endedCount">0</span></summary><div id="endedRoutineList"></div></details><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
+      <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1 id="routinesTitle">Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span id="routineOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortRoutines" class="sort-button" hidden>Reset to due time</button></div></div><div id="routineList"></div></section><details id="endedRoutines" class="ended-routines" hidden><summary>Ended routines <span id="endedCount">0</span></summary><div id="endedRoutineList"></div></details><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
       <footer class="main-footer"><span>Less remembering. More doing.</span><span>day by day.</span></footer>
     </main>
   </div>
   <dialog id="taskDialog" aria-labelledby="dialogTitle">
     <form id="taskForm"><div class="dialog-heading"><div><p class="eyebrow">MAKE A LITTLE PLAN</p><h2 id="dialogTitle">Add a task</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
       <label for="taskTitle">What would you like to do?</label><input id="taskTitle" name="title" placeholder="e.g. Water the plants" maxlength="200" required autocomplete="off">
+      <div id="scheduleDateRow"><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31"></div>
+      <button type="button" id="toggleTaskOptions" class="options-toggle" aria-expanded="false" aria-controls="taskOptions"><span id="taskOptionsLabel">More options</span><span class="options-hint">Notes, repeat, time &amp; reminders</span></button>
+      <div id="taskOptions" hidden>
       <div class="description-field"><label for="taskDescription">Description <span class="optional-label">(optional)</span></label><textarea id="taskDescription" name="description" rows="4" maxlength="5000" placeholder="Add details, notes, or https:// links…" aria-describedby="descriptionHint"></textarea><p class="field-hint" id="descriptionHint">Up to 5,000 characters. Web links become clickable in your checklist.</p></div>
       <fieldset class="frequency"><legend>How often?</legend><label><input type="radio" name="kind" value="once" checked><span><svg><use href="#i-calendar"/></svg>One time</span></label><label><input type="radio" name="kind" value="weekly"><span><svg><use href="#i-repeat"/></svg>Every week</span></label></fieldset>
       <fieldset id="weeklyDays" class="weekly-days" hidden><legend>Repeat on</legend><div class="day-presets"><button type="button" id="workdaysPreset">Mon–Fri</button><button type="button" id="everydayPreset">Every day</button></div><div class="weekday-picker"><label><input type="checkbox" name="weekdays" value="1" aria-label="Monday"><span>Mon</span></label><label><input type="checkbox" name="weekdays" value="2" aria-label="Tuesday"><span>Tue</span></label><label><input type="checkbox" name="weekdays" value="3" aria-label="Wednesday"><span>Wed</span></label><label><input type="checkbox" name="weekdays" value="4" aria-label="Thursday"><span>Thu</span></label><label><input type="checkbox" name="weekdays" value="5" aria-label="Friday"><span>Fri</span></label><label><input type="checkbox" name="weekdays" value="6" aria-label="Saturday"><span>Sat</span></label><label><input type="checkbox" name="weekdays" value="0" aria-label="Sunday"><span>Sun</span></label></div></fieldset>
-      <div id="scheduleDateRow"><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31"></div>
       <div id="routineChanges" class="routine-changes" hidden><label for="taskEffectiveDate">Apply changes / end routine from</label><input type="date" id="taskEffectiveDate" min="1900-01-01" max="9999-12-31"><p class="field-hint">Earlier dates and completed occurrences keep their details. Saving replaces changes scheduled from this date onward. End routine stops new occurrences starting on this date.</p></div>
-      <p class="form-hint" id="scheduleHint"></p><p class="form-error" id="formError" role="alert"></p>
+      <p class="form-hint" id="scheduleHint"></p>
       <fieldset class="frequency timing-choice"><legend>Task time</legend><label><input type="radio" name="timing" value="allday" checked><span><svg><use href="#i-sun"/></svg>All day</span></label><label><input type="radio" name="timing" value="timed"><span><svg><use href="#i-clock"/></svg>Specific time</span></label></fieldset>
       <div id="taskTimingFields" hidden><label for="taskTime">Due at</label><input type="time" id="taskTime" step="60"><fieldset class="reminder-choices"><legend>Remind me before</legend><div class="reminder-options"><label><input type="checkbox" name="reminders" value="5"><span>5 min</span></label><label><input type="checkbox" name="reminders" value="15"><span>15 min</span></label><label><input type="checkbox" name="reminders" value="30"><span>30 min</span></label><label><input type="checkbox" name="reminders" value="60"><span>1 hr</span></label></div><p class="form-hint">Select one or more, or leave all unchecked for no reminder.</p></fieldset><div class="notification-note"><p>Reminders are best effort. Keep this file open and the computer awake. Sleeping or suspended tabs can delay alerts; existing tasks can catch up when it resumes.</p><button type="button" class="outline-button" id="enableNotifications">Enable desktop alerts</button><p id="notificationStatus" role="status"></p></div></div>
+      </div>
+      <p class="form-error" id="formError" role="alert"></p>
       <div class="dialog-actions"><button type="button" class="delete-button" id="deleteTask" hidden>Delete task</button><div><button type="button" class="outline-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button" id="saveTask">Add task</button></div></div>
     </form>
   </dialog>
@@ -991,19 +1055,28 @@ window.createRecoveryCopies = function ({ validate, getData, restore, now = () =
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {} }) {
+window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
   let handle = null, rawBaseline = null, baseline = null, dirty = false, writing = null;
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
-  let dbPromise = null;
+  let dbPromise = null, hasSaved = false;
+  function showDetails(expanded = true) {
+    $('taskFileDetails').hidden = !expanded;
+    $('manageTaskFile').setAttribute('aria-expanded', String(expanded));
+    $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
+  }
+  $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
   const snapshot = () => JSON.stringify(validate(getData()));
   const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
   function status(title, detail, state = 'idle') {
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
+    if (state === 'error' || state === 'idle' || state === 'unsupported') showDetails();
+    if (state === 'idle' || state === 'unsupported') hasSaved = false;
+    if (state === 'saved' && !hasSaved) { showDetails(false); hasSaved = true; }
     // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
     $('retryTaskFile').hidden = !handle || !paused || !dirty || rawBaseline === null;
     $('reconnectTaskFile').hidden = !handle || !paused;
@@ -1015,9 +1088,9 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
   function idleStatus() { status('Keep your tasks in a file', 'Set up autosave once, or open your existing JSON task file. The file stays on your computer when browser data is cleared.'); }
-  function setBusy(value) {
+  function setBusy(value, blockChecklist = true) {
     busy = value;
-    document.querySelector('.app-shell').inert = value;
+    document.querySelector('.app-shell').inert = value && blockChecklist;
     refreshControls();
   }
   function db() {
@@ -1127,7 +1200,16 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     else void flush();
   }
   async function attach(target, { creating = false, automatic = false, knownBaseline = null } = {}) {
-    const disk = await readFile(target, creating);
+    let disk;
+    for (;;) {
+      disk = await readFile(target, creating);
+      const editorClosed = automatic && waitForEditor();
+      if (!editorClosed) break;
+      status('Finish editing to reconnect ' + target.name, 'Save or cancel the open task first. Your current tasks remain available while the file waits.', 'connecting');
+      await editorClosed;
+      // Both the file and the browser copy may have changed during editing.
+      // Read again, and check for another editor opened before that read finished.
+    }
     const current = snapshot();
     const currentHasTasks = getData().tasks.length > 0 || Object.keys(getData().completed).length > 0;
     let decision = creating ? 'current' : 'disk';
@@ -1210,7 +1292,9 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       status('File autosave needs Chrome or Edge', 'Open this HTML file in a current desktop Chrome or Edge browser. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
       initialized = true; return;
     }
-    setBusy(true);
+    // The remembered connection may be slow. Keep the checklist usable; attach()
+    // waits for an open editor, then compares the latest browser and file copies.
+    setBusy(true, false);
     status('Looking for your task file…', 'Checking the connection saved in this browser.');
     let failed = false;
     try {
@@ -1238,7 +1322,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (dirty || writing || busy) { event.preventDefault(); event.returnValue = ''; }
   });
   // Do not poll or write on unload: writes happen immediately after each edit.
-  return { init, changed, flush, retry, ownsCache: () => Boolean(handle) || !initialized,
+  return { init, changed, flush, retry, showDetails, ownsCache: () => Boolean(handle) || !initialized,
     isConnected: () => Boolean(handle), isPending: () => dirty || Boolean(writing) };
 };
 
@@ -1268,7 +1352,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   function fadeDayContent() {
     playMotion($('dayTitle'), [{ opacity: .8 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
   }
-  let dialogClosing = false, dialogCloseMotion = null, dialogCycle = 0, dialogFocusTarget = null;
+  let dialogCycle = 0, dialogFocusTarget = null, taskFormStart = '';
   function focusTask(id) {
     const containers = [view === 'routines' ? $('routineList') : $('taskList')];
     if (view === 'day' && selected === today && !$('overdueSection').hidden) containers.push($('overdueList'));
@@ -1288,22 +1372,18 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     });
   }
   function closeTaskDialog() {
-    const dialog = $('taskDialog'); if (!dialog.open || dialogClosing) return;
-    const cycle = dialogCycle;
-    dialogClosing = true; dialog.classList.toggle('is-closing', true);
-    const animation = playMotion(dialog, [{ opacity: 1 }, { opacity: 0 }], { duration: 130, easing: 'ease-in' });
-    if (!animation) { dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false); restoreDialogFocus(cycle); return; }
-    dialogCloseMotion = animation;
-    animation.finished.catch(() => {}).then(() => {
-      if (dialogCloseMotion !== animation) return;
-      dialogCloseMotion = null; dialog.close(); dialogClosing = false; dialog.classList.toggle('is-closing', false);
-      restoreDialogFocus(cycle);
-    });
+    const dialog = $('taskDialog'); if (!dialog.open) return;
+    // Release the native modal immediately. A suspended/unfinished animation must
+    // never leave an invisible top-layer dialog blocking checklist input in Edge.
+    activeMotion.get(dialog)?.cancel();
+    dialog.close();
+    restoreDialogFocus(dialogCycle);
   }
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
-  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null, browserUnsaved = false, localNote = null;
+  let data = empty(), persistent = true, loadFailed = false, originalSavedData = null, browserUnsaved = false;
   function storageError(message) {
     if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
+    fileStore?.showDetails();
     persistent = false; $('storageWarning').hidden = false; $('storageWarningText').textContent = message;
     $('downloadOriginalData').hidden = originalSavedData === null;
     // Retrying only helps when a write failed. Unreadable saved data is never written over.
@@ -1331,6 +1411,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   let renderedOverdueKey = '';
   function overdueKey(tasks) { return JSON.stringify(tasks.map(task => [task.date, task.id])); }
   const expandedDescriptions = new Set();
+  const collapsedCompleted = new Set();
+  let openTaskMenuKey = null;
   const calendarCounts = new Map();
   const BACKUP_KEY = 'day-by-day.backup.v1';
   let backupStatus = { lastExported: 0, changes: 0, firstChangeAt: 0, snoozedUntil: 0 };
@@ -1353,7 +1435,6 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const oldChanges = backupStatus.firstChangeAt && Date.now() - backupStatus.firstChangeAt >= 7 * 86400000;
     $('backupNotice').hidden = !data.tasks.length || backupStatus.snoozedUntil > Date.now() || !(backupStatus.changes >= 25 || (backupStatus.changes > 0 && oldChanges));
     $('backupNoticeText').textContent = `${text}. You have changes to back up.`;
-    if (localNote) localNote.textContent = `${persistent ? 'Saved in this browser' : 'Not saved in this browser'} · ${text}`;
   }
   let undoAction, announcementTimer, pendingAnnouncement = null;
   function announceStatus(message) {
@@ -1484,6 +1565,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   function chooseDate(date) {
     if (!validDate(date)) return;
     const previousView = view, changed = selected !== date || view !== 'day';
+    if (changed) openTaskMenuKey = null;
     selected = date; month = parseDate(date); view = 'day'; render();
     if (changed) { if (previousView !== 'day') revealView($('dailyView')); else fadeDayContent(); }
   }
@@ -1558,13 +1640,22 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
         data.completed[occurrenceDate] = [...completed];
         if (!save()) return;
         const updated = [...$('taskList').querySelectorAll('.check-button'), ...$('overdueList').querySelectorAll('.check-button')].find(b => b.dataset.id === task.id);
-        (updated || (overdue && !$('overdueSection').hidden ? $('overdueTitle') : $('inlineAdd'))).focus({ preventScroll: true });
+        const completedSummary = isDone(task.id, occurrenceDate) && collapsedCompleted.has(occurrenceDate) ? $('taskList').querySelector('.completed-tasks')?.querySelector('summary') : null;
+        (completedSummary || updated || (overdue && !$('overdueSection').hidden ? $('overdueTitle') : $('inlineAdd'))).focus({ preventScroll: true });
       }; check.dataset.id = task.id; row.append(check);
     }
+    const secondary = el('div', 'task-menu-content');
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
     meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
-    heading.append(name, time); copy.append(heading, meta);
+    heading.append(name, time);
+    if (task.reminders?.length) {
+      // A small bell shows at a glance that a task will remind you. Details stay under More.
+      const when = task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ');
+      const bell = el('span', 'reminder-badge'); bell.title = `Reminder ${when} before`;
+      bell.append(icon('bell'), el('span', 'sr-only', `Reminder ${when} before`)); heading.append(bell);
+    }
+    copy.append(heading, meta);
     if (task.movedFrom) {
       // A task carried over by Move to tomorrow links back to the day it came from.
       const origin = el('button', 'text-button moved-link', `Moved from ${fmt(task.movedFrom.date, { weekday: 'short', month: 'short', day: 'numeric' })}`); origin.type = 'button';
@@ -1572,7 +1663,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       origin.onclick = () => { chooseDate(task.movedFrom.date); ($('skippedSection').hidden ? $('inlineAdd') : $('skippedTitle')).focus({ preventScroll: true }); };
       copy.append(origin);
     }
-    if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); copy.append(reminder); }
+    if (task.reminders?.length) { const reminder = el('div', 'task-meta reminder-meta'); reminder.append(icon('bell'), document.createTextNode('Remind ' + task.reminders.map(offset => offset === 60 ? '1 hr' : `${offset} min`).join(', ') + ' before')); secondary.append(reminder); }
     if (task.description) {
       const description = el('div', 'task-description'), body = el('div', 'description-body'), preview = descriptionPreview(task.description);
       const expansionKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
@@ -1609,6 +1700,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
         if (!save()) return; focusTask(task.id);
         notify('Task moved to today.', () => { data.tasks = data.tasks.map(item => item.id === task.id ? { ...item, date: previous, reminderFrom: task.reminderFrom || 0 } : item); });
       };
+      // Rescheduling is the main reason to look at an overdue task, so it stays visible.
       copy.append(moveToday);
     }
     if (inOverdue && !done && occurrenceDate === today && validDate(dateKey(plusDays(parseDate(today), 1)))) {
@@ -1656,7 +1748,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
         if (!save()) return; $('skippedTitle').focus({ preventScroll: true });
         notify('Occurrence skipped. Future repeats are unchanged.', () => { source.exceptions = source.exceptions.filter(date => date !== occurrenceDate); });
       };
-      copy.append(skip);
+      secondary.append(skip);
     }
     if (routine && task.endedOn) copy.append(el('p', 'task-meta', `Ends before ${fmt(task.endedOn, { month: 'short', day: 'numeric', year: 'numeric' })}`));
     const nextVersion = routine && task.versions?.find(version => version.from > today);
@@ -1665,7 +1757,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const actions = el('div', 'task-actions'), ordering = el('div', 'task-order'), position = peers.findIndex(peer => peer.id === task.id);
     for (const [direction, step] of [['up', -1], ['down', 1]]) {
       const move = el('button', `icon-button move-task move-${direction}`); move.type = 'button'; move.append(icon('arrow'));
-      move.title = `Move ${direction}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.dataset.move = direction;
+      move.title = routine ? `Move ${direction} in the routine catalog` : `Move ${direction} for every ${DAYS[parseDate(occurrenceDate).getDay()]}`; move.setAttribute('aria-label', `Move ${task.title} ${direction}`); move.setAttribute('aria-describedby', routine ? 'routineOrderScope' : 'dayOrderScope'); move.dataset.move = direction;
       const neighbor = peers[position + step]; move.disabled = !neighbor;
       move.onclick = () => {
         if (!neighbor) return;
@@ -1686,7 +1778,48 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       ordering.append(move);
     }
     const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
-    if (!overdue || occurrenceDate === selected) row.prepend(ordering); actions.append(edit); row.append(actions); return row;
+    // The reorder arrows sit to the left of the task, so moving it never needs the More menu.
+    // The line above the list explains what a move affects.
+    if (!overdue || occurrenceDate === selected) row.prepend(ordering);
+    // Offer More only when it has something in it. An invisible copy keeps the Edit buttons lined up.
+    if (!secondary.children.length) {
+      const spacer = el('span', 'task-menu-toggle task-menu-spacer', 'More'); spacer.setAttribute('aria-hidden', 'true');
+      actions.append(edit, spacer); row.append(actions); return row;
+    }
+    const menu = el('details', 'task-menu'), summary = el('summary', 'task-menu-toggle', 'More');
+    const menuKey = `${routine ? 'routine' : occurrenceDate}:${task.id}`;
+    menu.dataset.key = menuKey; menu.open = openTaskMenuKey === menuKey;
+    summary.setAttribute('aria-label', `More actions for ${task.title}`); summary.title = 'More actions';
+    menu.append(summary, secondary);
+    menu.addEventListener('toggle', () => {
+      if (!menu.isConnected) return;
+      if (menu.open) {
+        openTaskMenuKey = menuKey;
+        for (const other of document.querySelectorAll('.task-menu')) if (other !== menu) other.open = false;
+      } else if (openTaskMenuKey === menuKey) openTaskMenuKey = null;
+    });
+    actions.append(edit, menu); row.append(actions); return row;
+  }
+  // The Coming up column lists the 7 days after the selected day. It only shows on wide screens.
+  function renderComingUp() {
+    const start = parseDate(selected);
+    $('comingUpHint').textContent = selected === today ? 'Next 7 days' : `7 days after ${fmt(selected, { weekday: 'short', month: 'short', day: 'numeric' })}`;
+    const days = [];
+    for (let offset = 1; offset <= 7; offset++) {
+      const key = dateKey(plusDays(start, offset));
+      if (!validDate(key)) break;
+      // Only days with two or more tasks need sorting into the order your list uses.
+      const found = data.tasks.filter(task => scheduled(task, key)).map(task => resolveTask(task, key));
+      const tasks = found.length > 1 ? orderedTasks(found, key) : found, open = tasks.filter(task => !isDone(task.id, key));
+      const button = el('button', 'coming-up-open' + (tasks.length ? '' : ' empty')); button.type = 'button';
+      const count = !tasks.length ? 'Nothing planned' : !open.length ? 'All done' : `${open.length} task${open.length === 1 ? '' : 's'}`;
+      button.append(el('span', 'coming-up-date', fmt(key, { weekday: 'short', month: 'short', day: 'numeric' })), el('span', 'coming-up-count', count));
+      const shown = (open.length ? open : tasks).slice(0, 6), more = (open.length ? open : tasks).length - shown.length;
+      if (shown.length) { const names = el('span', 'coming-up-tasks'); names.append(...shown.map(task => el('span', '', task.title)), ...(more > 0 ? [el('span', '', `+${more} more`)] : [])); button.append(names); }
+      button.onclick = () => chooseDate(key);
+      const item = el('li', 'coming-up-day'); item.append(button); days.push(item);
+    }
+    $('comingUpList').replaceChildren(...days);
   }
   function render() {
     calendarCounts.clear();
@@ -1703,6 +1836,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('viewBreadcrumb').textContent = view === 'day' ? 'My day' : 'Weekly routines';
     $('sortDay').hidden = !data.weekdayOrders[parseDate(selected).getDay()];
     $('sortDay').title = `Restore automatic sorting for ${DAYS[parseDate(selected).getDay()]}`;
+    $('dayOrderScope').textContent = `${data.weekdayOrders[parseDate(selected).getDay()] ? 'Custom order' : 'Due time'} · reordering repeats every ${DAYS[parseDate(selected).getDay()]}`;
+    $('routineOrderScope').textContent = `${data.routineOrder ? 'Custom order' : 'Due time'} · catalog only`;
     $('sortRoutines').hidden = !data.routineOrder;
     $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
     $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
@@ -1716,7 +1851,17 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const list = $('taskList'); list.replaceChildren();
     if (!tasks.length || (!pending.length && !done.length)) list.append(makeEmpty(false, selected === today && overdueToday.length > 0));
     pending.forEach(task => list.append(taskRow(task, false, pending)));
-    if (done.length) { list.append(el('div', 'section-label', `COMPLETED · ${done.length}`)); done.forEach(task => list.append(taskRow(task, false, done))); }
+    if (done.length) {
+      const completed = el('details', 'completed-tasks'); completed.open = !collapsedCompleted.has(selected);
+      const summary = el('summary', 'section-label', `Completed · ${done.length}`);
+      completed.append(summary, ...done.map(task => taskRow(task, false, done)));
+      const date = selected;
+      completed.addEventListener('toggle', () => {
+        if (!completed.isConnected) return;
+        if (completed.open) collapsedCompleted.delete(date); else collapsedCompleted.add(date);
+      });
+      list.append(completed);
+    }
     $('overdueSection').hidden = selected !== today || !overdue.length;
     $('overdueCount').textContent = overdue.length;
     $('overdueList').replaceChildren(...overdueEarlier.map(task => taskRow(task, false, [task], task.date, true)), ...overdueToday.map(task => taskRow(task, false, overdueToday, today, true)));
@@ -1749,7 +1894,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       history.onclick = () => chooseDate(lastRoutineDate(task, task.endedOn) || task.endedOn);
       item.append(history); return item;
     }));
-    renderCalendar(); renderWeek();
+    renderComingUp(); renderCalendar(); renderWeek();
   }
   const weekdayInputs = [...document.querySelectorAll('input[name="weekdays"]')];
   weekdayInputs.forEach(input => {
@@ -1771,6 +1916,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
     const source = data.tasks.find(task => task.id === editingId);
+    if (weekly) setTaskOptions(true);
     const converting = source?.kind === 'once' && weekly;
     $('routineChanges').hidden = !(source?.kind === 'weekly' && weekly);
     const date = $('taskDate').value;
@@ -1780,6 +1926,22 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('workdaysPreset').setAttribute('aria-pressed', String(days.length === 5 && [1, 2, 3, 4, 5].every(day => days.includes(day))));
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
+  function setTaskOptions(expanded) {
+    $('taskOptions').hidden = !expanded;
+    $('toggleTaskOptions').setAttribute('aria-expanded', String(expanded));
+    $('taskOptionsLabel').textContent = expanded ? 'Fewer options' : 'More options';
+  }
+  // Native validation runs before submit. Reveal invalid optional controls while
+  // the browser can still focus them and show its validation message.
+  $('taskForm').addEventListener('invalid', event => {
+    if ($('taskOptions').contains(event.target)) setTaskOptions(true);
+  }, true);
+  $('toggleTaskOptions').onclick = () => {
+    if (!$('taskOptions').hidden && $('taskForm').elements.timing.value === 'timed' && !validTime($('taskTime').value)) {
+      $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return;
+    }
+    setTaskOptions($('taskOptions').hidden);
+  };
   function openTask(task = null, kind = 'once') {
     const source = task ? data.tasks.find(item => item.id === task.id) || task : null;
     const effective = view === 'routines' || selected < today ? today : selected;
@@ -1787,7 +1949,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
-    dialogCloseMotion?.cancel(); dialogCloseMotion = null; dialogClosing = false; $('taskDialog').classList.toggle('is-closing', false);
+    setTaskOptions(Boolean(task) || kind === 'weekly');
     editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
@@ -1814,24 +1976,25 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       $('scheduleHint').textContent = 'This routine has ended. Saved occurrences and completion history are kept for reference.';
     }
     $('taskDialog').showModal();
+    taskFormStart = taskFormState();
     playMotion($('taskDialog'), [{ opacity: 0 }, { opacity: 1 }], { duration: 180 });
     (editingReadOnly ? $('cancelDialog') : $('taskTitle')).focus();
   }
   $('taskForm').addEventListener('submit', event => {
     event.preventDefault();
+    if (!$('taskDialog').open) return;
     const title = $('taskTitle').value.trim();
     const description = $('taskDescription').value.trim();
     const kind = $('taskForm').elements.kind.value;
     const date = $('taskDate').value;
-    if (dialogClosing) return;
     if (editingReadOnly) return;
     if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
-    if (description.length > 5000) { $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
+    if (description.length > 5000) { setTaskOptions(true); $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
     if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
     const weekdays = selectedWeekdays();
-    if (kind === 'weekly' && !weekdays.length) { $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
+    if (kind === 'weekly' && !weekdays.length) { setTaskOptions(true); $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
-    if (time !== null && !validTime(time)) { $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
+    if (time !== null && !validTime(time)) { setTaskOptions(true); $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     const previous = data.tasks.find(task => task.id === editingId);
     // Keep saved data within the limits the app accepts when it loads.
@@ -1839,7 +2002,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
-    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { setTaskOptions(true); $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
     // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
     const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
@@ -1880,11 +2043,11 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
   $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
   $('deleteTask').onclick = () => {
-    if (dialogClosing || editingReadOnly) return;
+    if (editingReadOnly) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
-      if (!validDate(effective) || effective < today) { $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
       recovery?.keep('end-routine');
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
@@ -1902,12 +2065,43 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
   $('taskDialog').addEventListener('cancel', event => { event.preventDefault(); closeTaskDialog(); });
+  // Clicking outside the task window closes it, like Cancel. If anything was typed or changed,
+  // ask first, so a stray click never throws away a draft.
+  function taskFormState() {
+    const form = $('taskForm').elements;
+    return JSON.stringify([...['taskTitle', 'taskDescription', 'taskDate', 'taskTime', 'taskEffectiveDate'].map(id => $(id).value),
+      form.kind.value, form.timing.value, ...weekdayInputs.map(input => input.checked), ...reminderInputs.map(input => input.checked)]);
+  }
+  function outsideTaskDialog(event) {
+    const box = $('taskDialog').getBoundingClientRect();
+    return event.target === $('taskDialog') && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom);
+  }
+  let pressStartedOutside = false;
+  // Only a press that starts and ends outside counts, so selecting text and dragging past the edge is safe.
+  $('taskDialog').addEventListener('pointerdown', event => { pressStartedOutside = outsideTaskDialog(event); });
+  $('taskDialog').addEventListener('click', event => {
+    const outside = pressStartedOutside && outsideTaskDialog(event); pressStartedOutside = false;
+    if (!outside) return;
+    if (!editingReadOnly && taskFormState() !== taskFormStart && !window.confirm('Discard your changes to this task?')) return;
+    closeTaskDialog();
+  });
+  document.addEventListener('click', event => {
+    // A row action may have just rebuilt the list. Keep its replacement menu open.
+    if (!event.target.isConnected) return;
+    for (const menu of document.querySelectorAll('.task-menu')) if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || ['taskDialog', 'restoreDialog', 'tabChoiceDialog', 'fileChoiceDialog'].some(id => $(id).open)) return;
+    for (const menu of document.querySelectorAll('.task-menu')) if (menu.open) {
+      event.preventDefault(); menu.open = false; menu.querySelector('summary').focus();
+    }
+  });
   $('addTask').onclick = () => openTask(null, view === 'routines' ? 'weekly' : 'once'); $('inlineAdd').onclick = () => openTask();
   $('todayNav').onclick = $('jumpToday').onclick = () => chooseDate(today); document.querySelector('.brand').onclick = event => { event.preventDefault(); chooseDate(today); };
   $('routinesNav').onclick = () => { if (view === 'routines') return; view = 'routines'; render(); revealView($('routinesView')); };
   $('prevWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), -7))); $('nextWeek').onclick = () => chooseDate(dateKey(plusDays(parseDate(selected), 7)));
-  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; if (!save()) return; notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
-  $('sortRoutines').onclick = () => { data.routineOrder = null; if (!save()) return; notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
+  $('sortDay').onclick = () => { delete data.weekdayOrders[parseDate(selected).getDay()]; if (!save()) return; $('dayOrderScope').focus({ preventScroll: true }); notify(`Automatic sorting restored for ${DAYS[parseDate(selected).getDay()]}. Other weekdays are unchanged.`); };
+  $('sortRoutines').onclick = () => { data.routineOrder = null; if (!save()) return; $('routineOrderScope').focus({ preventScroll: true }); notify('Routine catalog sorted by due time. Daily orders are unchanged.'); };
   function shiftMonth(direction) { month = new Date(month.getFullYear(), month.getMonth() + direction, 1, 12); renderCalendar(); playMotion($('calendarGrid'), [{ opacity: .4, transform: `translateX(${direction * 5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 170 }); }
   $('prevMonth').onclick = () => shiftMonth(-1); $('nextMonth').onclick = () => shiftMonth(1);
   function downloadData(text, name) {
@@ -2166,14 +2360,13 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   setInterval(checkReminders, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); }); window.addEventListener('focus', () => { checkReminders(); updateNotificationStatus(); renderBackupStatus(); });
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
-  const footer = document.querySelector('.main-footer'); const mobileBackup = el('button', 'text-button', 'Back up'); mobileBackup.style.display = 'none'; mobileBackup.onclick = backup; const mobileRestore = el('button', 'text-button', 'Restore'); mobileRestore.style.display = 'none'; mobileRestore.onclick = () => $('restoreFile').click(); footer.append(mobileBackup, mobileRestore);
-  localNote = el('div', 'mobile-storage', 'Tasks stay on this device · See task-file status above'); localNote.style.display = 'none'; document.querySelector('main').append(localNote);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
   recovery = window.createRecoveryCopies({ validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label) });
   void recovery.init();
   fileStore = window.createTaskFileStorage({
     getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
+    waitForEditor: () => $('taskDialog').open ? new Promise(resolve => $('taskDialog').addEventListener('close', resolve, { once: true })) : null,
     applyData(next) {
       data = validate(next); undoNotice.hide();
       persistent = true; loadFailed = false; originalSavedData = null;

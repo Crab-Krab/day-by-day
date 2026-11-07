@@ -6,9 +6,20 @@ Day by Day has three kinds of checks. Each one catches things the others can't.
 | --- | --- | --- |
 | Automated tests | `npm test` (GitHub runs them on every push) | Scheduling, history, saving, and the app's screens in a simulated browser |
 | Browser checks | `npm run preview`, then open the printed browser-checks address and select **Run browser checks** | The real built app in a real browser: adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links |
+| Interface browser tests (optional) | `npm run test:browser`, after installing Playwright as shown below. GitHub runs them in Chrome and Edge on every pull request and on main. | 51 interface checks at desktop and phone widths, with animations on and off: quick entry, task menus, collapsing Completed, saving panel, real mouse and keyboard input, plus all browser checks above. Screenshots are saved for review |
 | Manual checklist | Below, before a release | File permission prompts and other browser behavior that can't be automated |
 
 Run the browser checks in desktop Chrome or Edge, and in Firefox when a change touches the calendar, dialogs, or saving. They use only the preview page's own storage, put back whatever was there, and never touch your everyday tasks. Stop the preview with Ctrl+C.
+
+To run the interface browser tests on your computer, install Playwright outside the project, then run them. Nothing is added to the app or to `package.json`:
+
+```sh
+npm install --no-save --package-lock=false playwright@1.62.1
+npx playwright install chromium
+npm run test:browser
+```
+
+Set `DAY_BY_DAY_BROWSER_CHANNEL=msedge` to use an installed Edge, or `DAY_BY_DAY_BROWSER_OUTPUT` to a folder to keep the screenshots. These tests use sample tasks and simulated files, never your own.
 
 ## Manual checklist before a release
 

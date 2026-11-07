@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day by Day — Browser checks</title>
+<style>
+body{font:15px system-ui;background:#f6f7f2;color:#243c34;margin:24px}h1{font:32px Georgia}button{font:inherit;padding:12px 18px;cursor:pointer}li{padding:4px}.pass{color:#236653}.fail{color:#a34d38}iframe{border:1px solid #7a8d6e;background:white;display:block;margin:20px 0}#preview{overflow:auto}#status{font-weight:600}
+</style>
+<h1>Day by Day browser checks</h1>
+<p>Tests the generated HTML with disposable tasks in an isolated frame. File access and permissions are simulated; no real task file is opened.</p>
+<button id="run">Run browser checks</button><p id="status" role="status" data-state="ready">Ready</p><ol id="results"></ol><div id="preview"></div>
+<script>
+const run=document.getElementById('run'),status=document.getElementById('status'),results=document.getElementById('results'),preview=document.getElementById('preview');
+function check(value,message){if(!value)throw Error(message);const li=document.createElement('li');li.className='pass';li.textContent=message;results.append(li);console.log('PASS '+message);}
+async function until(predicate){const end=performance.now()+8000;while(!predicate()){if(performance.now()>end)throw Error('Timed out waiting for browser UI');await new Promise(requestAnimationFrame);}}
+const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+function fixture(){
+  const coreDate=new Date(),key=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const today=key(coreDate),weekday=coreDate.getDay();
+  const value={version:5,tasks:[
+    {id:'routine',title:'Water the plants',kind:'weekly',weekdays:[weekday],startDate:today,description:'Check the soil before watering.'},
+    {id:'report',title:'Review weekly report',kind:'once',date:today,description:'Notes with a safe link: https://example.com',time:'23:59',reminders:[15]},
+    {id:'walk',title:'Take a walk',kind:'once',date:today},
+    {id:'done',title:'Clear the desk',kind:'once',date:today}
+  ],completed:{[today]:['done']}};
+  localStorage.setItem('day-by-day.v1',JSON.stringify(value));localStorage.setItem('day-by-day.theme','light');
+  localStorage.removeItem('day-by-day.backup.v1');localStorage.removeItem('day-by-day.reminders.v1');
+  window.__testDisk={name:'Tasks.json',raw:'',fail:false};
+  const file={name:'Tasks.json',queryPermission:async()=> 'granted',requestPermission:async()=> 'granted',getFile:async()=>new Blob([window.__testDisk.raw]),createWritable:async()=>{let pending;return{write:async text=>{if(window.__testDisk.fail)throw Error('Simulated disk full');pending=text;},close:async()=>{window.__testDisk.raw=pending;},abort:async()=>{}};}};
+  Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:async()=>file});
+  Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:async()=>[file]});
+  // Keep test connections in the frame. Real IndexedDB persistence is tested separately.
+  let record;
+  Object.defineProperty(window,'indexedDB',{configurable:true,value:{open(){const request={};queueMicrotask(()=>{request.result={close(){},transaction(){const tx={objectStore(){return{get(){const req={};queueMicrotask(()=>{req.result=record;tx.oncomplete();});return req;},put(value){record=value;const req={};queueMicrotask(()=>tx.oncomplete());return req;},delete(){record=undefined;const req={};queueMicrotask(()=>tx.oncomplete());return req;}};},abort(){tx.onabort?.();}};return tx;}};request.onsuccess();});return request;}}});
+}
+run.onclick=async()=>{
+  run.disabled=true;results.replaceChildren();preview.replaceChildren();status.textContent='Running…';status.dataset.state='running';
+  const keys=['day-by-day.v1','day-by-day.theme','day-by-day.backup.v1','day-by-day.reminders.v1'];
+  const saved=new Map(keys.map(key=>[key,localStorage.getItem(key)]));
+  try{
+    const response=await fetch('../Day-by-Day.html');if(!response.ok)throw Error('Build Day-by-Day.html before running browser checks.');
+    const html=await response.text();
+    for(const width of [1366,390]){
+      preview.replaceChildren();const frame=document.createElement('iframe');frame.title=`App under test at ${width}px`;frame.style.width=width+'px';frame.style.height='900px';preview.append(frame);
+      frame.srcdoc=html.replace('<head>','<head><script>('+fixture.toString()+')();<\/script>');
+      await until(()=>frame.contentWindow?.DayByDay&&frame.contentDocument.getElementById('taskFilePanel').dataset.state==='idle');
+      const win=frame.contentWindow,doc=frame.contentDocument,$=id=>doc.getElementById(id),row=id=>doc.querySelector(`[data-id="${id}"]`),state=()=>JSON.parse(win.localStorage.getItem('day-by-day.v1'));
+      const click=async node=>{node.click();await nextFrame();};
+      const label=message=>`${width}px: ${message}`;
+      await click($('createTaskFile'));await until(()=>$('taskFilePanel').dataset.state==='saved');
+      check($('taskFileDetails').hidden&&$('manageTaskFile').getAttribute('aria-expanded')==='false',label('successful autosave collapses to one status row'));
+      await click($('manageTaskFile'));check(!$('taskFileDetails').hidden&&$('saveStatus').textContent.includes('Saved'),label('Manage exposes browser saving, backups, and file controls together'));await click($('manageTaskFile'));
+      const top=doc.querySelector('[aria-label="Daily checklist"]').getBoundingClientRect().top;
+      check(top<650,label(`checklist starts at ${Math.round(top)}px with autosave connected`));
+      check(doc.documentElement.scrollWidth<=width,label('layout has no horizontal overflow'));
+      const checkbox=row('walk').querySelector('.check-button'),rect=checkbox.getBoundingClientRect();
+      check(rect.width>=44&&rect.height>=44,label('checkbox has a 44px clickable target'));
+      await click($('addTask'));check($('taskOptions').hidden&&$('taskDate').value,label('quick entry starts with name and date'));
+      $('taskTitle').value='Quick entry task';$('taskForm').requestSubmit();await until(()=>!$('taskDialog').open);
+      check(state().tasks.some(task=>task.title==='Quick entry task'&&task.time===null),label('quick entry saves without optional fields'));
+      await click(row('report').querySelector('.edit-task'));check(!$('taskOptions').hidden&&$('taskTime').value==='23:59'&&$('taskDescription').value.includes('https://example.com'),label('full editor retains notes, time, and reminders'));
+      await click($('cancelDialog'));check(!doc.querySelector(':modal'),label('cancel immediately releases the native modal'));
+      await click(row('routine').querySelector('.edit-task'));
+      const effective=$('taskEffectiveDate').value, yesterday=win.DayByDay.dateKey(win.DayByDay.plusDays(win.DayByDay.parseDate(effective),-1));
+      $('taskEffectiveDate').value=yesterday;await click($('toggleTaskOptions'));
+      check($('taskOptions').hidden,label('routine options can collapse before native date validation'));
+      await click($('saveTask'));
+      check($('taskDialog').open&&!$('taskOptions').hidden&&doc.activeElement===$('taskEffectiveDate')&&$('taskEffectiveDate').validity.rangeUnderflow,label('Save reveals and focuses an invalid date inside collapsed options'));
+      $('taskEffectiveDate').value=effective;await click($('saveTask'));
+      check(!$('taskDialog').open,label('correcting the revealed date allows the routine to save'));
+      check(!row('routine').querySelector('.task-menu').open,label('secondary actions start hidden'));
+      await click(row('routine').querySelector('summary'));check(row('routine').querySelector('.task-menu').open,label('More reveals the secondary actions'));
+      check(!row('routine').querySelector('.task-menu').contains(row('routine').querySelector('.move-up'))&&row('routine').querySelector('.move-up').getBoundingClientRect().width>0&&$('dayOrderScope').textContent.includes('reordering repeats every'),label('reorder arrows sit beside the task outside More, and the scope shows above the list'));
+      await click(row('routine').querySelector('.move-up'));check($('dayOrderScope').textContent.includes('Custom order'),label('reorder updates the scope label'));
+      await click($('dayTitle'));check(!row('routine').querySelector('.task-menu').open,label('outside click dismisses the action menu'));
+      await click($('sortDay'));check($('sortDay').hidden&&doc.activeElement===$('dayOrderScope'),label('reset restores due-time sorting and visible focus'));
+      let group=doc.querySelector('.completed-tasks');await click(group.querySelector('summary'));check(!group.open,label('completed tasks collapse'));
+      await click(row('walk').querySelector('.check-button'));group=doc.querySelector('.completed-tasks');
+      check(!group.open&&group.querySelector('summary').textContent==='Completed · 2'&&doc.activeElement===group.querySelector('summary'),label('completion preserves collapse and moves focus to its visible summary'));
+      await click(group.querySelector('summary'));await click(row('walk').querySelector('.check-button'));check(state().completed[win.DayByDay.dateKey(new win.Date())].length===1,label('completed tasks can expand and be unchecked'));
+      for(let cycle=0;cycle<24;cycle++){
+        await click($('addTask'));await click($('cancelDialog'));
+        await click(row('walk').querySelector('.check-button'));await click(row('walk').querySelector('.edit-task'));await click($('cancelDialog'));
+        await click(row('walk').querySelector('.check-button'));
+        if(doc.querySelector(':modal')||doc.querySelector('.app-shell').inert)throw Error('Checklist remained blocked during repeated edit cycles');
+      }
+      check(true,label('24 repeated add/edit/cancel/check cycles leave the checklist responsive'));
+      win.__testDisk.fail=true;await click($('addTask'));$('taskTitle').value='While file saving fails';$('taskForm').requestSubmit();
+      await until(()=>$('taskFilePanel').dataset.state==='error');check(!$('taskFileDetails').hidden&&$('taskFileStatus').textContent.includes('not saved'),label('failed file writes automatically expose recovery controls'));
+      win.__testDisk.fail=false;await click($('retryTaskFile'));await until(()=>$('taskFilePanel').dataset.state==='saved');check(JSON.parse(win.__testDisk.raw).tasks.some(task=>task.title==='While file saving fails'),label('retry writes the pending task to the simulated file'));
+      await click($('routinesNav'));await click($('addTask'));check(!$('taskOptions').hidden&&!$('weeklyDays').hidden,label('Add routine opens repeat controls immediately'));await click($('cancelDialog'));
+      check($('routineOrderScope').textContent.includes('catalog only'),label('routine catalog scope is explicit'));
+      await click($('todayNav'));await click($('manageTaskFile')); // leave a compact preview
+      const link=doc.querySelector('.description-body a');check(link?.rel.includes('noopener')&&!doc.querySelector('.description-body script'),label('notes and links retain safe rendering'));
+      // Verify the menu cannot cover an unrelated row when closed and the hit target is real.
+      const target=row('walk').querySelector('.check-button');target.scrollIntoView({block:'center'});await nextFrame();const bounds=target.getBoundingClientRect();
+      check(target.contains(doc.elementFromPoint(bounds.left+4,bounds.top+4)),label('the edge of the checkbox receives actual pointer hits'));
+      if(width===390){await click($('themeToggle'));check(doc.documentElement.dataset.theme==='dark',label('dark theme works with the compact layout'));await click($('themeToggle'));}
+      frame.contentWindow.scrollTo(0,0);await nextFrame();
+    }
+    status.textContent=`Passed ${results.children.length} browser checks`;status.dataset.state='passed';
+  }catch(error){const li=document.createElement('li');li.className='fail';li.textContent=error.stack||error.message;results.append(li);status.textContent='Browser checks failed';status.dataset.state='failed';console.error(error);}
+  finally{for(const [key,value]of saved)value===null?localStorage.removeItem(key):localStorage.setItem(key,value);run.disabled=false;}
+};
+</script>
+</html>

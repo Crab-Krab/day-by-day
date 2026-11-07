@@ -1,19 +1,28 @@
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {} }) {
+window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
   let handle = null, rawBaseline = null, baseline = null, dirty = false, writing = null;
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
-  let dbPromise = null;
+  let dbPromise = null, hasSaved = false;
+  function showDetails(expanded = true) {
+    $('taskFileDetails').hidden = !expanded;
+    $('manageTaskFile').setAttribute('aria-expanded', String(expanded));
+    $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
+  }
+  $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
   const snapshot = () => JSON.stringify(validate(getData()));
   const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
   function status(title, detail, state = 'idle') {
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
+    if (state === 'error' || state === 'idle' || state === 'unsupported') showDetails();
+    if (state === 'idle' || state === 'unsupported') hasSaved = false;
+    if (state === 'saved' && !hasSaved) { showDetails(false); hasSaved = true; }
     // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
     $('retryTaskFile').hidden = !handle || !paused || !dirty || rawBaseline === null;
     $('reconnectTaskFile').hidden = !handle || !paused;
@@ -25,9 +34,9 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
   function idleStatus() { status('Keep your tasks in a file', 'Set up autosave once, or open your existing JSON task file. The file stays on your computer when browser data is cleared.'); }
-  function setBusy(value) {
+  function setBusy(value, blockChecklist = true) {
     busy = value;
-    document.querySelector('.app-shell').inert = value;
+    document.querySelector('.app-shell').inert = value && blockChecklist;
     refreshControls();
   }
   function db() {
@@ -137,7 +146,16 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     else void flush();
   }
   async function attach(target, { creating = false, automatic = false, knownBaseline = null } = {}) {
-    const disk = await readFile(target, creating);
+    let disk;
+    for (;;) {
+      disk = await readFile(target, creating);
+      const editorClosed = automatic && waitForEditor();
+      if (!editorClosed) break;
+      status('Finish editing to reconnect ' + target.name, 'Save or cancel the open task first. Your current tasks remain available while the file waits.', 'connecting');
+      await editorClosed;
+      // Both the file and the browser copy may have changed during editing.
+      // Read again, and check for another editor opened before that read finished.
+    }
     const current = snapshot();
     const currentHasTasks = getData().tasks.length > 0 || Object.keys(getData().completed).length > 0;
     let decision = creating ? 'current' : 'disk';
@@ -220,7 +238,9 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       status('File autosave needs Chrome or Edge', 'Open this HTML file in a current desktop Chrome or Edge browser. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
       initialized = true; return;
     }
-    setBusy(true);
+    // The remembered connection may be slow. Keep the checklist usable; attach()
+    // waits for an open editor, then compares the latest browser and file copies.
+    setBusy(true, false);
     status('Looking for your task file…', 'Checking the connection saved in this browser.');
     let failed = false;
     try {
@@ -248,6 +268,6 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     if (dirty || writing || busy) { event.preventDefault(); event.returnValue = ''; }
   });
   // Do not poll or write on unload: writes happen immediately after each edit.
-  return { init, changed, flush, retry, ownsCache: () => Boolean(handle) || !initialized,
+  return { init, changed, flush, retry, showDetails, ownsCache: () => Boolean(handle) || !initialized,
     isConnected: () => Boolean(handle), isPending: () => dirty || Boolean(writing) };
 };
