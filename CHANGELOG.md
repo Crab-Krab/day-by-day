@@ -2,18 +2,21 @@
 
 ## Unreleased
 
-- Close the Add or Edit task window by clicking outside it. If anything was typed or changed, the app asks before discarding it. Selecting text and dragging past the window's edge keeps it open.
-- Wait for an open task editor before reconnecting a remembered file, then reread the file and ask which copy to keep when needed. This prevents stale edits from overwriting newer file details or disappearing after a task was deleted from the file.
-- Reveal collapsed task options when browser validation finds an invalid field, so Save can focus the field and explain what needs correcting.
+## 1.6.0 — 2026-11-07
 
 - On screens 1360px wide and up, add a **Coming up** column beside the checklist with the 7 days after the selected day: each day's task count and up to six task names, and a click to open it. Remove the width cap so the checklist and Coming up use the whole screen beside the sidebar, and line the saving panels up with the content. The day title and week strip stay stacked above. Narrower screens and phones are unchanged.
 - Collapse connected autosave to one status row; group file controls, browser saving, and backups under Manage. Expand setup and file errors automatically.
 - Start one-time task entry with a name and date; reveal notes, repeats, time, and reminders through More options. Existing tasks and new routines open the full editor.
-- Reduce heading, week-strip, and row spacing; enlarge checkbox hit targets to 44px while keeping the checkbox drawing compact.
 - Group secondary task actions and reminder details under More, explain weekday/catalog reordering scope before moving, and label the reset action clearly. The reorder arrows stay beside each task, and overdue tasks keep **Move to today** and **Move to tomorrow** visible, and a small bell beside the time shows which tasks have reminders. **More** appears only when a task has something in it.
 - Add collapsible completed sections with stable per-date session state and visible keyboard focus when a newly completed task is hidden.
+- Close the Add or Edit task window by clicking outside it. If anything was typed or changed, the app asks before discarding it. Selecting text and dragging past the window's edge keeps it open.
+- Reduce heading, week-strip, and row spacing; enlarge checkbox hit targets to 44px while keeping the checkbox drawing compact.
+- Wait for an open task editor before reconnecting a remembered file, then reread the file and ask which copy to keep when needed. This prevents stale edits from overwriting newer file details or disappearing after a task was deleted from the file.
 - Release the task dialog immediately on close and keep startup reconnection from blocking the checklist. Add regression checks for stalled animations and edits during slow reconnection; the intermittent Edge issue still needs long-session verification.
+- Reveal collapsed task options when browser validation finds an invalid field, so Save can focus the field and explain what needs correcting.
 - Add browser regression checks for desktop/mobile layouts, normal/reduced motion, repeated edits, file-save errors, and pointer targets. GitHub runs them in Chrome and Edge on every pull request and on main. Their guide is now part of `docs/TESTING.md`.
+
+Saved-data format remains 5, so v1.4.x, v1.5.0, and v1.6.0 can read each other's tasks and backups.
 
 ## 1.5.0 — 2026-11-06
 
