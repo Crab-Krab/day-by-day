@@ -25,537 +25,424 @@ SOFTWARE.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-0jL1EYnvS6YXkrMOXrpWPu+HmUkrxoDeHVEeVm7NRVs=' 'sha256-tPujQjLr22cogDb0NHb7Ok3/Hg+/5sVcv+WpWQmkRTo='; style-src 'sha256-XBSXfslSO05q/Lw93V8JiH1qZlZ3yNRlOlhs48mD/to='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-q1U66eBAKq9NZHux2bt5wAV4Dy9cYGCeHhsFVYuHPn8=' 'sha256-4GODDF3C48YIplZh1W9SOanFfZmNzOX0An0X0OZPEco='; style-src 'sha256-mF83rV/+DnmgAcr0Quk8i8qT3QsfNPUqBomF/xKZwxQ='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#236653">
+  <meta name="theme-color" content="#f7f7f8">
   <meta name="description" content="A little space for everything you want to do. A daily checklist with weekly routines and a built-in calendar.">
   <title>Day by Day — Your daily checklist</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2038%2038%22%3E%3Crect%20width%3D%2238%22%20height%3D%2238%22%20rx%3D%2212%22%20fill%3D%22%23236653%22%2F%3E%3Csvg%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2225%22%20height%3D%2225%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%2012%204%204L19%206%22%2F%3E%3C%2Fsvg%3E%3C%2Fsvg%3E">
-  <style>/* The two palettes share the same readable type scale and layout. */
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2038%2038%22%3E%3Crect%20width%3D%2238%22%20height%3D%2238%22%20rx%3D%2212%22%20fill%3D%22%235B4CE2%22%2F%3E%3Csvg%20x%3D%226.5%22%20y%3D%226.5%22%20width%3D%2225%22%20height%3D%2225%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%2012%204%204L19%206%22%2F%3E%3C%2Fsvg%3E%3C%2Fsvg%3E">
+  <style>/* Shared, offline design system. Aliases keep presentation hooks independent of task data. */
 :root {
   color-scheme: light;
-  --paper: #f6f7f2;
+  --canvas: #f7f7f8;
   --surface: #ffffff;
-  --sidebar: #eef1e8;
-  --ink: #243c34;
-  --secondary: #5e6e5c;
-  --muted: #63745e;
-  --line: #dce3d6;
-  --green: #236653;
-  --green-hover: #1b5142;
-  --active: #dfe8d7;
-  --active-ink: #2c604b;
-  --badge: #d0dfc6;
-  --subtle: #f2f5ed;
-  --hover: #e8eee0;
-  --done: #f8faf4;
-  --done-ink: #68785f;
-  --accent: #96643d;
+  --sidebar: #f2f2f4;
+  --surface-subtle: #f3f3f6;
+  --text: #202024;
+  --text-secondary: #62626c;
+  --text-completed: #6b6b75;
+  --border: #dddde3;
+  --control-border: #85858e;
+  --accent: #5b4ce2;
+  --on-accent: #ffffff;
+  --accent-hover: #4c3bcb;
+  --selection: #eeeafe;
+  --on-selection: #4535b5;
+  --hover: #f1f1f5;
+  --link: #5140cc;
+  --focus: #6854e8;
+  --danger: #b42332;
+  --danger-surface: #fff1f2;
+  --warning: #8a4809;
+  --warning-surface: #fff4e6;
   --field: #ffffff;
-  --field-border: #7a8d6e;
-  --danger: #a34d38;
-  --outside: #5f6e55;
-  --shadow: 0 6px 24px #243b3306;
-  font-family: system-ui, 'Segoe UI', Arial, sans-serif;
+  --menu-shadow: 0 8px 24px #0000001f;
+  --dialog-shadow: 0 20px 64px #00000033;
+  --backdrop: #00000066;
+  --paper: var(--canvas);
+  --ink: var(--text);
+  --secondary: var(--text-secondary);
+  --muted: var(--text-secondary);
+  --line: var(--border);
+  --active: var(--selection);
+  --active-ink: var(--on-selection);
+  --subtle: var(--surface-subtle);
+  --done: var(--surface-subtle);
+  --done-ink: var(--text-completed);
+  --field-border: var(--control-border);
+  --outside: var(--text-secondary);
+  --workspace: 1440px;
+  --gutter: 32px;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif;
   font-synthesis: none;
-  color: var(--ink);
-  background: var(--paper);
+  color: var(--text);
+  background: var(--canvas);
 }
 :root[data-theme=dark] {
   color-scheme: dark;
-  --paper: #151c19;
-  --surface: #202b25;
-  --sidebar: #1b241f;
-  --ink: #e5ece2;
-  --secondary: #bdcbb5;
-  --muted: #a7b99d;
-  --line: #40503d;
-  --green: #397a5f;
-  --green-hover: #3c8062;
-  --active: #30432f;
-  --active-ink: #deecd3;
-  --badge: #40543b;
-  --subtle: #29392a;
-  --hover: #344731;
-  --done: #1b261f;
-  --done-ink: #b2c1a6;
-  --accent: #e2b78f;
-  --field: #17201a;
-  --field-border: #789369;
-  --danger: #efb19e;
-  --outside: #8a9a82;
-  --shadow: 0 6px 24px #0000000a;
+  --canvas: #111113;
+  --surface: #1b1b1e;
+  --sidebar: #171719;
+  --surface-subtle: #232327;
+  --text: #f5f5f7;
+  --text-secondary: #b3b3be;
+  --text-completed: #a6a6b1;
+  --border: #35353d;
+  --accent: #b8abff;
+  --on-accent: #211848;
+  --accent-hover: #c8bdff;
+  --selection: #2d2742;
+  --on-selection: #d5ccff;
+  --hover: #28282e;
+  --link: #c9bdff;
+  --focus: #c5b7ff;
+  --danger: #ffb4bc;
+  --danger-surface: #3b2229;
+  --warning: #f6ce94;
+  --warning-surface: #3b3023;
+  --field: #151518;
+  --menu-shadow: 0 8px 24px #00000052;
+  --dialog-shadow: 0 20px 64px #0000007a;
+  --backdrop: #000000a3;
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-size: 16px; line-height: 1.5; }
 button, input, select, textarea { font: inherit; }
-button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-button svg, button svg * { pointer-events: none; }
+button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; color: inherit; }
-button:disabled { cursor: default; }
-button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
-svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+button svg, button svg * { pointer-events: none; }
+button:disabled { cursor: default; color: var(--secondary); }
+a { color: var(--link); text-underline-offset: 3px; }
+:focus-visible, input:focus, textarea:focus, select:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 [hidden] { display: none !important; }
-.app-shell { display: flex; min-height: 100vh; }
-.sidebar { width: 292px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--line); padding: 38px 26px 26px; display: flex; flex-direction: column; min-height: 100vh; }
-.brand { color: var(--ink); text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 650; letter-spacing: -1px; }
-.brand-mark { display: grid; place-items: center; background: var(--green); color: white; border-radius: 12px; width: 38px; height: 38px; }
-.brand-mark svg { width: 25px; height: 25px; stroke-width: 2; }
-.brand-dot { color: var(--muted); }
-.tagline { font-size: 13px; margin: 12px 0 36px; color: var(--secondary); }
-.main-nav { display: grid; gap: 8px; margin: 0 -8px 36px; }
-.nav-item { display: flex; align-items: center; gap: 12px; background: transparent; border: 0; text-align: left; width: 100%; border-radius: 9px; padding: 14px 12px; min-height: 50px; font-size: 15px; font-weight: 550; color: var(--secondary); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.skip-link { position: absolute; left: 16px; top: -100px; z-index: 30; padding: 12px 16px; border-radius: 8px; background: var(--accent); color: var(--on-accent); }
+.skip-link:focus { top: 12px; }
+.app-shell { display: flex; min-height: 100dvh; }
+.sidebar { width: 248px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--border); padding: 28px 16px; }
+.brand { color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 23px; font-weight: 650; letter-spacing: -.8px; }
+.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--on-accent); }
+.brand-mark svg { width: 24px; height: 24px; stroke-width: 2; }
+.brand-dot { color: var(--secondary); }
+.main-nav { display: grid; gap: 8px; margin: 32px 0; }
+.nav-item { display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; padding: 12px 10px; min-height: 44px; width: 100%; background: transparent; color: var(--secondary); text-align: left; font-size: 14px; font-weight: 550; }
 .nav-item:hover { background: var(--hover); }
-.nav-item.active { background: var(--active); color: var(--active-ink); }
-.nav-count, .quiet-count { display: inline-grid; place-items: center; flex-shrink: 0; margin-left: auto; min-width: 24px; min-height: 24px; padding: 2px 6px; border-radius: 5px; font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
-.nav-item.active .nav-count, .nav-item.active .quiet-count { background: var(--badge); }
-.calendar-panel { --calendar-label-inset: max(0px, calc((100% - 18px) / 14 - 7px)); border-top: 1px solid var(--line); padding-top: 24px; }
-.calendar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-inline-start: var(--calendar-label-inset); }
-.calendar-heading h2 { font-size: 15px; font-weight: 650; margin: 0; }
-.arrow-group { display: flex; align-items: center; gap: 3px; }
-.icon-button { border: 0; background: transparent; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; color: var(--secondary); }
-.icon-button:hover { background: var(--hover); color: var(--ink); }
-.icon-button svg { width: 19px; height: 19px; }
+.nav-item.active { background: var(--selection); color: var(--on-selection); box-shadow: inset 3px 0 var(--accent); }
+.nav-count, .quiet-count { display: inline-grid; place-items: center; margin-left: auto; min-width: 24px; min-height: 24px; padding: 2px 6px; border-radius: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.nav-item.active .nav-count, .nav-item.active .quiet-count { background: var(--surface); }
+.calendar-panel { border-top: 1px solid var(--border); padding-top: 24px; }
+.calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 16px; }
+.calendar-heading h2 { font-size: 14px; font-weight: 600; margin: 0; }
+.arrow-group { display: flex; align-items: center; gap: 4px; }
+.icon-button { display: inline-grid; place-items: center; border: 0; border-radius: 8px; width: 44px; height: 44px; padding: 0; background: transparent; color: var(--secondary); }
+.icon-button:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.calendar-heading .icon-button { width: 28px; height: 32px; }
 .rotate { transform: rotate(180deg); }
-.calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 3px; }
-.calendar-weekdays { font-size: 12px; color: var(--secondary); margin-bottom: 8px; }
-.calendar-grid button { position: relative; height: 34px; padding: 0; border: 0; background: transparent; border-radius: 8px; font-size: 13px; color: var(--ink); }
+.calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 3px; text-align: center; }
+.calendar-weekdays { color: var(--secondary); font-size: 12px; margin-bottom: 8px; }
+.calendar-grid button { position: relative; min-width: 24px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
 .calendar-grid button:hover { background: var(--hover); }
 .calendar-grid .outside { color: var(--outside); }
-.calendar-grid .today { box-shadow: inset 0 0 0 1px var(--field-border); font-weight: 700; }
-.calendar-grid .selected, .calendar-grid .selected:hover { background: var(--green); color: white; box-shadow: none; }
-.calendar-grid .has-tasks:after { position: absolute; content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); bottom: 2px; left: calc(50% - 2px); }
-.calendar-grid .selected.has-tasks:after { background: #d6e8c6; }
-.calendar-key { position: relative; display: flex; align-items: center; padding-inline-start: var(--calendar-label-inset); font-size: 12px; color: var(--secondary); margin-top: 15px; }
-.jump-date { margin-top: 18px; }
-.jump-date label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--secondary); }
-.jump-date input:not([type=radio]):not([type=checkbox]) { min-height: 36px; padding: 6px 10px; font-size: 13px; }
-.calendar-key span { position: absolute; inset-inline-start: calc(var(--calendar-label-inset) - 11px); top: 50%; margin-top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
-.backup-status { line-height: 1.6; }
-.backup-notice, .undo-notice { margin: 16px 48px 0; padding: 14px 18px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--subtle); color: var(--ink); font-size: 13px; }
-.backup-notice p { margin: 0 0 9px; }
-.backup-notice>div, .undo-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-.undo-notice>span { flex: 1; }
-.overdue-section { margin-bottom: 24px; }
-.overdue-hint { margin: -8px 28px 12px; font-size: 13px; color: var(--secondary); }
-.move-today { margin-top: 9px; font-size: 13px; text-decoration: underline; }
-.skip-task { margin-top: 8px; font-size: 12px; text-decoration: underline; }
-.moved-link { margin-top: 8px; font-size: 12px; text-decoration: underline; }
-.history-item .moved-link { margin-top: 0; }
-.skipped-section, .ended-routines { margin-top: 24px; }
-.history-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--line); }
-.history-item>span { min-width: 0; overflow-wrap: anywhere; }
-.history-item button { flex-shrink: 0; }
-.ended-routines { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 14px; }
-.ended-routines summary { cursor: pointer; padding: 16px 24px; color: var(--secondary); }
-.routine-changes { margin-top: 22px; padding: 16px; background: var(--subtle); border: 1px solid var(--line); border-radius: 9px; }
-#overdueList>.task-row:last-child { border-radius: 0 0 14px 14px; }
-.restore-content { padding: 28px; }
-.restore-content h2 { margin-top: 0; font-family: Georgia, serif; font-weight: 400; font-size: 28px; }
-.restore-content p { color: var(--secondary); line-height: 1.7; }
-.restore-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-@media (max-width: 860px) { .backup-notice, .undo-notice { margin-inline: 24px; } }
-@media (max-width: 560px) { .backup-notice, .undo-notice { margin-inline: 18px; } .overdue-hint { margin-inline: 18px; } }
-.sidebar-note { margin-top: auto; display: flex; gap: 10px; align-items: flex-start; margin: 32px 0 0; color: var(--secondary); }
-.sidebar-note svg { width: 20px; height: 20px; margin-top: 2px; }
-.sidebar-note p { font-size: 13px; line-height: 1.8; margin: 0; }
-.sidebar-note p span { color: var(--muted); }
-.storage-area { margin-top: auto; border-top: 1px solid var(--line); padding-top: 22px; }
-.task-file-panel { margin: 16px 40px 0; padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.task-file-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
-.task-file-copy { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.task-file-copy strong { font-size: 13px; font-weight: 550; overflow-wrap: anywhere; }
-.task-file-summary .text-button { margin: 0; padding: 8px 0; flex-shrink: 0; }
-.task-file-details>p { margin: 10px 0 12px; color: var(--secondary); font-size: 13px; line-height: 1.6; }
-.task-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.task-file-actions button { font-size: 12px; }
-.task-file-panel[data-state="error"] { border-color: var(--danger); }
-.task-file-panel[data-state="error"] .status-dot { background: var(--danger); }
-.task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--active-ink); }
-.task-file-panel[data-state="idle"] .status-dot, .task-file-panel[data-state="unsupported"] .status-dot { background: var(--accent); }
-.task-file-panel .storage-area { margin-top: 14px; padding-top: 14px; }
-#fileChoiceDialog .restore-actions { flex-wrap: wrap; }
-@media (max-width: 1150px) { .task-file-panel { margin-inline: 30px; } }
-@media (max-width: 860px) { .task-file-panel { margin-inline: 24px; } }
-@media (max-width: 560px) { .task-file-panel { margin: 12px 18px 0; padding: 8px 12px; } }
-/* Optional recovery copies, collapsed under the task-file panel. */
-.recovery-panel { margin: 12px 36px 0; padding: 12px 18px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; }
-.recovery-panel[data-state="paused"] { border-color: #b97835; }
-.recovery-panel summary { cursor: pointer; font-weight: 600; font-size: 14px; }
-.recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; color: var(--secondary); }
-.recovery-intro, .recovery-status { margin: 8px 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
-.recovery-status:empty { display: none; }
-.recovery-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.recovery-actions button, .recovery-list button { font-size: 12px; }
-.recovery-list { list-style: none; margin: 8px 0 0; padding: 0; }
-.recovery-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
-@media (max-width: 700px) { .recovery-panel { margin: 12px 16px 0; padding: 12px 14px; } }
-.saved-label { font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 550; }
-.saved-label>.status-dot { display: none; }
-.status-dot { height: 6px; width: 6px; border-radius: 50%; background: #79a16d; }
-.storage-area p { font-size: 12px; color: var(--secondary); margin: 8px 0 13px; }
-.text-button { border: 0; background: none; font-size: 12px; color: var(--secondary); padding: 5px 0; display: inline-flex; align-items: center; gap: 5px; margin-right: 12px; }
-.text-button:hover { text-decoration: underline; color: var(--ink); }
-.text-button svg { width: 14px; height: 14px; }
+.calendar-grid .today { outline: 1px solid var(--control-border); outline-offset: -2px; font-weight: 700; }
+.calendar-grid .selected, .calendar-grid .selected:hover { background: var(--accent); color: var(--on-accent); }
+.calendar-grid .selected:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.calendar-grid .has-tasks::after { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: currentColor; bottom: 2px; left: calc(50% - 2px); }
+.calendar-key { display: flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; margin-top: 12px; }
+.calendar-key span { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.jump-date { margin-top: 24px; }
+.jump-date label { display: block; color: var(--secondary); font-size: 14px; margin-bottom: 8px; }
 main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.topbar { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 40px; border-bottom: 1px solid var(--line); }
-.breadcrumb { font-size: 11px; letter-spacing: 1.5px; color: var(--secondary); display: flex; gap: 18px; align-items: center; }
-.breadcrumb-divider { color: var(--muted); }
-.breadcrumb b { font-size: 14px; letter-spacing: 0; font-weight: 500; color: var(--ink); }
-.topbar-actions { display: flex; align-items: center; gap: 18px; }
-.primary-button { display: inline-flex; justify-content: center; align-items: center; gap: 9px; background: var(--green); color: white; border: 1px solid var(--green); border-radius: 9px; min-height: 46px; font-size: 14px; font-weight: 600; padding: 11px 18px; white-space: nowrap; }
-.primary-button:hover { background: var(--green-hover); }
-.primary-button svg { width: 19px; height: 19px; }
-.theme-toggle { position: relative; display: inline-grid; place-items: center; width: 46px; height: 46px; flex-shrink: 0; padding: 0; border: 1px solid var(--line); border-radius: 11px; background: transparent; color: var(--secondary); }
-.theme-toggle:hover { background: var(--hover); color: var(--ink); }
-.theme-toggle svg { position: absolute; width: 22px; height: 22px; stroke-width: 1.7; pointer-events: none; transition: opacity .24s ease, transform .3s cubic-bezier(.2,.8,.2,1); }
-.theme-sun { opacity: 1; transform: rotate(0) scale(1); }
-.theme-moon { opacity: 0; transform: rotate(-75deg) scale(.45); }
-[data-theme=dark] .theme-sun { opacity: 0; transform: rotate(75deg) scale(.45); }
-[data-theme=dark] .theme-moon { opacity: 1; transform: rotate(0) scale(1); }
-.content { width: 100%; max-width: var(--content-max, 1380px); margin: 0 auto; padding: 28px 40px 32px; }
-/* The Coming up column appears only on wide screens, beside the checklist. */
-.coming-up { display: none; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); padding: 18px 14px 8px; }
-.coming-up h2 { margin: 0 6px; font-size: 16px; }
-.coming-up-hint { margin: 2px 6px 10px; font-size: 12px; color: var(--secondary); }
-.coming-up-list { list-style: none; margin: 0; padding: 0; }
-.coming-up-day { border-top: 1px solid var(--line); }
-.coming-up-open { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 10px; width: 100%; margin: 4px 0; padding: 8px 6px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
-.coming-up-open:hover { background: var(--hover); }
-.coming-up-date { font-size: 13px; font-weight: 600; }
-.coming-up-count { font-size: 12px; color: var(--secondary); white-space: nowrap; }
-.coming-up-tasks { grid-column: 1 / -1; display: grid; gap: 3px; margin-top: 3px; font-size: 13px; color: var(--secondary); }
-.coming-up-tasks span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.coming-up-open.empty .coming-up-date { font-weight: 500; color: var(--secondary); }
-@media (min-width: 1151px) {
-  /* Notices and the saving panels line up with the content below them instead of running edge to edge. */
-  .task-file-panel, .recovery-panel, .backup-notice, .undo-notice, .warning { margin-inline: max(40px, calc((100% - var(--content-max, 1380px)) / 2 + 40px)); }
-}
-@media (min-width: 1360px) {
-  /* No width cap: the content fills the screen beside the sidebar. */
-  :root { --content-max: 99999px; }
-  /* The day title and week strip stay stacked full width; Coming up sits beside the checklist below them. */
-  #dailyView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); column-gap: 28px; align-items: start; }
-  #dailyView > .page-heading, #dailyView > .week-section { grid-column: 1 / -1; }
-  #dailyView > .day-main { grid-column: 1; min-width: 0; }
-  #dailyView > .coming-up { display: block; grid-column: 2; position: sticky; top: 20px; }
-}
-.page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 18px; }
-.eyebrow { font-size: 11px; font-weight: 650; letter-spacing: 1.7px; color: var(--accent); margin: 0 0 13px; line-height: 1.6; }
-h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 48px; letter-spacing: -1.5px; font-weight: 400; margin: 0 0 8px; line-height: 1.12; }
-h1 span { color: var(--muted); }
-.subtitle { font-size: 16px; color: var(--secondary); margin: 0; line-height: 1.7; }
-.outline-button { background: transparent; border: 1px solid var(--field-border); border-radius: 8px; min-height: 42px; padding: 10px 15px; font-size: 13px; white-space: nowrap; color: var(--secondary); }
-.outline-button:hover { background: var(--hover); color: var(--ink); }
-#jumpToday { min-height: 42px; font-size: 13px; padding: 10px 15px; }
-.week-section { margin-bottom: 20px; }
-.week-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.week-heading>span { font-size: 14px; color: var(--secondary); }
-.week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
-.week-day { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; flex-direction: column; justify-content: center; min-height: 78px; padding: 10px 4px 16px; gap: 5px; transition: background .15s, border-color .15s; }
-.week-day:hover { background: var(--hover); border-color: var(--field-border); }
-.week-day .weekday { font-size: 14px; color: var(--secondary); }
-.week-day .number { font-size: 26px; line-height: 1.2; font-weight: 500; color: var(--ink); }
+.topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; width: 100%; max-width: var(--workspace); margin-inline: auto; padding: 16px var(--gutter); min-height: 76px; border-bottom: 1px solid var(--border); }
+.breadcrumb { color: var(--text); font-size: 14px; }
+.breadcrumb b { font-weight: 600; }
+.topbar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.primary-button, .outline-button, .inline-add { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; border-radius: 8px; padding: 10px 16px; font-size: 14px; line-height: 20px; font-weight: 550; }
+.primary-button { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+.primary-button:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.outline-button { background: var(--surface); color: var(--text); border: 1px solid var(--control-border); }
+.outline-button:hover:not(:disabled) { background: var(--hover); }
+.primary-button:disabled, .outline-button:disabled { background: var(--subtle); color: var(--secondary); border-color: var(--border); }
+.text-button, .sort-button, .description-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--link); font-size: 14px; text-align: left; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.text-button:hover:not(:disabled), .sort-button:hover, .description-toggle:hover { color: var(--text); }
+.text-button:disabled { color: var(--secondary); text-decoration: none; }
+.theme-toggle, .reminder-center-button { display: inline-grid; place-items: center; position: relative; flex-shrink: 0; width: 44px; height: 44px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--secondary); }
+.theme-toggle:hover, .reminder-center-button:hover { background: var(--hover); color: var(--text); }
+.theme-toggle svg { position: absolute; width: 20px; height: 20px; pointer-events: none; }
+.theme-sun { opacity: 1; }
+.theme-moon { opacity: 0; }
+[data-theme=dark] .theme-sun { opacity: 0; }
+[data-theme=dark] .theme-moon { opacity: 1; }
+.reminder-count { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); border: 2px solid var(--canvas); border-radius: 20px; min-width: 22px; height: 22px; padding-inline: 4px; font-size: 12px; }
+.task-file-panel, .backup-notice, .undo-notice, .warning { margin: 16px max(var(--gutter), calc((100% - var(--workspace)) / 2 + var(--gutter))) 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 14px; }
+.task-file-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.task-file-copy { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.task-file-copy strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.task-file-summary .text-button { flex-shrink: 0; }
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--secondary); flex-shrink: 0; }
+.task-file-panel[data-state=saved] .task-file-copy .status-dot { width: 14px; height: 8px; border-radius: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; background: transparent; transform: rotate(-45deg); }
+.task-file-panel[data-state=error] { border-color: var(--danger); }
+.task-file-panel[data-state=error] .task-file-copy { color: var(--danger); }
+.task-file-panel[data-state=error] .status-dot { background: var(--danger); }
+.task-file-details > p, .storage-area p, .recovery-intro, .recovery-status { color: var(--secondary); font-size: 13px; line-height: 20px; margin: 8px 0 12px; }
+.saving-group-title { font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+.task-file-actions, .recovery-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.storage-area { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 4px; }
+.storage-area > .text-button { margin-right: 16px; }
+.saved-label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.saved-label > .status-dot { display: none; }
+.backup-status { overflow-wrap: anywhere; }
+.recovery-panel { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 14px; }
+.recovery-panel > summary { min-height: 44px; padding-block: 10px; cursor: pointer; font-weight: 600; }
+.recovery-state { margin-left: 8px; font-size: 13px; font-weight: 400; color: var(--secondary); }
+.recovery-panel[data-state=paused] { color: var(--warning); }
+.recovery-panel[data-state=paused] .recovery-state { color: var(--warning); font-weight: 600; }
+.recovery-status:empty { display: none; }
+.recovery-list { list-style: none; margin: 12px 0 0; padding: 0; max-height: 50dvh; overflow-y: auto; }
+.recovery-list li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border); padding: 8px 0; overflow-wrap: anywhere; }
+.backup-notice p, .warning p { margin: 0 0 8px; }
+.backup-notice > div, .undo-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.undo-notice > span { flex: 1; min-width: 160px; }
+.warning { background: var(--danger-surface); border-color: var(--danger); color: var(--danger); }
+.warning button { margin: 8px 8px 0 0; }
+.content { width: 100%; max-width: var(--workspace); margin-inline: auto; padding: 24px var(--gutter) 32px; }
+.page-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+.eyebrow { margin: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--secondary); }
+h1 { margin: 0; font-size: 32px; line-height: 40px; font-weight: 650; letter-spacing: -.7px; }
+.subtitle { margin: 8px 0 0; font-size: 14px; color: var(--secondary); }
+.week-section { margin-bottom: 24px; }
+.week-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; color: var(--secondary); font-size: 14px; }
+.week-strip { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 8px; }
+.week-day { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-width: 0; min-height: 64px; padding: 6px 2px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.week-day:hover { background: var(--hover); }
+.week-day .weekday { font-size: 12px; line-height: 18px; color: var(--secondary); }
+.week-day .number { font-size: 20px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.week-day.today { box-shadow: inset 0 0 0 1px var(--control-border); }
 .week-day.today .weekday { font-weight: 700; }
-.week-day.active { background: var(--green); border-color: var(--green); box-shadow: 0 5px 12px #224b3815; }
-.week-day.active .weekday { color: white; }
-.week-day.active .number { color: white; }
-.week-day .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); position: absolute; bottom: 8px; }
-.week-day.active .day-dot { background: #d2e7ba; }
-.checklist-card { border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
-.routines-card #routineList, #taskList>:last-child, .routines-card .task-row:last-child { border-radius: 0 0 14px 14px; }
-.checklist-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px 14px; gap: 16px; }
-.checklist-header h2 { font-size: 18px; font-weight: 600; margin: 0; display: flex; gap: 11px; align-items: center; }
-.checklist-header h2>span { font-size: 12px; background: var(--subtle); color: var(--secondary); min-width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; }
-.checklist-header>span { color: var(--secondary); font-size: 13px; }
+.week-day.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: none; }
+.week-day.active .weekday { color: var(--on-accent); }
+.day-dot { position: absolute; bottom: 6px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.day-main { min-width: 0; container-type: inline-size; }
+.checklist-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.checklist-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px; }
+.checklist-header h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; }
+.checklist-header h2 > span { display: inline-grid; place-items: center; min-width: 26px; height: 26px; border-radius: 6px; background: var(--subtle); color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
 .checklist-title { min-width: 0; }
-.completion-summary { display: block; margin-top: 5px; color: var(--secondary); font-size: 13px; }
-.checklist-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; color: var(--secondary); font-size: 13px; text-align: right; }
-.sort-button { border: 0; padding: 4px 0; background: transparent; color: var(--secondary); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
-.sort-button:hover { color: var(--ink); }
-.progress-track { height: 4px; background: var(--subtle); margin: 0 28px; border-radius: 4px; overflow: hidden; }
-.progress-track>div { height: 100%; background: #85a970; transition: width .3s; width: 0; }
-.task-row { display: flex; align-items: flex-start; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); min-height: 80px; }
-.task-row:last-child { border-bottom: 0; }
-.check-button { position: relative; width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 8px; background: transparent; padding: 0; display: grid; place-items: center; touch-action: manipulation; }
-.check-button:before { content: ''; position: absolute; width: 26px; height: 26px; border: 1.5px solid var(--field-border); border-radius: 8px; background: var(--field); }
-.check-button:hover:before { border-color: var(--green); background: var(--hover); }
-.check-button svg { position: relative; width: 20px; height: 20px; stroke-width: 2; color: white; }
-.check-button[aria-pressed=true]:before { background: var(--green); border-color: var(--green); }
-.task-copy { flex: 1; min-width: 0; padding-top: 8px; }
-.task-description { margin-top: 12px; color: var(--secondary); font-size: 14px; }
-.description-toggle { display: block; border: 0; background: transparent; color: var(--secondary); cursor: pointer; padding: 6px 0; margin-top: 3px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
-.description-toggle:hover { color: var(--ink); }
-.description-body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
-.description-body a { color: var(--active-ink); text-decoration: underline; text-underline-offset: 3px; }
-.description-body a:hover { color: var(--ink); }
-.task-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 10px; margin-bottom: 6px; }
-.task-heading .task-name { margin: 0; }
-.time-badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; background: var(--subtle); color: var(--secondary); font-size: 11px; white-space: nowrap; }
-.reminder-badge { display: inline-flex; align-items: center; color: var(--secondary); }
-.reminder-badge svg { width: 14px; height: 14px; }
-.time-badge.timed { background: var(--active); color: var(--active-ink); font-weight: 600; }
-.reminder-meta { margin-top: 4px; font-size: 12px; }
-.task-name { font-size: 17px; font-weight: 500; overflow-wrap: anywhere; margin: 0 0 5px; line-height: 1.5; }
-.task-meta { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
-.task-meta svg { width: 14px; height: 14px; }
-.task-row.done { background: var(--done); }
-.task-row.done .task-name { text-decoration: line-through; color: var(--done-ink); }
-.task-row .edit-task { color: var(--secondary); flex-shrink: 0; width: 40px; height: 40px; touch-action: manipulation; }
-.task-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.task-order { display: grid; gap: 2px; flex-shrink: 0; }
-.task-order .move-task { width: 32px; height: 28px; padding: 0; border-radius: 6px; }
-.move-task svg { width: 17px; height: 17px; }
+.completion-summary { display: block; margin-top: 4px; font-size: 13px; color: var(--secondary); }
+.checklist-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.inline-add { background: transparent; color: var(--link); border: 0; padding-inline: 4px; }
+.inline-add:hover { background: var(--hover); }
+.inline-add > span { font-size: 20px; }
+.progress-track { height: 4px; margin-inline: 16px; border-radius: 4px; overflow: hidden; background: var(--subtle); }
+.progress-track > div { height: 100%; width: 0; background: var(--accent); transition: width 180ms; }
+.list-order { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.order-scope { font-size: 13px; color: var(--secondary); }
+.sort-button { font-size: 13px; }
+.task-row { display: grid; grid-template-columns: 32px 44px minmax(0,1fr) auto; grid-template-areas: "order check copy actions"; align-items: start; gap: 12px; min-height: 76px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.task-row.no-order { grid-template-columns: 44px minmax(0,1fr) auto; grid-template-areas: "check copy actions"; }
+.task-row:last-child { border-bottom: 0; border-radius: 0 0 11px 11px; }
+.task-row:focus-visible { outline-offset: -4px; }
+.task-order { grid-area: order; display: grid; gap: 4px; }
+.task-order .move-task { width: 32px; height: 32px; }
+.move-task svg { width: 16px; height: 16px; }
 .move-up svg { transform: rotate(90deg); }
 .move-down svg { transform: rotate(-90deg); }
-.move-task:disabled { opacity: .25; }
-.move-task:disabled:hover { background: transparent; color: var(--secondary); }
-.task-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-.section-label { font-size: 11px; letter-spacing: 1.5px; font-weight: 600; color: var(--secondary); background: var(--done); padding: 14px 28px; border-block: 1px solid var(--line); }
-.inline-add { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--subtle); color: var(--active-ink); font-size: 13px; text-align: left; min-height: 40px; padding: 8px 12px; white-space: nowrap; }
-.inline-add:hover { background: var(--hover); color: var(--ink); }
-.inline-add>span { font-size: 21px; font-weight: 300; line-height: 20px; }
-.daily-footer { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 24px; line-height: 1.7; }
-.daily-footer svg { width: 15px; height: 15px; }
-.empty-state { padding: 42px 24px 40px; text-align: center; }
-.empty-illustration { width: 74px; height: 74px; border: 1px solid var(--line); border-radius: 23px; background: var(--subtle); display: grid; place-items: center; margin: 0 auto 22px; transform: rotate(-7deg); }
-.empty-illustration svg { width: 34px; height: 34px; stroke-width: 1.3; color: var(--secondary); transform: rotate(7deg); }
-.empty-state h3 { font-family: Georgia, 'Times New Roman', serif; font-size: 29px; font-weight: 400; margin: 0 0 13px; letter-spacing: -.6px; }
-.empty-state p { color: var(--secondary); font-size: 15px; line-height: 1.8; margin: 0; }
-.empty-state button { margin-top: 22px; font-size: 14px; }
-.main-footer { margin: auto 48px 0; padding: 24px 0; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
-.main-footer>span:last-of-type { font-family: Georgia, serif; font-size: 15px; }
-.routines-card .checklist-header { border-bottom: 1px solid var(--line); }
-.routine-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--subtle); color: var(--secondary); }
-.routine-icon svg { width: 20px; height: 20px; }
-.warning { margin: 20px 48px 0; padding: 16px; background: #fff2df; color: #815218; border-radius: 8px; font-size: 14px; }
-.warning p { margin: 0; }
-.warning button { margin-top: 12px; }
-[data-theme=dark] .warning { background: #423722; color: #f1d3a1; }
-dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; max-width: 540px; max-height: calc(100dvh - 32px); width: calc(100% - 32px); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #10231940; }
-dialog::backdrop { background: #17291f66; }
-[data-theme=dark] dialog::backdrop { background: #070d0a99; }
-#taskForm { padding: 32px; }
-.dialog-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
-.dialog-heading .eyebrow { font-size: 10px; margin-bottom: 8px; }
-.dialog-heading h2 { font-family: Georgia, serif; font-size: 34px; font-weight: 400; margin: 0; letter-spacing: -.7px; }
-form label, form legend { display: block; font-size: 14px; font-weight: 600; margin: 0 0 10px; color: var(--secondary); }
-input:not([type=radio]):not([type=checkbox]), select, textarea { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--field-border); background: var(--field); border-radius: 8px; font-size: 16px; color: var(--ink); min-width: 0; }
-input::placeholder, textarea::placeholder { color: var(--muted); }
-textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh; }
-.description-field { margin-top: 22px; }
-.optional-label { font-weight: 400; color: var(--muted); }
-.field-hint { margin: 7px 0 0; color: var(--secondary); font-size: 12px; line-height: 1.6; }
-.frequency { border: 0; padding: 0; margin: 26px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.frequency legend { margin-bottom: 12px; }
-.frequency label { margin: 0; position: relative; }
-.frequency input { position: absolute; opacity: 0; }
-.frequency span { padding: 13px; min-height: 49px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--field-border); border-radius: 9px; background: var(--field); font-size: 14px; font-weight: 500; cursor: pointer; }
-.frequency svg { width: 18px; height: 18px; }
-.frequency input:checked+span { border-color: var(--green); background: var(--active); color: var(--active-ink); box-shadow: inset 0 0 0 1px var(--green); }
-.frequency input:focus-visible+span { outline: 3px solid var(--accent); outline-offset: 3px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.form-row.weekly-date { grid-template-columns: 1fr; }
-.weekly-days { border: 0; padding: 0; margin: 0 0 24px; min-width: 0; }
-.day-presets { display: flex; gap: 10px; margin: 0 0 12px; }
-.day-presets button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; color: var(--secondary); background: transparent; }
-.day-presets button:hover { color: var(--ink); background: var(--hover); }
-.day-presets button[aria-pressed=true] { background: var(--active); color: var(--active-ink); border-color: var(--field-border); }
-.weekday-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.weekday-picker label { position: relative; margin: 0; min-width: 0; }
-.weekday-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
-.weekday-picker span { display: grid; place-items: center; min-height: 46px; border: 1px solid var(--field-border); border-radius: 8px; background: var(--field); color: var(--secondary); font-size: 13px; font-weight: 500; cursor: pointer; }
-.weekday-picker input:checked+span { background: var(--active); color: var(--active-ink); border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
-.weekday-picker input:focus-visible+span { outline: 3px solid var(--accent); outline-offset: 3px; }
-.weekday-picker label:hover span { border-color: var(--green); }
-.form-hint { font-size: 13px; line-height: 1.8; color: var(--secondary); margin: 18px 0 0; }
-.timing-choice { margin-top: 24px; }
-.reminder-choices { border: 0; padding: 0; margin: 24px 0 0; min-width: 0; }
-.reminder-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.reminder-options label { position: relative; margin: 0; }
-.reminder-options input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.reminder-options span { display: grid; place-items: center; min-height: 44px; padding: 7px 3px; border: 1px solid var(--field-border); border-radius: 8px; color: var(--secondary); font-size: 14px; cursor: pointer; }
-.reminder-options input:checked+span { background: var(--active); border-color: var(--green); color: var(--active-ink); box-shadow: inset 0 0 0 1px var(--green); }
-.reminder-options input:focus-visible+span { outline: 3px solid var(--accent); outline-offset: 3px; }
-.reminder-choices .form-hint { margin-top: 10px; }
-.notification-note { border: 1px solid var(--line); background: var(--subtle); padding: 14px; margin-top: 18px; border-radius: 9px; }
-.notification-note p { color: var(--secondary); font-size: 12px; line-height: 1.7; margin: 0; }
-.notification-note button { margin-top: 12px; font-size: 12px; }
-#notificationStatus { margin-top: 9px; }
-.reminder-center-button { position: relative; display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; padding: 0; background: transparent; border: 1px solid var(--line); border-radius: 11px; color: var(--secondary); }
-.reminder-center-button:hover { color: var(--ink); background: var(--hover); }
-.reminder-count { position: absolute; top: -6px; right: -6px; background: var(--green); color: white; border: 2px solid var(--paper); font-size: 10px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 20px; display: grid; place-items: center; }
-.reminder-panel { position: fixed; right: 22px; bottom: 22px; z-index: 20; width: 370px; max-width: calc(100% - 32px); background: var(--surface); border: 1px solid var(--field-border); box-shadow: 0 10px 42px #0003; border-radius: 14px; overflow: hidden; }
-.reminder-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
-.reminder-panel-heading h2 { display: flex; align-items: center; gap: 9px; font-size: 15px; margin: 0; }
-.reminder-panel-heading .text-button { margin: 0; }
-#reminderAlerts { overflow-y: auto; max-height: 50vh; }
-.reminder-card { padding: 13px 18px; border-bottom: 1px solid var(--line); }
-.reminder-card:last-child { border-bottom: 0; }
-.reminder-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.reminder-card h3 { font-size: 15px; font-weight: 600; margin: 4px 0 0; overflow-wrap: anywhere; }
-.reminder-card .icon-button { width: 28px; height: 28px; flex-shrink: 0; }
-.reminder-card p { color: var(--secondary); font-size: 13px; line-height: 1.6; margin: 4px 0 6px; }
-.reminder-card .text-button { font-size: 12px; margin: 0; }
-.reminder-panel-note { margin: 0; padding: 11px 18px; background: var(--subtle); color: var(--secondary); font-size: 11px; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-.list-order { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; padding: 10px 24px; }
-.order-scope { color: var(--secondary); font-size: 12px; line-height: 1.6; }
-.order-scope:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+.move-task:disabled { opacity: .4; }
+.move-task:disabled:hover { background: transparent; }
+.check-button, .routine-icon { grid-area: check; display: grid; place-items: center; position: relative; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; touch-action: manipulation; }
+.check-button::before { content: ''; position: absolute; width: 22px; height: 22px; border: 1.5px solid var(--control-border); border-radius: 6px; background: var(--field); }
+.check-button:hover::before { border-color: var(--accent); background: var(--hover); }
+.check-button[aria-pressed=true]::before { background: var(--accent); border-color: var(--accent); }
+.check-button svg { position: relative; width: 18px; height: 18px; stroke-width: 2; color: var(--on-accent); }
+.routine-icon { background: var(--subtle); color: var(--secondary); }
+.task-copy { grid-area: copy; min-width: 0; padding-top: 8px; }
+.task-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.task-name { margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; overflow-wrap: anywhere; }
+.time-badge { display: inline-flex; align-items: center; border-radius: 6px; padding: 2px 6px; background: var(--subtle); color: var(--secondary); font-size: 12px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.time-badge.overdue-badge { color: var(--warning); background: var(--warning-surface); }
+.reminder-badge { display: inline-flex; color: var(--secondary); }
+.reminder-badge svg, .task-meta svg { width: 16px; height: 16px; }
+.task-meta { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; font-size: 13px; line-height: 20px; color: var(--secondary); overflow-wrap: anywhere; }
+.task-meta svg { margin-top: 2px; align-self: flex-start; }
+.task-description { margin-top: 8px; font-size: 14px; line-height: 22px; color: var(--secondary); }
+.description-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.description-toggle { font-size: 13px; }
+.move-today, .move-tomorrow, .moved-link { font-size: 13px; }
+.task-row.done { background: var(--done); }
+.task-row.done .task-name { text-decoration: line-through; color: var(--done-ink); }
+.task-actions { grid-area: actions; display: flex; align-items: center; gap: 4px; }
+.edit-task { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; width: auto; height: 44px; padding-inline: 8px; font-size: 14px; }
+.edit-task svg { display: none; }
 .task-menu { position: relative; }
-.task-menu-toggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; border-radius: 8px; list-style: none; cursor: pointer; color: var(--secondary); font-size: 12px; }
+.task-menu-toggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 4px; border-radius: 8px; list-style: none; cursor: pointer; color: var(--secondary); font-size: 14px; }
 .task-menu-toggle::-webkit-details-marker { display: none; }
+.task-menu-toggle:hover, .task-menu[open] .task-menu-toggle { background: var(--hover); color: var(--text); }
 .task-menu-spacer { visibility: hidden; pointer-events: none; }
-.task-menu-toggle:hover, .task-menu[open] .task-menu-toggle { background: var(--hover); color: var(--ink); }
-summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.task-menu-content { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; width: 240px; max-width: 75vw; padding: 14px; border: 1px solid var(--field-border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0002; }
-.task-menu-content>.text-button { display: flex; min-height: 44px; margin: 0; padding: 8px 0; font-size: 13px; }
-.task-menu-content .reminder-meta { margin-bottom: 10px; }
-.task-row .edit-task { height: 44px; }
-.task-meta { color: var(--secondary); font-size: 12px; }
-.completed-tasks>summary { cursor: pointer; text-transform: none; font-size: 12px; letter-spacing: .3px; }
-.completed-tasks:not([open])>summary { border-bottom: 0; border-radius: 0 0 14px 14px; }
-.completed-tasks .task-row:last-child { border-bottom: 0; border-radius: 0 0 14px 14px; }
-#scheduleDateRow { margin-top: 20px; }
-.options-toggle { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; width: 100%; min-height: 54px; margin-top: 18px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--subtle); color: var(--active-ink); font-size: 14px; text-align: left; }
+.task-menu-content { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; width: 240px; max-width: calc(100vw - 48px); max-height: min(360px, 50dvh); overflow-y: auto; padding: 16px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--surface); box-shadow: var(--menu-shadow); }
+.task-menu-content > .text-button { display: flex; }
+.task-menu-content .task-meta { margin-bottom: 8px; }
+.completed-tasks > summary { min-height: 44px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--subtle); color: var(--secondary); cursor: pointer; font-size: 14px; font-weight: 500; }
+.completed-tasks:not([open]) > summary { border-radius: 0 0 11px 11px; }
+.overdue-section { margin-bottom: 24px; }
+.overdue-section > .checklist-header { color: var(--warning); }
+.overdue-hint { margin: 0 16px 12px; font-size: 13px; color: var(--secondary); }
+.skipped-section, .ended-routines { margin-top: 24px; }
+.history-item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.history-item > span { min-width: 0; overflow-wrap: anywhere; }
+.ended-routines { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.ended-routines > summary { padding: 12px 16px; min-height: 44px; cursor: pointer; font-size: 14px; }
+.routines-card { container-type: inline-size; }
+.routines-card .checklist-header { border-bottom: 1px solid var(--border); }
+.empty-state { padding: 32px 16px; text-align: center; }
+.empty-illustration { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--subtle); color: var(--secondary); margin: 0 auto 12px; }
+.empty-state h3 { font-size: 18px; font-weight: 600; line-height: 26px; margin: 0 0 8px; }
+.empty-state p { margin: 0; color: var(--secondary); font-size: 14px; }
+.empty-state button { margin-top: 16px; }
+.daily-footer { display: flex; justify-content: center; align-items: flex-start; gap: 8px; color: var(--secondary); font-size: 13px; margin-top: 24px; }
+.daily-footer svg { width: 16px; height: 16px; margin-top: 2px; }
+.main-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: auto max(var(--gutter), calc((100% - var(--workspace)) / 2 + var(--gutter))) 0; padding: 24px 0; border-top: 1px solid var(--border); color: var(--secondary); font-size: 12px; }
+.coming-up { margin-top: 24px; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 0 16px; }
+.coming-up > summary { min-height: 56px; padding: 16px 0; cursor: pointer; font-size: 18px; font-weight: 600; }
+.coming-up-hint { margin: 0 0 12px; font-size: 13px; color: var(--secondary); }
+.coming-up-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.coming-up-day { border-top: 1px solid var(--border); }
+.coming-up-open { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; gap: 4px 8px; width: 100%; min-height: 44px; padding: 12px 4px; border: 0; border-radius: 8px; background: transparent; text-align: left; }
+.coming-up-open:hover { background: var(--hover); }
+.coming-up-date { font-size: 14px; font-weight: 550; }
+.coming-up-count { font-size: 12px; color: var(--secondary); }
+.coming-up-tasks { grid-column: 1 / -1; display: grid; gap: 4px; font-size: 13px; color: var(--secondary); }
+.coming-up-tasks span { overflow-wrap: anywhere; }
+dialog { width: calc(100% - 32px); max-width: 560px; max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text); box-shadow: var(--dialog-shadow); overflow-y: auto; }
+dialog::backdrop { background: var(--backdrop); }
+#taskForm, .restore-content { padding: 24px; }
+.dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.dialog-heading h2, .restore-content h2 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 650; letter-spacing: -.4px; }
+.dialog-heading .icon-button { margin: -6px -6px 0 0; }
+form label, form legend { display: block; margin: 0 0 8px; color: var(--text); font-size: 14px; font-weight: 550; }
+input:not([type=radio]):not([type=checkbox]), select, textarea { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--field); color: var(--text); font-size: 16px; }
+input::placeholder, textarea::placeholder { color: var(--secondary); }
+input:disabled, textarea:disabled { color: var(--secondary); background: var(--subtle); border-color: var(--border); }
+textarea { display: block; resize: vertical; min-height: 112px; max-height: 40dvh; }
+.frequency { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; min-width: 0; padding: 0; border: 0; margin: 24px 0; }
+.frequency label { position: relative; margin: 0; }
+.frequency input, .weekday-picker input, .reminder-options input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.frequency span { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 10px 8px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--field); font-size: 14px; font-weight: 500; cursor: pointer; }
+.frequency input:checked + span, .weekday-picker input:checked + span, .reminder-options input:checked + span { background: var(--selection); color: var(--on-selection); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.frequency input:focus-visible + span, .weekday-picker input:focus-visible + span, .reminder-options input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.frequency input:disabled + span, .weekday-picker input:disabled + span, .reminder-options input:disabled + span { cursor: default; }
+.frequency input:disabled:not(:checked) + span, .weekday-picker input:disabled:not(:checked) + span, .reminder-options input:disabled:not(:checked) + span { color: var(--secondary); border-color: var(--border); background: var(--subtle); }
+#scheduleDateRow { margin-top: 24px; }
+.weekly-days, .reminder-choices { border: 0; padding: 0; min-width: 0; margin: 24px 0 0; }
+.weekday-picker { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 6px; }
+.weekday-picker label, .reminder-options label { position: relative; margin: 0; min-width: 0; }
+.weekday-picker span, .reminder-options span { display: grid; place-items: center; min-height: 44px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--field); color: var(--secondary); font-size: 13px; cursor: pointer; }
+.day-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.day-presets button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); font-size: 14px; }
+.day-presets button:hover:not(:disabled) { background: var(--hover); }
+.day-presets button[aria-pressed=true] { color: var(--on-selection); background: var(--selection); border-color: var(--accent); }
+.routine-changes { margin-top: 24px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--subtle); }
+.field-hint, .form-hint, .notification-note p { font-size: 13px; line-height: 20px; color: var(--secondary); margin: 8px 0 0; }
+.form-hint { margin-top: 16px; }
+.options-toggle { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; min-height: 56px; margin-top: 24px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--subtle); color: var(--link); text-align: left; font-size: 14px; }
 .options-toggle:hover { background: var(--hover); }
-.options-hint { font-size: 12px; font-weight: 400; color: var(--secondary); }
-.dialog-actions { position: sticky; bottom: -32px; margin-bottom: -32px; padding-bottom: 24px; background: var(--surface); z-index: 2; }
-@media (max-width: 560px) { .list-order { padding-inline: 18px; } .task-actions { gap: 0; } .task-row .edit-task { width: 34px; height: 44px; } .dialog-actions { bottom: -24px; margin-bottom: -24px; padding-bottom: 20px; } }
-/* Quiet feedback for navigation and task edits; content updates immediately. */
-:root, .sidebar, .topbar, .checklist-card, .task-row, .time-badge, .section-label, .reminder-panel {
-  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+.options-hint { font-size: 13px; color: var(--secondary); }
+.description-field { margin-top: 24px; }
+.optional-label { font-weight: 400; color: var(--secondary); }
+.reminder-options { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.notification-note { margin-top: 16px; padding: 16px; background: var(--subtle); border: 1px solid var(--border); border-radius: 12px; }
+.notification-note p { margin-top: 0; }
+.notification-note button, #notificationStatus { margin-top: 12px; }
+.field-error, .form-error { color: var(--danger); font-size: 14px; line-height: 20px; margin: 8px 0 0; }
+.field-error:empty, .form-error:empty { display: none; }
+[aria-invalid=true] { border-color: var(--danger) !important; }
+.dialog-actions { position: sticky; bottom: -24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 24px 0 -24px; padding: 16px 0 24px; border-top: 1px solid var(--border); background: var(--surface); z-index: 2; }
+.dialog-actions > div { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.delete-button { min-height: 44px; padding: 10px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--danger); font-size: 14px; }
+.delete-button:hover { background: var(--danger-surface); }
+.restore-content p { font-size: 16px; color: var(--secondary); overflow-wrap: anywhere; }
+.restore-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.reminder-panel { position: fixed; right: 24px; bottom: 24px; z-index: 20; width: 380px; max-width: calc(100% - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--control-border); border-radius: 12px; box-shadow: var(--menu-shadow); }
+.reminder-panel-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.reminder-panel-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
+#reminderAlerts { max-height: 50dvh; overflow-y: auto; }
+.reminder-card { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.reminder-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.reminder-card h3 { margin: 8px 0 0; font-size: 16px; font-weight: 550; overflow-wrap: anywhere; }
+.reminder-card p { margin: 4px 0; color: var(--secondary); font-size: 13px; }
+.reminder-panel-note { margin: 0; padding: 12px 16px; background: var(--subtle); color: var(--secondary); font-size: 13px; }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 9; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; max-width: calc(100% - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 12px 16px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: var(--menu-shadow); font-size: 14px; }
+.toast > span { overflow-wrap: anywhere; }
+.toast button { min-height: 44px; border: 0; background: transparent; color: var(--link); text-decoration: underline; font-size: 14px; }
+button, a, input, textarea, summary { scroll-margin-block: 24px; }
+.primary-button, .outline-button, .icon-button, .nav-item, .theme-toggle, .reminder-center-button, .week-day { transition: background-color 140ms, color 140ms, border-color 140ms; }
+@media (min-width: 1360px) {
+  #dailyView:not([hidden]) { display: grid; grid-template-columns: minmax(0,1fr) 280px; column-gap: 24px; align-items: start; }
+  #dailyView > .page-heading, #dailyView > .week-section { grid-column: 1 / -1; }
+  #dailyView > .day-main { grid-column: 1; }
+  #dailyView > .coming-up { grid-column: 2; position: sticky; top: 24px; margin-top: 0; }
+  .coming-up > summary { list-style: none; cursor: default; }
+  .coming-up > summary::-webkit-details-marker { display: none; }
 }
-.primary-button, .outline-button, .icon-button, .nav-item, .check-button, .theme-toggle, .reminder-center-button {
-  transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+@container (max-width: 640px) {
+  .task-row, .task-row.no-order { grid-template-columns: 44px minmax(0,1fr) auto; grid-template-areas: "check copy copy" ". order actions"; gap: 8px; padding: 12px; }
+  .task-order { display: flex; gap: 4px; }
+  .task-order .move-task { width: 44px; height: 44px; }
+  .task-actions { justify-content: flex-end; }
+  .task-menu-spacer { display: none; }
 }
-.primary-button:active, .outline-button:active { transform: scale(.98); }
-.icon-button:not(:disabled):active, .check-button:active { transform: scale(.94); }
-.week-day { transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease; }
-dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
-.check-button[aria-pressed=true] svg { animation: check-enter .17s ease-out both; }
-.toast:not([hidden]), .reminder-panel:not([hidden]) { animation: notice-enter .18s ease-out both; }
-#weeklyDays:not([hidden]), #taskTimingFields:not([hidden]) { animation: field-enter .16s ease-out both; }
-@keyframes backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
-@keyframes check-enter { from { opacity: 0; transform: scale(.65); } to { opacity: 1; transform: scale(1); } }
-@keyframes notice-enter { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
-@keyframes field-enter { from { opacity: .3; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
-.form-error { font-size: 14px; color: var(--danger); line-height: 1.6; }
-.form-error:empty { display: none; }
-.dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 24px; margin-top: 26px; }
-.dialog-actions>div { margin-left: auto; display: flex; gap: 10px; }
-.delete-button { background: none; border: 0; font-size: 13px; padding: 10px 0; color: var(--danger); }
-.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); padding: 15px 22px; background: #284f3e; color: white; border-radius: 10px; box-shadow: 0 4px 18px #122d3020; font-size: 14px; z-index: 9; max-width: calc(100% - 30px); text-align: center; }
-.toast button { border: 0; background: transparent; color: #e0efb7; font-size: 14px; text-decoration: underline; margin-left: 15px; }
-[data-theme=dark] .toast { background: #3b6046; }
-@media (min-width: 1800px) {
-  .sidebar { width: 308px; padding: 40px 30px 28px; }
-  .content { padding-top: 34px; }
-}
-@media (max-width: 1150px) {
-  .sidebar { width: 260px; padding: 30px 20px 22px; }
-  .topbar { padding-inline: 30px; }
-  .breadcrumb-prefix, .breadcrumb-divider { display: none; }
-  .content { padding: 28px 30px 32px; }
-  .main-footer { margin-inline: 30px; }
-  h1 { font-size: 46px; }
-  .week-strip { gap: 8px; }
-  .week-day { min-height: 76px; }
-  .checklist-header, .task-row { padding-inline: 22px; }
-}
-@media (max-width: 860px) {
+@media (max-width: 959px) {
   .app-shell { display: block; }
-  .sidebar { position: relative; width: 100%; min-height: 0; padding: 22px 24px 0; border-right: 0; border-bottom: 1px solid var(--line); display: block; }
-  .brand { font-size: 25px; }
-  .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
-  .tagline, .sidebar-note, .calendar-panel { display: none; }
-  .main-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 19px -8px 0; }
-  .nav-item { width: auto; padding: 11px 12px; border-radius: 8px 8px 0 0; min-height: 46px; font-size: 14px; gap: 9px; }
-  .nav-count, .quiet-count { margin-left: 8px; }
-  .nav-item svg { width: 18px; height: 18px; }
-  .calendar-mobile-toggle { display: inline-flex !important; position: absolute; right: 24px; top: 22px; margin: 0; padding: 8px 10px; min-height: 36px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
-  .sidebar.mobile-calendar .calendar-panel { display: block; padding: 18px 0; margin-bottom: 12px; max-width: 350px; }
-  .calendar-grid button { height: 40px; font-size: 14px; }
-  .topbar { min-height: 78px; padding: 15px 24px; }
-  .topbar-actions { gap: 16px; }
-  .content { padding: 24px; }
-  .page-heading { margin-bottom: 18px; }
-  h1 { font-size: 42px; }
-  .subtitle { font-size: 15px; }
-  .week-day { min-height: 74px; }
-  .week-day .weekday { font-size: 13px; }
-  .week-day .number { font-size: 24px; }
-  .main-footer { margin-inline: 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; }
-  .main-footer>button { display: inline-flex !important; }
-  .mobile-storage { display: block !important; font-size: 12px; padding: 0 24px 20px; color: var(--muted); text-align: center; }
-  .warning { margin-inline: 24px; }
+  .sidebar { position: relative; width: 100%; min-height: 0; padding: 24px var(--gutter) 16px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .main-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; }
+  .nav-item { width: auto; }
+  .nav-count, .quiet-count { margin-left: 4px; }
+  .calendar-panel { display: none; margin-top: 16px; max-width: 360px; }
+  .sidebar.mobile-calendar .calendar-panel { display: block; }
+  .calendar-mobile-toggle { display: inline-flex !important; position: absolute; top: 20px; right: var(--gutter); margin: 0; padding: 10px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text); text-decoration: none; }
+  .calendar-grid button { min-height: 36px; }
 }
-@media (max-width: 560px) {
-  .sidebar { padding: 18px 18px 0; }
-  .main-nav { gap: 2px; }
-  .nav-item { font-size: 13px; padding-inline: 9px; gap: 7px; }
-  .nav-count, .quiet-count { margin-left: 2px; }
-  .calendar-mobile-toggle { top: 18px; right: 18px; font-size: 12px; }
-  .calendar-mobile-toggle svg { width: 13px; height: 13px; }
-  .topbar { padding-inline: 18px; gap: 10px; }
-  .breadcrumb b { font-size: 13px; }
-  .topbar-actions { gap: 12px; }
-  .theme-toggle { width: 44px; height: 44px; }
-  .topbar .primary-button { font-size: 13px; padding-inline: 13px; }
-  .content { padding: 22px 18px; }
-  .page-heading { align-items: flex-start; gap: 10px; }
-  .eyebrow { font-size: 10px; letter-spacing: 1.3px; }
-  h1 { font-size: 42px; letter-spacing: -1.5px; }
-  .subtitle { font-size: 14px; }
-  .page-heading #jumpToday { font-size: 11px; padding: 8px 10px; margin-top: 29px; }
-  .week-heading>span { font-size: 12px; }
-  .week-strip { gap: 5px; }
-  .week-day { min-height: 68px; border-radius: 9px; padding: 9px 1px 14px; gap: 5px; }
-  .week-day .weekday { font-size: 11px; }
-  .week-day .number { font-size: 22px; }
-  .checklist-header { padding: 20px 18px 18px; gap: 8px; }
-  .checklist-header h2 { font-size: 16px; gap: 8px; }
-  .checklist-header>span { max-width: 125px; text-align: right; font-size: 11px; }
-  .checklist-header-actions { max-width: 125px; font-size: 11px; }
-  .daily-checklist-header { flex-wrap: wrap; gap: 12px; }
-  .daily-checklist-header .checklist-header-actions { max-width: 100%; margin-left: auto; }
-  .completion-summary { font-size: 12px; }
-  .progress-track { margin-inline: 18px; }
-  .task-row { padding: 12px; gap: 8px; }
-  .task-name { font-size: 16px; }
-  .task-meta { font-size: 12px; }
-  .check-button { width: 44px; height: 44px; }
-  .task-row .edit-task { width: 34px; height: 44px; }
-  .task-actions { gap: 3px; }
-  .task-order .move-task { width: 36px; height: 34px; }
-  .empty-state { padding: 34px 18px; }
-  .empty-state h3 { font-size: 26px; }
-  .empty-state p { font-size: 14px; }
-  .inline-add { font-size: 12px; padding-inline: 10px; }
-  .daily-footer { font-size: 11px; align-items: flex-start; text-align: center; }
-  .daily-footer svg { margin-top: 2px; }
-  .main-footer { margin-inline: 18px; font-size: 11px; }
-  .warning { margin-inline: 18px; }
-  #taskForm { padding: 24px; }
-  .dialog-heading h2 { font-size: 30px; }
-  .form-row { gap: 12px; }
+@media (max-width: 599px) {
+  :root { --gutter: 16px; }
+  .sidebar { padding-top: 20px; }
+  .brand { font-size: 22px; }
+  .brand-mark { width: 32px; height: 32px; }
+  .calendar-mobile-toggle { top: 14px; font-size: 14px; }
+  .main-nav { gap: 4px; margin-top: 20px; }
+  .nav-item { padding-inline: 8px; gap: 6px; }
+  .topbar { gap: 8px; }
+  .topbar-actions { gap: 4px; }
+  .topbar .primary-button { padding-inline: 12px; }
+  .task-file-panel { padding: 8px 12px; }
+  .page-heading { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 28px; line-height: 36px; }
+  .week-strip { gap: 4px; }
+  .week-day { min-height: 60px; }
+  .checklist-header { padding: 16px 12px; }
+  .daily-checklist-header .checklist-header-actions { width: 100%; align-items: flex-start; text-align: left; }
+  .progress-track { margin-inline: 12px; }
+  .list-order { padding-inline: 12px; }
+  .daily-footer { justify-content: flex-start; }
+  dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); }
+  #taskForm, .restore-content { padding: 16px; }
+  .dialog-actions { bottom: -16px; margin-bottom: -16px; padding-bottom: 16px; }
+  .dialog-actions > .delete-button { width: 100%; text-align: left; }
+  .dialog-actions > div { width: 100%; display: grid; grid-template-columns: 1fr 1fr; margin: 0; }
+  .frequency span { gap: 6px; }
   .weekday-picker { gap: 4px; }
-  .weekday-picker span { font-size: 12px; border-radius: 6px; }
-  .form-row label { font-size: 12px; }
-  .form-row input, .form-row select { font-size: 14px; padding-inline: 8px; }
-  .dialog-actions { flex-wrap: wrap; }
-  .delete-button { font-size: 12px; }
-  .dialog-actions>div { gap: 7px; }
-  .dialog-actions .primary-button, .dialog-actions .outline-button { font-size: 12px; padding-inline: 12px; }
-  .toast { bottom: 18px; }
+  .weekday-picker span { font-size: 12px; }
   .reminder-panel { right: 16px; bottom: 16px; }
-  .topbar-actions { gap: 9px; }
-  .reminder-center-button { width: 38px; height: 44px; }
+  .toast { width: calc(100% - 32px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *:before, *:after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .nav-item.active, .week-day.active, .calendar-grid .selected { outline: 2px solid Highlight; outline-offset: -3px; }
+  .check-button::before, .frequency span, .weekday-picker span, .reminder-options span { border-color: ButtonText; }
+  .check-button[aria-pressed=true]::before { background: Highlight; forced-color-adjust: none; }
+  .check-button[aria-pressed=true] svg { color: HighlightText; forced-color-adjust: none; }
+  .frequency input:checked + span, .weekday-picker input:checked + span, .reminder-options input:checked + span { outline: 2px solid Highlight; outline-offset: -3px; }
 }
 </style>
   <script>'use strict';
@@ -569,7 +456,7 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
     theme = value === 'dark' ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#151c19' : '#236653');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#111113' : '#f7f7f8');
     const button = document.getElementById('themeToggle');
     if (button) {
       button.setAttribute('aria-pressed', String(theme === 'dark'));
@@ -601,63 +488,65 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
   
 </head>
 <body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4M20 7H8a4 4 0 0 0-4 4m4 10-4-4 4-4m-4 4h12a4 4 0 0 0 4-4"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol><symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l5-1L20 8a2.8 2.8 0 0 0-4-4L5 15l-1 5Z"/></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M19 4c-9-2-15 4-12 10s14 4 12-10ZM5 21 15 10"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol></svg>
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol></svg>
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="#" aria-label="Day by Day home"><span class="brand-mark"><svg><use href="#i-check"/></svg></span><span>day by day<span class="brand-dot">.</span></span></a>
-      <p class="tagline">A little progress, every day.</p>
       <nav class="main-nav" aria-label="Main navigation">
-        <button id="todayNav" class="nav-item active"><svg><use href="#i-sun"/></svg>My day<span class="nav-count" id="todayCount">0</span></button>
+        <button id="todayNav" aria-describedby="todayCountHint" class="nav-item active"><svg><use href="#i-sun"/></svg>My day<span class="nav-count" id="todayCount">0</span></button>
         <button id="routinesNav" class="nav-item"><svg><use href="#i-repeat"/></svg>Weekly routines<span id="routineCount" class="quiet-count">0</span></button>
       </nav>
-      <section class="calendar-panel" aria-label="Calendar">
+      <p id="todayCountHint" class="sr-only">Unfinished tasks scheduled for today, including those overdue today, plus unfinished one-time tasks from earlier dates.</p>
+      <section id="calendarPanel" class="calendar-panel" aria-label="Calendar">
         <div class="calendar-heading"><h2 id="monthLabel"></h2><div class="arrow-group"><button id="prevMonth" class="icon-button" aria-label="Previous month"><svg><use href="#i-arrow"/></svg></button><button id="nextMonth" class="icon-button" aria-label="Next month"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div>
         <div class="calendar-weekdays" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
         <div id="calendarGrid" class="calendar-grid" aria-describedby="calendarHint"></div><p id="calendarHint" class="sr-only">Use the arrow keys to move between days.</p>
         <div class="calendar-key"><span></span>Tasks planned</div><div class="jump-date"><label for="jumpDate">Go to date</label><input type="date" id="jumpDate" min="1900-01-01" max="9999-12-31"></div>
       </section>
-      <div class="sidebar-note"><svg><use href="#i-leaf"/></svg><p>Make room for what matters.<br><span>One checkbox at a time.</span></p></div>
     </aside>
-    <main>
-      <header class="topbar"><div class="breadcrumb"><span class="breadcrumb-prefix">YOUR EVERYDAY SPACE</span><span class="breadcrumb-divider">/</span><b id="viewBreadcrumb">My day</b></div><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span>Add task</span></button></div></header>
+    <main id="mainContent" tabindex="-1">
+      <header class="topbar"><div class="breadcrumb"><b id="viewBreadcrumb">My day</b></div><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span id="addTaskLabel">Add task</span></button></div></header>
       <section id="taskFilePanel" class="task-file-panel" aria-label="Saving and backups">
-        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Keep your tasks in a file</strong></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="true" aria-controls="taskFileDetails">Hide details</button></div>
-        <div id="taskFileDetails" class="task-file-details"><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
+        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Saved in this browser</strong></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="true" aria-controls="taskFileDetails">Hide details</button></div>
+        <p id="taskFileAvailability" class="field-hint" hidden></p>
+        <div id="taskFileDetails" class="task-file-details"><h2 class="saving-group-title">Working task file</h2><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
         <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Create new task file</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div>
-      <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
+      <div class="storage-area"><h2 class="saving-group-title">Browser copy &amp; manual backups</h2><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Tasks are saved in this browser at this HTML file’s location. Keep a task file or manual backup in case browser data is cleared.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
+      <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
         </div>
       </section>
-      <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="retrySave" class="outline-button" hidden>Retry saving</button><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
       <aside id="backupNotice" class="backup-notice" hidden><p id="backupNoticeText"></p><div><button type="button" id="backupNow" class="outline-button">Back up now</button><button type="button" id="backupLater" class="text-button">Remind me tomorrow</button></div></aside>
       <div id="undoNotice" class="undo-notice" role="group" aria-label="Undo last change" hidden><span id="undoMessage"></span><button type="button" id="undoAction" class="outline-button">Undo</button><button type="button" id="dismissUndo" class="text-button">Dismiss</button></div>
       <section id="dailyView" class="content">
-        <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="primary-button">Back to today</button></div>
+        <div class="page-heading"><div><p class="eyebrow" id="dateEyebrow"></p><h1 id="dayTitle" tabindex="-1"></h1><p class="subtitle" id="daySubtitle">A fresh day. A little space to get things done.</p></div><button id="jumpToday" class="outline-button">Back to today</button></div>
         <section class="week-section" aria-label="Select a day"><div class="week-heading"><span id="weekLabel"></span><div class="arrow-group"><button id="prevWeek" class="icon-button" aria-label="Previous week"><svg><use href="#i-arrow"/></svg></button><button id="nextWeek" class="icon-button" aria-label="Next week"><svg class="rotate"><use href="#i-arrow"/></svg></button></div></div><div id="weekStrip" class="week-strip"></div></section>
         <div class="day-main"><section id="overdueSection" class="checklist-card overdue-section" aria-labelledby="overdueTitle" hidden><div class="checklist-header"><h2 id="overdueTitle" tabindex="-1">Overdue <span id="overdueCount">0</span></h2></div><p class="overdue-hint">Unfinished tasks past their due time today, plus one-time tasks from earlier dates.</p><div id="overdueList"></div></section>
-        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button></div></div><div class="progress-track"><div id="progressBar"></div></div><div class="list-order"><span id="dayOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortDay" class="sort-button" hidden>Reset to due time</button></div><div id="taskList"></div></section>
+        <section class="checklist-card" aria-label="Daily checklist"><div class="checklist-header daily-checklist-header"><div class="checklist-title"><h2>Your checklist <span id="taskTotal">0</span></h2><span id="completionText" class="completion-summary" hidden></span></div><div class="checklist-header-actions"><button type="button" id="inlineAdd" class="inline-add"><span aria-hidden="true">+</span> Add a task to this day</button></div></div><div id="progressTrack" class="progress-track"><div id="progressBar"></div></div><div class="list-order"><span id="dayOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortDay" class="sort-button" hidden>Reset to due time</button></div><div id="taskList"></div></section>
         <section id="skippedSection" class="checklist-card skipped-section" aria-labelledby="skippedTitle" hidden><div class="checklist-header"><h2 id="skippedTitle" tabindex="-1">Skipped for this date</h2></div><div id="skippedList"></div></section>
         <div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Routines repeat weekly. Every new date starts fresh.</span></div></div>
-        <aside id="comingUp" class="coming-up" aria-labelledby="comingUpTitle"><h2 id="comingUpTitle">Coming up</h2><p id="comingUpHint" class="coming-up-hint">Next 7 days</p><ol id="comingUpList" class="coming-up-list"></ol></aside>
+        <details id="comingUp" class="coming-up"><summary id="comingUpSummary"><span id="comingUpTitle">Coming up</span></summary><p id="comingUpHint" class="coming-up-hint">Next 7 days</p><ol id="comingUpList" class="coming-up-list"></ol></details>
       </section>
-      <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">A RHYTHM THAT WORKS FOR YOU</p><h1 id="routinesTitle">Weekly routines<span>.</span></h1><p class="subtitle">Set it once. Make a little progress every week.</p></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span id="routineOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortRoutines" class="sort-button" hidden>Reset to due time</button></div></div><div id="routineList"></div></section><details id="endedRoutines" class="ended-routines" hidden><summary>Ended routines <span id="endedCount">0</span></summary><div id="endedRoutineList"></div></details><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
-      <footer class="main-footer"><span>Less remembering. More doing.</span><span>day by day.</span></footer>
+      <section id="routinesView" class="content" hidden><div class="page-heading"><div><p class="eyebrow">Your recurring plans</p><h1 id="routinesTitle">Weekly routines</h1></div></div><section class="checklist-card routines-card"><div class="checklist-header"><h2>Your recurring tasks</h2><div class="checklist-header-actions"><span id="routineOrderScope" class="order-scope" tabindex="-1"></span><button type="button" id="sortRoutines" class="sort-button" hidden>Reset to due time</button></div></div><div id="routineList"></div></section><details id="endedRoutines" class="ended-routines" hidden><summary>Ended routines <span id="endedCount">0</span></summary><div id="endedRoutineList"></div></details><div class="daily-footer"><svg><use href="#i-repeat"/></svg><span>Completing a routine checks off that date only.</span></div></section>
+      <footer class="main-footer"><span>Your plans, on your device.</span><span>day by day.</span></footer>
     </main>
   </div>
   <dialog id="taskDialog" aria-labelledby="dialogTitle">
-    <form id="taskForm"><div class="dialog-heading"><div><p class="eyebrow">MAKE A LITTLE PLAN</p><h2 id="dialogTitle">Add a task</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
-      <label for="taskTitle">What would you like to do?</label><input id="taskTitle" name="title" placeholder="e.g. Water the plants" maxlength="200" required autocomplete="off">
-      <div id="scheduleDateRow"><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31"></div>
-      <button type="button" id="toggleTaskOptions" class="options-toggle" aria-expanded="false" aria-controls="taskOptions"><span id="taskOptionsLabel">More options</span><span class="options-hint">Notes, repeat, time &amp; reminders</span></button>
-      <div id="taskOptions" hidden>
-      <div class="description-field"><label for="taskDescription">Description <span class="optional-label">(optional)</span></label><textarea id="taskDescription" name="description" rows="4" maxlength="5000" placeholder="Add details, notes, or https:// links…" aria-describedby="descriptionHint"></textarea><p class="field-hint" id="descriptionHint">Up to 5,000 characters. Web links become clickable in your checklist.</p></div>
+    <form id="taskForm"><div class="dialog-heading"><div><h2 id="dialogTitle">Add a task</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
+      <label for="taskTitle">Task title</label><input id="taskTitle" name="title" placeholder="e.g. Water the plants" maxlength="200" required autocomplete="off" aria-describedby="taskTitleError"><p id="taskTitleError" class="field-error"></p>
       <fieldset class="frequency"><legend>How often?</legend><label><input type="radio" name="kind" value="once" checked><span><svg><use href="#i-calendar"/></svg>One time</span></label><label><input type="radio" name="kind" value="weekly"><span><svg><use href="#i-repeat"/></svg>Every week</span></label></fieldset>
-      <fieldset id="weeklyDays" class="weekly-days" hidden><legend>Repeat on</legend><div class="day-presets"><button type="button" id="workdaysPreset">Mon–Fri</button><button type="button" id="everydayPreset">Every day</button></div><div class="weekday-picker"><label><input type="checkbox" name="weekdays" value="1" aria-label="Monday"><span>Mon</span></label><label><input type="checkbox" name="weekdays" value="2" aria-label="Tuesday"><span>Tue</span></label><label><input type="checkbox" name="weekdays" value="3" aria-label="Wednesday"><span>Wed</span></label><label><input type="checkbox" name="weekdays" value="4" aria-label="Thursday"><span>Thu</span></label><label><input type="checkbox" name="weekdays" value="5" aria-label="Friday"><span>Fri</span></label><label><input type="checkbox" name="weekdays" value="6" aria-label="Saturday"><span>Sat</span></label><label><input type="checkbox" name="weekdays" value="0" aria-label="Sunday"><span>Sun</span></label></div></fieldset>
-      <div id="routineChanges" class="routine-changes" hidden><label for="taskEffectiveDate">Apply changes / end routine from</label><input type="date" id="taskEffectiveDate" min="1900-01-01" max="9999-12-31"><p class="field-hint">Earlier dates and completed occurrences keep their details. Saving replaces changes scheduled from this date onward. End routine stops new occurrences starting on this date.</p></div>
+      <div id="scheduleDateRow"><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31" aria-describedby="taskDateError"><p id="taskDateError" class="field-error"></p></div>
+      <fieldset id="weeklyDays" class="weekly-days" aria-describedby="weeklyDaysError" hidden><legend>Repeat on</legend><div class="weekday-picker"><label><input type="checkbox" name="weekdays" value="1" aria-label="Monday"><span>Mon</span></label><label><input type="checkbox" name="weekdays" value="2" aria-label="Tuesday"><span>Tue</span></label><label><input type="checkbox" name="weekdays" value="3" aria-label="Wednesday"><span>Wed</span></label><label><input type="checkbox" name="weekdays" value="4" aria-label="Thursday"><span>Thu</span></label><label><input type="checkbox" name="weekdays" value="5" aria-label="Friday"><span>Fri</span></label><label><input type="checkbox" name="weekdays" value="6" aria-label="Saturday"><span>Sat</span></label><label><input type="checkbox" name="weekdays" value="0" aria-label="Sunday"><span>Sun</span></label></div><div class="day-presets"><button type="button" id="workdaysPreset">Mon–Fri</button><button type="button" id="everydayPreset">Every day</button></div></fieldset>
+      <p id="weeklyDaysError" class="field-error"></p>
+      <div id="routineChanges" class="routine-changes" hidden><label for="taskEffectiveDate">Apply changes / end routine from</label><input type="date" id="taskEffectiveDate" min="1900-01-01" max="9999-12-31" aria-describedby="taskEffectiveDateError"><p id="taskEffectiveDateError" class="field-error"></p><p class="field-hint">Earlier dates and completed occurrences keep their details. Saving replaces changes scheduled from this date onward. End routine stops new occurrences starting on this date.</p></div>
       <p class="form-hint" id="scheduleHint"></p>
+      <button type="button" id="toggleTaskOptions" class="options-toggle" aria-expanded="false" aria-controls="taskOptions"><span id="taskOptionsLabel">More options</span><span class="options-hint">Notes, time &amp; reminders</span></button>
+      <div id="taskOptions" hidden>
+      <div class="description-field"><label for="taskDescription">Description <span class="optional-label">(optional)</span></label><textarea id="taskDescription" name="description" rows="4" maxlength="5000" placeholder="Add details, notes, or https:// links…" aria-describedby="descriptionHint taskDescriptionError"></textarea><p id="taskDescriptionError" class="field-error"></p><p class="field-hint" id="descriptionHint">Up to 5,000 characters. Web links become clickable in your checklist.</p></div>
       <fieldset class="frequency timing-choice"><legend>Task time</legend><label><input type="radio" name="timing" value="allday" checked><span><svg><use href="#i-sun"/></svg>All day</span></label><label><input type="radio" name="timing" value="timed"><span><svg><use href="#i-clock"/></svg>Specific time</span></label></fieldset>
-      <div id="taskTimingFields" hidden><label for="taskTime">Due at</label><input type="time" id="taskTime" step="60"><fieldset class="reminder-choices"><legend>Remind me before</legend><div class="reminder-options"><label><input type="checkbox" name="reminders" value="5"><span>5 min</span></label><label><input type="checkbox" name="reminders" value="15"><span>15 min</span></label><label><input type="checkbox" name="reminders" value="30"><span>30 min</span></label><label><input type="checkbox" name="reminders" value="60"><span>1 hr</span></label></div><p class="form-hint">Select one or more, or leave all unchecked for no reminder.</p></fieldset><div class="notification-note"><p>Reminders are best effort. Keep this file open and the computer awake. Sleeping or suspended tabs can delay alerts; existing tasks can catch up when it resumes.</p><button type="button" class="outline-button" id="enableNotifications">Enable desktop alerts</button><p id="notificationStatus" role="status"></p></div></div>
+      <div id="taskTimingFields" hidden><label for="taskTime">Due at</label><input type="time" id="taskTime" step="60" aria-describedby="taskTimeError"><p id="taskTimeError" class="field-error"></p><fieldset class="reminder-choices"><legend>Remind me before</legend><div class="reminder-options"><label><input type="checkbox" name="reminders" value="5"><span>5 min</span></label><label><input type="checkbox" name="reminders" value="15"><span>15 min</span></label><label><input type="checkbox" name="reminders" value="30"><span>30 min</span></label><label><input type="checkbox" name="reminders" value="60"><span>1 hr</span></label></div><p class="form-hint">Select one or more, or leave all unchecked for no reminder.</p></fieldset><div class="notification-note"><p>Reminders are best effort. Keep this file open and the computer awake. Sleeping or suspended tabs can delay alerts; existing tasks can catch up when it resumes.</p><button type="button" class="outline-button" id="enableNotifications">Enable desktop alerts</button><p id="notificationStatus" role="status"></p></div></div>
       </div>
       <p class="form-error" id="formError" role="alert"></p>
       <div class="dialog-actions"><button type="button" class="delete-button" id="deleteTask" hidden>Delete task</button><div><button type="button" class="outline-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button" id="saveTask">Add task</button></div></div>
@@ -914,7 +803,7 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
 'use strict';
 // Optional recovery copies: earlier versions of your tasks, kept in a folder you choose.
 // Copies never stop your tasks from saving. If the folder can't be used, copies pause and the panel says so.
-window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore, now = () => Date.now() }) {
+window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore, now = () => Date.now(), onAttention = () => {} }) {
   const $ = id => document.getElementById(id);
   const FOLDER = 'Day-by-Day recovery copies', KEEP = 20, HOUR = 3600000, BURST = 5 * 60000;
   // Repeated small actions, like deleting many tasks, make one copy per 5 minutes, so a cleanup can't push out older copies.
@@ -941,6 +830,7 @@ window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore,
     if (state !== 'on') $('recoveryList').replaceChildren();
     if (message !== undefined) $('recoveryStatus').textContent = message;
     $('recoveryPanel').setAttribute('aria-busy', String(pending > 0));
+    if (state === 'paused') { $('recoveryPanel').open = true; onAttention(); }
   }
 
   // The chosen folder is remembered in browser storage, separately from the task file connection.
@@ -1081,7 +971,7 @@ window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore,
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
+window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null, browserStatus = () => 'Saved in this browser', needsAttention = () => false }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showDirectoryPicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -1089,6 +979,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
   let dbPromise = null, hasSaved = false;
   function showDetails(expanded = true) {
+    expanded = expanded || needsAttention();
     $('taskFileDetails').hidden = !expanded;
     $('manageTaskFile').setAttribute('aria-expanded', String(expanded));
     $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
@@ -1113,7 +1004,13 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.'); }
+  function idleStatus() {
+    status(browserStatus(), 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.');
+    showDetails(false);
+  }
+  function refreshBrowserStatus() {
+    if (initialized && !handle && ['idle', 'unsupported'].includes($('taskFilePanel').dataset.state)) $('taskFileStatus').textContent = browserStatus();
+  }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;
@@ -1344,7 +1241,10 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   async function init() {
     if (!supported) {
-      status('File autosave needs Chrome or Edge', 'Open this HTML file in a current desktop Chrome or Edge browser. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
+      $('taskFileAvailability').hidden = false;
+      $('taskFileAvailability').textContent = 'File autosave unavailable here. Browser saving and backups work.';
+      status(browserStatus(), 'File autosave works in current desktop Chrome or Edge. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
+      showDetails(false);
       initialized = true; return;
     }
     // The remembered connection may be slow. Keep the checklist usable; attach()
@@ -1379,7 +1279,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     if (dirty || writing || busy) { event.preventDefault(); event.returnValue = ''; }
   });
   // Do not poll or write on unload: writes happen immediately after each edit.
-  return { init, changed, flush, retry, showDetails, ownsCache: () => Boolean(handle) || !initialized,
+  return { init, changed, flush, retry, showDetails, refreshBrowserStatus, ownsCache: () => Boolean(handle) || !initialized,
     isConnected: () => Boolean(handle), isPending: () => dirty || Boolean(writing) };
 };
 
@@ -1404,7 +1304,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function revealView(element) {
     // Keep the interactive checklist outside animated/composited ancestors.
-    playMotion(element.id === 'dailyView' ? $('dayTitle') : $('routinesTitle'), [{ opacity: .5 }, { opacity: 1 }]);
+    playMotion(element.id === 'dailyView' ? $('dayTitle') : $('routinesTitle'), [{ opacity: .5 }, { opacity: 1 }], { duration: 160 });
   }
   function fadeDayContent() {
     playMotion($('dayTitle'), [{ opacity: .8 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
@@ -1448,6 +1348,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     // Retrying only helps when a write failed. Unreadable saved data is never written over.
     $('retrySave').hidden = loadFailed;
     $('saveStatus').textContent = fileStore?.isConnected() ? 'Browser copy unavailable' : loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
+    fileStore?.refreshBrowserStatus();
   }
   try {
     originalSavedData = storedText = localStorage.getItem(KEY);
@@ -1576,6 +1477,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
       // Retry after every failure, so a temporary problem such as a full disk clears itself.
       if (!persistent && !loadFailed) { $('storageWarning').hidden = true; $('saveStatus').textContent = 'Saved in this browser'; }
       persistent = true;
+      fileStore?.refreshBrowserStatus();
     } catch (_) {
       browserUnsaved = true;
       storageError('Your browser could not save these changes. Tasks are available for this session. Use Back up tasks to keep a copy before closing.');
@@ -1684,8 +1586,8 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     }
   }
   function makeEmpty(routines = false, remainingOverdue = false) {
-    const box = el('div', 'empty-state'), illustration = el('div', 'empty-illustration'); illustration.append(icon(routines ? 'repeat' : 'leaf'));
-    box.append(illustration, el('h3', '', routines ? 'Find your weekly rhythm.' : remainingOverdue ? 'Your remaining tasks are overdue.' : 'What’s on your list?'), el('p', '', routines ? 'Add the things you do each week.\nThey’ll be ready when the day comes.' : remainingOverdue ? 'You can complete them in the Overdue section above.' : 'No tasks planned for this day.\nStart with one thing you’d like to get done.'));
+    const box = el('div', 'empty-state'), illustration = el('div', 'empty-illustration'); illustration.append(icon(routines ? 'repeat' : 'calendar')); illustration.setAttribute('aria-hidden', 'true');
+    box.append(illustration, el('h3', '', routines ? 'Build your weekly routine' : remainingOverdue ? 'Your remaining tasks are overdue.' : `No tasks planned for ${fmt(selected, { month: 'short', day: 'numeric' })}`), el('p', '', routines ? 'Add a task once and choose the days it repeats.' : remainingOverdue ? 'You can complete them in the Overdue section above.' : 'Start with one thing you’d like to get done.'));
     box.querySelector('p').style.whiteSpace = 'pre-line';
     if (routines) { const add = el('button', 'outline-button', '+ Add a routine'); add.type = 'button'; add.onclick = () => openTask(null, 'weekly'); box.append(add); }
     return box;
@@ -1694,7 +1596,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const done = !routine && isDone(task.id, occurrenceDate);
     const overdue = !routine && (inOverdue || occurrenceDate !== selected);
     const pastDue = !routine && task.kind === 'once' && occurrenceDate < today && !done;
-    const row = el('div', 'task-row' + (done ? ' done' : ''));
+    const row = el('div', 'task-row' + (done ? ' done' : '') + (overdue && occurrenceDate !== selected ? ' no-order' : ''));
     row.dataset.id = task.id; row.tabIndex = -1;
     if (routine) { const badge = el('div', 'routine-icon'); badge.append(icon('repeat')); row.append(badge); }
     else {
@@ -1713,6 +1615,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
     meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
     const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
+    if (overdue && !done) { time.classList.toggle('overdue-badge', true); time.textContent = `Overdue · ${time.textContent}`; }
     heading.append(name, time);
     if (task.reminders?.length) {
       // A small bell shows at a glance that a task will remind you. Details stay under More.
@@ -1842,7 +1745,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
       };
       ordering.append(move);
     }
-    const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
+    const edit = el('button', 'icon-button edit-task'); edit.type = 'button'; edit.append(icon('edit'), el('span', '', 'Edit')); edit.setAttribute('aria-label', `Edit ${task.title}`); edit.title = 'Edit task'; edit.onclick = () => openTask(task);
     // The reorder arrows sit to the left of the task, so moving it never needs the More menu.
     // The line above the list explains what a move affects.
     if (!overdue || occurrenceDate === selected) row.prepend(ordering);
@@ -1865,7 +1768,19 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     });
     actions.append(edit, menu); row.append(actions); return row;
   }
-  // The Coming up column lists the 7 days after the selected day. It only shows on wide screens.
+  // One list serves the wide column and the narrow native disclosure. Presentation state
+  // stays in this tab; it never changes tasks or the file format.
+  const comingUpWide = window.matchMedia?.('(min-width: 1360px)');
+  let comingUpExpanded = false;
+  function syncComingUpLayout() {
+    if (!comingUpWide?.matches && $('comingUpList').contains(document.activeElement)) comingUpExpanded = true;
+    $('comingUp').open = Boolean(comingUpWide?.matches || comingUpExpanded);
+  }
+  $('comingUp').addEventListener('toggle', () => { if (!comingUpWide?.matches) comingUpExpanded = $('comingUp').open; });
+  $('comingUpSummary').onclick = event => { if (comingUpWide?.matches) event.preventDefault(); };
+  comingUpWide?.addEventListener?.('change', syncComingUpLayout);
+  syncComingUpLayout();
+  // The next seven days follow the selected day, including empty selectable dates.
   function renderComingUp() {
     const start = parseDate(selected);
     $('comingUpHint').textContent = selected === today ? 'Next 7 days' : `7 days after ${fmt(selected, { weekday: 'short', month: 'short', day: 'numeric' })}`;
@@ -1895,6 +1810,9 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const overdueEarlier = overdue.filter(task => task.date < today);
     $('dailyView').hidden = view !== 'day'; $('routinesView').hidden = view !== 'routines';
     $('todayNav').classList.toggle('active', view === 'day'); $('routinesNav').classList.toggle('active', view === 'routines');
+    $('todayNav').setAttribute('aria-current', view === 'day' ? 'page' : 'false');
+    $('routinesNav').setAttribute('aria-current', view === 'routines' ? 'page' : 'false');
+    $('addTaskLabel').textContent = view === 'routines' ? 'Add routine' : 'Add task';
     $('todayCount').textContent = todayTasks.filter(t => !isDone(t.id, today)).length + overdueEarlier.length;
     const activeRoutines = data.tasks.filter(task => task.kind === 'weekly' && (!task.endedOn || task.endedOn > today));
     $('routineCount').textContent = activeRoutines.length;
@@ -1902,19 +1820,21 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('sortDay').hidden = !data.weekdayOrders[parseDate(selected).getDay()];
     $('sortDay').title = `Restore automatic sorting for ${DAYS[parseDate(selected).getDay()]}`;
     $('dayOrderScope').textContent = `${data.weekdayOrders[parseDate(selected).getDay()] ? 'Custom order' : 'Due time'} · reordering repeats every ${DAYS[parseDate(selected).getDay()]}`;
-    $('routineOrderScope').textContent = `${data.routineOrder ? 'Custom order' : 'Due time'} · catalog only`;
+    $('routineOrderScope').textContent = `Catalog order · daily orders unchanged · ${data.routineOrder ? 'Custom order' : 'Due time'}`;
     $('sortRoutines').hidden = !data.routineOrder;
-    $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
-    $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
+    $('dateEyebrow').textContent = `${selected === today ? 'Today · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    $('dayTitle').textContent = DAYS[parseDate(selected).getDay()];
     $('jumpToday').hidden = selected === today;
     const tasks = selected === today ? todayTasks : tasksOn(selected);
     const unfinished = tasks.filter(t => !isDone(t.id));
     const pending = unfinished.filter(task => selected !== today || !overdueTodayIds.has(task.id)), done = tasks.filter(t => isDone(t.id));
     $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : ''; $('completionText').hidden = !tasks.length;
     $('progressBar').style.width = `${tasks.length ? done.length / tasks.length * 100 : 0}%`;
-    $('daySubtitle').textContent = tasks.length && !unfinished.length && (selected !== today || !overdueEarlier.length) ? 'All done for this day. Enjoy a little breathing room.' : 'A fresh day. A little space to get things done.';
+    $('progressTrack').hidden = !tasks.length;
+    $('daySubtitle').textContent = tasks.length && !unfinished.length && (selected !== today || !overdueEarlier.length) ? 'All done for this day.' : '';
+    $('daySubtitle').hidden = !$('daySubtitle').textContent;
     const list = $('taskList'); list.replaceChildren();
-    if (!tasks.length || (!pending.length && !done.length)) list.append(makeEmpty(false, selected === today && overdueToday.length > 0));
+    if (!tasks.length || (!pending.length && !done.length)) list.append(makeEmpty(false, selected === today && overdue.length > 0));
     pending.forEach(task => list.append(taskRow(task, false, pending)));
     if (done.length) {
       const completed = el('details', 'completed-tasks'); completed.open = !collapsedCompleted.has(selected);
@@ -1974,6 +1894,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const timed = $('taskForm').elements.timing.value === 'timed';
     $('taskTimingFields').hidden = !timed; $('taskTime').required = timed; $('taskTime').disabled = !timed;
     reminderInputs.forEach(input => { input.disabled = !timed; });
+    if (!timed) clearFieldError('taskTime');
     updateNotificationStatus();
   }
   function selectedWeekdays() { return weekdayInputs.filter(input => input.checked).map(input => Number(input.value)); }
@@ -1981,10 +1902,11 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   function updateHint() {
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
+    if (!weekly) clearFieldError('weeklyDays');
     const source = data.tasks.find(task => task.id === editingId);
-    if (weekly) setTaskOptions(true);
     const converting = source?.kind === 'once' && weekly;
     $('routineChanges').hidden = !(source?.kind === 'weekly' && weekly);
+    $('taskEffectiveDate').required = source?.kind === 'weekly' && weekly && !editingReadOnly;
     const date = $('taskDate').value;
     const begins = converting && date < today ? today : date;
     const days = selectedWeekdays();
@@ -1997,14 +1919,39 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('toggleTaskOptions').setAttribute('aria-expanded', String(expanded));
     $('taskOptionsLabel').textContent = expanded ? 'Fewer options' : 'More options';
   }
+  const fieldErrors = ['taskTitle', 'taskDate', 'weeklyDays', 'taskEffectiveDate', 'taskDescription', 'taskTime'];
+  function clearFieldError(id) {
+    const previous = $(id + 'Error').textContent;
+    $(id + 'Error').textContent = '';
+    $(id).setAttribute('aria-invalid', 'false');
+    if (id === 'weeklyDays') weekdayInputs.forEach(input => input.setAttribute('aria-invalid', 'false'));
+    if ($('formError').textContent === previous) $('formError').textContent = '';
+  }
+  function clearFieldErrors() { fieldErrors.forEach(clearFieldError); $('formError').textContent = ''; }
+  function fieldError(id, message, focus = true) {
+    if ($('taskOptions').contains($(id))) setTaskOptions(true);
+    $(id + 'Error').textContent = message;
+    $(id).setAttribute('aria-invalid', 'true');
+    if (id === 'weeklyDays') weekdayInputs.forEach(input => input.setAttribute('aria-invalid', 'true'));
+    $('formError').textContent = message;
+    if (focus) (id === 'weeklyDays' ? weekdayInputs[0] : $(id)).focus();
+  }
+  for (const id of fieldErrors.filter(id => id !== 'weeklyDays')) $(id).addEventListener('input', () => {
+    if ($(id).validity?.valid === false) return;
+    const previous = $(id + 'Error').textContent;
+    clearFieldError(id);
+    if ($('formError').textContent === previous) $('formError').textContent = '';
+  });
+  weekdayInputs.forEach(input => input.setAttribute('aria-describedby', 'weeklyDaysError'));
   // Native validation runs before submit. Reveal invalid optional controls while
   // the browser can still focus them and show its validation message.
   $('taskForm').addEventListener('invalid', event => {
     if ($('taskOptions').contains(event.target)) setTaskOptions(true);
+    if (fieldErrors.includes(event.target.id)) fieldError(event.target.id, event.target.validationMessage || 'Check this field.', false);
   }, true);
   $('toggleTaskOptions').onclick = () => {
     if (!$('taskOptions').hidden && $('taskForm').elements.timing.value === 'timed' && !validTime($('taskTime').value)) {
-      $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return;
+      fieldError('taskTime', 'Choose a valid time, or select All day.'); return;
     }
     setTaskOptions($('taskOptions').hidden);
   };
@@ -2015,11 +1962,12 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
-    setTaskOptions(Boolean(task) || kind === 'weekly');
+    setTaskOptions(Boolean(task));
     editingId = task?.id || null; $('taskForm').reset();
+    clearFieldErrors();
     // The task as stored when the window opened, to notice if another tab changes or deletes it meanwhile.
     editingBase = source ? JSON.stringify(data.tasks.find(item => item.id === source.id) || null) : null; $('formError').textContent = '';
-    $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
+    $('dialogTitle').textContent = task ? 'Edit task' : kind === 'weekly' ? 'Add routine' : 'Add task'; $('saveTask').textContent = task ? 'Save changes' : kind === 'weekly' ? 'Add routine' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
     [...$('taskForm').elements.kind].forEach(input => { input.disabled = source?.kind === 'weekly'; });
     $('taskEffectiveDate').value = effective; $('taskEffectiveDate').min = today;
@@ -2056,13 +2004,14 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const kind = $('taskForm').elements.kind.value;
     const date = $('taskDate').value;
     if (editingReadOnly) return;
-    if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
-    if (description.length > 5000) { setTaskOptions(true); $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
-    if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
+    clearFieldErrors();
+    if (!title) { fieldError('taskTitle', 'Give your task a name.'); return; }
+    if (description.length > 5000) { setTaskOptions(true); fieldError('taskDescription', 'Use up to 5,000 characters for the description.'); return; }
+    if (!validDate(date)) { fieldError('taskDate', 'Choose a valid date.'); return; }
     const weekdays = selectedWeekdays();
-    if (kind === 'weekly' && !weekdays.length) { setTaskOptions(true); $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
+    if (kind === 'weekly' && !weekdays.length) { fieldError('weeklyDays', 'Select at least one day for this routine.'); return; }
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
-    if (time !== null && !validTime(time)) { setTaskOptions(true); $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
+    if (time !== null && !validTime(time)) { setTaskOptions(true); fieldError('taskTime', 'Choose a valid time, or select All day.'); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     let previous = data.tasks.find(task => task.id === editingId);
     // Another tab may have deleted or changed this task while the window was open.
@@ -2078,7 +2027,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
     if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
-    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { setTaskOptions(true); $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { fieldError('taskEffectiveDate', 'Choose a changes-from date on or after today and before the routine ends.'); return; }
     // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
     const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
@@ -2115,16 +2064,16 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   $('taskDate').onchange = updateHint;
   [...$('taskForm').elements.kind].forEach(radio => radio.onchange = updateHint);
   [...$('taskForm').elements.timing].forEach(radio => radio.onchange = updateTimingFields);
-  weekdayInputs.forEach(input => { input.onchange = () => { $('formError').textContent = ''; updateHint(); }; });
-  $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
-  $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
+  weekdayInputs.forEach(input => { input.onchange = () => { clearFieldError('weeklyDays'); $('formError').textContent = ''; updateHint(); }; });
+  $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); clearFieldError('weeklyDays'); $('formError').textContent = ''; updateHint(); };
+  $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); clearFieldError('weeklyDays'); $('formError').textContent = ''; updateHint(); };
   $('deleteTask').onclick = () => {
     if (editingReadOnly) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId);
     if (!task) { closeTaskDialog(); notify('This task was already deleted in another tab.'); return; }
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
-      if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      if (!validDate(effective) || effective < today) { fieldError('taskEffectiveDate', 'Choose an end date on or after today.'); return; }
       recovery?.keep('end-routine');
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
@@ -2298,7 +2247,12 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
       const dismiss = el('button', 'icon-button'); dismiss.type = 'button'; dismiss.setAttribute('aria-label', `Dismiss reminder for ${task.title}`); dismiss.append(icon('close'));
       dismiss.onclick = () => { reminderLog.alerts = reminderLog.alerts.filter(item => item.taskId !== alert.taskId || item.date !== alert.date || item.time !== alert.time); persistReminderLog(); renderReminderPanel(); };
       heading.append(dismiss); card.append(heading, el('p', '', `Due ${fmt(alert.date, { weekday: 'short', month: 'short', day: 'numeric' })} at ${formatTime(alert.time)}`));
-      const viewTask = el('button', 'text-button', 'View this day'); viewTask.type = 'button'; viewTask.onclick = () => { chooseDate(alert.date); reminderPanelOpen = false; renderReminderPanel(); const row = [...$('taskList').querySelectorAll('.task-row')].find(item => item.dataset.id === alert.taskId); row?.scrollIntoView({ block: 'center', behavior: 'smooth' }); row?.focus({ preventScroll: true }); }; card.append(viewTask); container.append(card);
+      const viewTask = el('button', 'text-button', 'View this day'); viewTask.type = 'button'; viewTask.onclick = () => {
+        chooseDate(alert.date); reminderPanelOpen = false; renderReminderPanel();
+        const row = [...$('taskList').querySelectorAll('.task-row'), ...$('overdueList').querySelectorAll('.task-row')].find(item => item.dataset.id === alert.taskId);
+        row?.scrollIntoView({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+        (row || $('dayTitle')).focus({ preventScroll: true });
+      }; card.append(viewTask); container.append(card);
     }
   }
   reminderButton.onclick = () => { reminderPanelOpen = !reminderPanelOpen; renderReminderPanel(); if (!reminderLog.alerts.length) notify('No active reminders. Add a time and reminder intervals when editing a task.'); };
@@ -2437,13 +2391,15 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   setInterval(refreshToday, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshToday(); }); window.addEventListener('focus', refreshToday);
   setInterval(checkReminders, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); }); window.addEventListener('focus', () => { checkReminders(); updateNotificationStatus(); renderBackupStatus(); });
   // Compact screens keep the calendar and backup controls within reach.
-  const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
+  const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-controls', 'calendarPanel'); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
-  recovery = window.createRecoveryCopies({ sizeLimit: SIZE_LIMIT, validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label) });
+  recovery = window.createRecoveryCopies({ sizeLimit: SIZE_LIMIT, validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label), onAttention: () => fileStore?.showDetails() });
   void recovery.init();
   fileStore = window.createTaskFileStorage({
     sizeLimit: SIZE_LIMIT, getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
+    browserStatus: () => $('saveStatus').textContent,
+    needsAttention: () => !persistent || loadFailed || $('recoveryPanel').dataset.state === 'paused',
     waitForEditor: () => $('taskDialog').open ? new Promise(resolve => $('taskDialog').addEventListener('close', resolve, { once: true })) : null,
     applyData(next) {
       data = validate(next); undoNotice.hide();

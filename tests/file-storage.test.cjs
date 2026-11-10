@@ -109,8 +109,10 @@ async function main() {
   assert.match(blocked.title(),/^Saved to/);assert.match(blocked.nodes.taskFileDetail.textContent,/could not remember/);assert.equal(blocked.shell.inert,false);
   blocked.change(sample('Still saving'));await blocked.controller.flush();assert.equal(JSON.parse(blocked.file.raw).tasks[0].title,'Still saving');
   // Unsupported browsers retain the checklist and cannot pretend file autosave works.
-  const unsupported=boot({supported:false});await unsupported.controller.init();assert.match(unsupported.title(),/Chrome or Edge/);assert.equal(unsupported.nodes.createTaskFile.disabled,true);
-  assert.equal(unsupported.nodes.taskFileDetails.hidden,false);
+  const unsupported=boot({supported:false});await unsupported.controller.init();assert.equal(unsupported.title(),'Saved in this browser');assert.equal(unsupported.nodes.createTaskFile.disabled,true);
+  assert.match(unsupported.nodes.taskFileDetail.textContent,/Chrome or Edge/);
+  assert.match(unsupported.nodes.taskFileAvailability.textContent,/File autosave unavailable/);
+  assert.equal(unsupported.nodes.taskFileDetails.hidden,true);
   // A slow remembered-file permission check must not make the checklist inert.
   const slowFile=disk(JSON.stringify(sample('Before startup')));
   let releasePermission;slowFile.queryPermission=()=>new Promise(resolve=>releasePermission=resolve);

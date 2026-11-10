@@ -34,7 +34,7 @@ function boot(storage, initialClock, options = {}) {
     get classList() { return {toggle:(name, force) => { const names = new Set(this.className.split(' ').filter(Boolean)); const add = force === undefined ? !names.has(name) : force; add ? names.add(name) : names.delete(name); this.className = [...names].join(' '); return add; }}; }
     focus() { document.activeElement = this; }
     get isConnected() { return !this.detached; }
-    scrollIntoView() {}
+    scrollIntoView(options) { this.lastScrollOptions = options; }
     getBoundingClientRect() { return {top:0,left:0,width:1}; }
     showModal() { this.open = true; }
     close() { this.open = false; queueMicrotask(() => this.dispatch('close')); }

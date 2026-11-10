@@ -8,9 +8,9 @@ A daily checklist with weekly routines, a calendar, and reminders, all in one HT
 
 1. Download the HTML file and save it in a folder you plan to keep using.
 2. Double-click it to open it in your browser. You only need this file; source-code downloads are for development.
-3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Choose **More options** for notes, repetition, a due time, or reminders. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
+3. Select **+ Add task**, enter a title and date, and choose **One time** or **Every week**. Recurrence and weekdays are visible in the main form. Choose **More options** for notes, a due time, or reminders. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
 
-The app opens to today. Select another day from the week strip, the month calendar (arrow keys work there too), or **Go to date**, and use the pencil beside a task to edit it.
+The app opens to today. Select another day from the week strip, the month calendar (arrow keys work there too), or **Go to date**, and use **Edit** beside a task to change it. **Coming up** shows the next seven dates beside the checklist on wide screens and in a collapsed section below it in smaller windows.
 
 ## What it does
 

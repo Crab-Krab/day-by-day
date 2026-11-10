@@ -4,8 +4,8 @@ const path = require('node:path');
 const http = require('node:http');
 const assert = require('node:assert/strict');
 async function main() {
-  let chromium;
-  try { ({ chromium } = require(process.env.DAY_BY_DAY_PLAYWRIGHT_PATH || 'playwright')); }
+  let chromium, browserType;
+  try { const pw = require(process.env.DAY_BY_DAY_PLAYWRIGHT_PATH || 'playwright'); chromium = pw.chromium; browserType = process.env.DAY_BY_DAY_BROWSER_TYPE === 'firefox' ? pw.firefox : chromium; }
   catch { throw Error('Browser tests need Playwright. Install it separately, or set DAY_BY_DAY_PLAYWRIGHT_PATH to its module directory. See docs/TESTING.md.'); }
   const root = path.resolve(__dirname, '..');
   const server = http.createServer((req, res) => {
@@ -16,7 +16,7 @@ async function main() {
   let browser;
   try {
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    browser = await chromium.launch({ headless: true, ...(process.env.DAY_BY_DAY_BROWSER_CHANNEL ? { channel: process.env.DAY_BY_DAY_BROWSER_CHANNEL } : {}) });
+    browser = await browserType.launch({ headless: true, ...(browserType === chromium && process.env.DAY_BY_DAY_BROWSER_CHANNEL ? { channel: process.env.DAY_BY_DAY_BROWSER_CHANNEL } : {}) });
     console.log('Browser version:', browser.version());
     for (const reducedMotion of ['no-preference', 'reduce']) {
       const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion });
@@ -48,6 +48,7 @@ async function main() {
       for (const width of [1366, 390]) {
         await standalone.setViewportSize({ width, height: 900 });
         await standalone.goto(`http://127.0.0.1:${server.address().port}/Day-by-Day.html`);
+        if (await standalone.locator('#taskFileDetails').isHidden()) await standalone.locator('#manageTaskFile').click();
         await standalone.locator('#createTaskFile').click();
         await standalone.locator('#taskFilePanel[data-state="saved"]').waitFor();
         const label = `trusted input ${width}px ${reducedMotion}`;

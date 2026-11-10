@@ -1,7 +1,7 @@
 'use strict';
 // Optional recovery copies: earlier versions of your tasks, kept in a folder you choose.
 // Copies never stop your tasks from saving. If the folder can't be used, copies pause and the panel says so.
-window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore, now = () => Date.now() }) {
+window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore, now = () => Date.now(), onAttention = () => {} }) {
   const $ = id => document.getElementById(id);
   const FOLDER = 'Day-by-Day recovery copies', KEEP = 20, HOUR = 3600000, BURST = 5 * 60000;
   // Repeated small actions, like deleting many tasks, make one copy per 5 minutes, so a cleanup can't push out older copies.
@@ -28,6 +28,7 @@ window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore,
     if (state !== 'on') $('recoveryList').replaceChildren();
     if (message !== undefined) $('recoveryStatus').textContent = message;
     $('recoveryPanel').setAttribute('aria-busy', String(pending > 0));
+    if (state === 'paused') { $('recoveryPanel').open = true; onAttention(); }
   }
 
   // The chosen folder is remembered in browser storage, separately from the task file connection.

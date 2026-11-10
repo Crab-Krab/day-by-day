@@ -3,7 +3,7 @@ name: Checks
 on:
   # Pull requests run these checks once. Pushes to main check the merged result.
   push:
-    branches: [main]
+    branches: [main, codex/neutral-violet-redesign]
   pull_request:
 
 permissions:

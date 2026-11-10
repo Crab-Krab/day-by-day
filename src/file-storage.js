@@ -1,7 +1,7 @@
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
+window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null, browserStatus = () => 'Saved in this browser', needsAttention = () => false }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showDirectoryPicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -9,6 +9,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
   let dbPromise = null, hasSaved = false;
   function showDetails(expanded = true) {
+    expanded = expanded || needsAttention();
     $('taskFileDetails').hidden = !expanded;
     $('manageTaskFile').setAttribute('aria-expanded', String(expanded));
     $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
@@ -33,7 +34,13 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.'); }
+  function idleStatus() {
+    status(browserStatus(), 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.');
+    showDetails(false);
+  }
+  function refreshBrowserStatus() {
+    if (initialized && !handle && ['idle', 'unsupported'].includes($('taskFilePanel').dataset.state)) $('taskFileStatus').textContent = browserStatus();
+  }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;
@@ -264,7 +271,10 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   async function init() {
     if (!supported) {
-      status('File autosave needs Chrome or Edge', 'Open this HTML file in a current desktop Chrome or Edge browser. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
+      $('taskFileAvailability').hidden = false;
+      $('taskFileAvailability').textContent = 'File autosave unavailable here. Browser saving and backups work.';
+      status(browserStatus(), 'File autosave works in current desktop Chrome or Edge. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
+      showDetails(false);
       initialized = true; return;
     }
     // The remembered connection may be slow. Keep the checklist usable; attach()
@@ -299,6 +309,6 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     if (dirty || writing || busy) { event.preventDefault(); event.returnValue = ''; }
   });
   // Do not poll or write on unload: writes happen immediately after each edit.
-  return { init, changed, flush, retry, showDetails, ownsCache: () => Boolean(handle) || !initialized,
+  return { init, changed, flush, retry, showDetails, refreshBrowserStatus, ownsCache: () => Boolean(handle) || !initialized,
     isConnected: () => Boolean(handle), isPending: () => dirty || Boolean(writing) };
 };

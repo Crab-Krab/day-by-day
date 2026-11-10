@@ -47,7 +47,8 @@ run.onclick=async()=>{
       const win=frame.contentWindow,doc=frame.contentDocument,$=id=>doc.getElementById(id),row=id=>doc.querySelector(`[data-id="${id}"]`),state=()=>JSON.parse(win.localStorage.getItem('day-by-day.v1'));
       const click=async node=>{node.click();await nextFrame();};
       const label=message=>`${width}px: ${message}`;
-      await click($('createTaskFile'));await until(()=>$('taskFilePanel').dataset.state==='saved');
+      check($('taskFileDetails').hidden,label('browser-only saving starts compact with Manage available'));
+      await click($('manageTaskFile'));await click($('createTaskFile'));await until(()=>$('taskFilePanel').dataset.state==='saved');
       check($('taskFileDetails').hidden&&$('manageTaskFile').getAttribute('aria-expanded')==='false',label('successful autosave collapses to one status row'));
       await click($('manageTaskFile'));check(!$('taskFileDetails').hidden&&$('saveStatus').textContent.includes('Saved'),label('Manage exposes browser saving, backups, and file controls together'));await click($('manageTaskFile'));
       const top=doc.querySelector('[aria-label="Daily checklist"]').getBoundingClientRect().top;
@@ -63,9 +64,9 @@ run.onclick=async()=>{
       await click(row('routine').querySelector('.edit-task'));
       const effective=$('taskEffectiveDate').value, yesterday=win.DayByDay.dateKey(win.DayByDay.plusDays(win.DayByDay.parseDate(effective),-1));
       $('taskEffectiveDate').value=yesterday;await click($('toggleTaskOptions'));
-      check($('taskOptions').hidden,label('routine options can collapse before native date validation'));
+      check($('taskOptions').hidden&&!$('routineChanges').hidden&&!$('taskOptions').contains($('taskEffectiveDate')),label('routine effective date remains visible when optional notes/time collapse'));
       await click($('saveTask'));
-      check($('taskDialog').open&&!$('taskOptions').hidden&&doc.activeElement===$('taskEffectiveDate')&&$('taskEffectiveDate').validity.rangeUnderflow,label('Save reveals and focuses an invalid date inside collapsed options'));
+      check($('taskDialog').open&&$('taskOptions').hidden&&doc.activeElement===$('taskEffectiveDate')&&$('taskEffectiveDate').validity.rangeUnderflow&&$('taskEffectiveDateError').textContent,label('Save focuses the invalid core date and exposes its adjacent error'));
       $('taskEffectiveDate').value=effective;await click($('saveTask'));
       check(!$('taskDialog').open,label('correcting the revealed date allows the routine to save'));
       check(!row('routine').querySelector('.task-menu').open,label('secondary actions start hidden'));
@@ -88,8 +89,8 @@ run.onclick=async()=>{
       win.__testDisk.fail=true;await click($('addTask'));$('taskTitle').value='While file saving fails';$('taskForm').requestSubmit();
       await until(()=>$('taskFilePanel').dataset.state==='error');check(!$('taskFileDetails').hidden&&$('taskFileStatus').textContent.includes('not saved'),label('failed file writes automatically expose recovery controls'));
       win.__testDisk.fail=false;await click($('retryTaskFile'));await until(()=>$('taskFilePanel').dataset.state==='saved');check(JSON.parse(win.__testDisk.raw).tasks.some(task=>task.title==='While file saving fails'),label('retry writes the pending task to the simulated file'));
-      await click($('routinesNav'));await click($('addTask'));check(!$('taskOptions').hidden&&!$('weeklyDays').hidden,label('Add routine opens repeat controls immediately'));await click($('cancelDialog'));
-      check($('routineOrderScope').textContent.includes('catalog only'),label('routine catalog scope is explicit'));
+      await click($('routinesNav'));await click($('addTask'));check($('taskOptions').hidden&&!$('weeklyDays').hidden&&!$('taskOptions').contains($('weeklyDays')),label('Add routine exposes repeat controls while optional notes/time stay collapsed'));await click($('cancelDialog'));
+      check($('routineOrderScope').textContent.includes('Catalog order · daily orders unchanged'),label('routine catalog scope is explicit'));
       await click($('todayNav'));await click($('manageTaskFile')); // leave a compact preview
       const link=doc.querySelector('.description-body a');check(link?.rel.includes('noopener')&&!doc.querySelector('.description-body script'),label('notes and links retain safe rendering'));
       // Verify the menu cannot cover an unrelated row when closed and the hit target is real.

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Redesign both themes with neutral surfaces, violet actions and selection, consistent system typography, shared controls, visible Edit labels, and a bounded workspace. Date navigation remains available at narrow widths; row actions reflow beneath task text.
+- Add collapsed Coming up below the checklist in smaller windows, using the same seven-day list as the wide-screen column. Its disclosure state stays in the current tab, and resizing keeps a focused date reachable.
+- Make One time / Every week, weekdays, and routine effective dates visible in the main editor. Keep notes/time/reminders optional, add adjacent accessible errors, and keep invalid fields reachable. New routines no longer require expanding optional fields.
+- Consolidate recovery copies under Manage. Use compact browser-only saving status; retain independent browser/file failures, expose paused recovery controls, and keep file conflict choices equally styled. Reminder navigation honors reduced motion and finds today's overdue tasks.
+- Preserve task-file format 5, formats 1–5 import support, existing scheduling/history/order semantics, and the offline CSP. Enforce LF checkouts so Windows rebuilds produce the same CSP and download checksums as CI.
+- Expand browser acceptance checks across 13 widths and both themes, short dialogs, long content, forced colors, unchanged task data, and read-only history. Add Firefox to browser CI and run checks on the redesign branch.
+
 ## 1.6.3 — 2026-11-10
 
 - If **Create new task file** ends without a folder, because Chrome refused a top-level folder such as Documents, permission was declined, or the dialog was cancelled, the panel now says **No folder chosen** and suggests making a folder such as `Documents\Day by Day`. Before, nothing visible happened.

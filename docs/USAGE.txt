@@ -8,7 +8,7 @@ Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
 The downloaded file works without an internet connection or account.
 
 AUTOMATIC FILE SAVING (CHROME / EDGE)
-Choose Create new task file, then choose a folder that stays on your computer,
+Choose Manage, then Create new task file and a folder that stays on your computer,
 such as a new Day by Day folder inside Documents. The app saves your tasks there
 as Day-by-Day-tasks.json. Allow editing access. Each task change saves
 automatically; wait for Saved to before closing or signing out. If that folder
@@ -16,9 +16,11 @@ already has a task file, the app opens it instead of replacing it. If you keep a
 task JSON or backup somewhere else, use Open task file; it becomes the live
 autosave file.
 
-After a successful file connection, saving controls collapse to one status row.
-Choose Manage to see file controls, browser saving, Back up tasks, and Restore
-backup together. Setup and file-saving errors show the details automatically.
+Browser-only and connected-file saving normally use one compact status row.
+Choose Manage to see Working task file, Browser copy & manual backups, and
+Recovery copies together. Saving failures, unreadable data, and paused recovery
+copies show the details automatically. Browser-copy status stays independent
+of the connected file's status.
 
 The app automatically reopens the remembered file when browser access survives.
 If permission expires, click Reconnect task file. If daily browser cleanup clears
@@ -41,16 +43,20 @@ Edge issue where the checklist stopped responding until a window repaint.
 Enable Reduce motion in your device's accessibility settings to turn effects off.
 
 The app opens to today's list. On a wide screen, Coming up beside the checklist
-lists the next 7 days with their tasks; select a day there to open it. Choose a
-weekday or a date on the month calendar
+lists the 7 days after the selected date with their tasks; select a day there
+to open it. In smaller windows, expand Coming up below the checklist. Your
+expanded/collapsed choice lasts for this tab. Choose a weekday or a date on the month calendar
 to see another day, or type any date in Go to date below the calendar. On a small
 screen, use the Calendar button to show the month. With a keyboard, Tab reaches
 one day of the month calendar, and the arrow keys move by day or week, including
 into the next or previous month.
 
-Use + Add task to enter a task and date, then Add task. More options reveals
-notes, One time / Every week, time, and reminders. Editing an existing task
-opens the full editor; Add task in Weekly routines opens repeat controls.
+Use + Add task to enter a title and date, then Add task. One time / Every week
+is always visible; Every week reveals weekdays and schedule guidance without
+opening More options. More options reveals notes, time, and reminders.
+Editing an existing task opens all options; Add routine in Weekly routines
+opens the weekly form with optional notes/time collapsed. Errors appear beside
+the relevant field and focus moves to the first invalid field.
 Click outside the task window to close it, like Cancel. If you have typed or
 changed anything, the app asks before discarding it.
 For weekly tasks, select any combination of weekdays under Repeat on.
@@ -86,7 +92,7 @@ one there records completion on its original date. Move to today explicitly
 changes its date. Missed recurring occurrences from earlier dates are not carried
 into this section. Today's overdue routines can still be skipped or rearranged.
 
-Use the pencil next to a task to edit it. One-time tasks can be deleted. For a
+Use Edit next to a task to edit it. One-time tasks can be deleted. For a
 routine, select Apply changes / end routine from (today or later). Save changes
 apply from that date onward and replace later planned edits. Earlier days and
 completed occurrences keep their saved details, including name, notes, and time.
@@ -113,7 +119,8 @@ Add an optional Description when creating or editing a task. Use it for details,
 multiline notes, and web links (starting with https:// or http://), up to 5,000
 characters. Descriptions appear directly below each task. Longer notes show a
 preview of up to three lines / 240 characters, with Show more and Show less to
-expand or collapse them. The checkbox, Edit, and More stay at the top of that task.
+expand or collapse them. Completion stays beside the title. In narrow lists,
+reordering, Edit, and More reflow below the text instead of crowding it.
 Web links open in a new tab. Descriptions are shared across a routine's scheduled days, saved in
 this browser, and included in backups. Clear the Description field to remove it.
 Older tasks and backups load with empty descriptions.
@@ -127,8 +134,8 @@ Tasks with the same time sort alphabetically by name, ignoring capitalization;
 the All day group also sorts alphabetically. Numbered titles use natural order
 (Task 2 before Task 10). Custom ordering takes precedence over these defaults.
 Choose More beside a task to find Skip and reminder details. More appears only
-when a task has one of these. Use the small up/down arrows beside the checkbox
-to move any task in its section,
+when a task has one of these. Use the up/down arrows beside the checkbox, or
+below the task in a narrow list, to move any task in its section,
 regardless of due time. The first move switches to custom ordering, starting from
 the current due-time order. The custom order is saved for that weekday and reused
 in future weeks; other weekdays are unchanged. New tasks follow ranked tasks in
