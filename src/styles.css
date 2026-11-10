@@ -76,13 +76,12 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 [hidden] { display: none !important; }
 .app-shell { display: flex; min-height: 100vh; }
-.sidebar { width: 292px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--border); padding: 38px 26px 26px; display: flex; flex-direction: column; min-height: 100vh; }
-.brand { color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 24px; line-height: 32px; font-weight: 650; letter-spacing: -.5px; border-radius: 8px; }
+.sidebar { width: 248px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; min-height: 100vh; }
+.brand { color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 24px; line-height: 32px; font-weight: 650; letter-spacing: -.5px; border-radius: 8px; min-height: 44px; }
 .brand-mark { display: grid; place-items: center; background: var(--accent); color: var(--on-accent); border-radius: 10px; width: 36px; height: 36px; }
 .brand-mark svg { width: 25px; height: 25px; stroke-width: 2; }
 .brand-dot { color: var(--accent); }
-.tagline { font-size: 13px; line-height: 20px; margin: 8px 0 32px; color: var(--text-secondary); }
-.main-nav { display: grid; gap: 8px; margin: 0 -8px 36px; }
+.main-nav { display: grid; gap: 4px; margin: 24px 0; }
 .nav-item { display: flex; align-items: center; gap: 12px; background: transparent; border: 0; text-align: left; width: 100%; border-radius: 8px; padding: 12px; min-height: 44px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-secondary); }
 .nav-item:hover { background: var(--hover); }
 .nav-item.active { background: var(--selection); color: var(--on-selection); font-weight: 600; }
@@ -111,11 +110,15 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .jump-date input:not([type=radio]):not([type=checkbox]) { min-height: 44px; padding: 8px 10px; font-size: 14px; }
 .calendar-key span { position: absolute; inset-inline-start: calc(var(--calendar-label-inset) - 11px); top: 50%; margin-top: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--text-secondary); }
 .backup-status { line-height: 1.6; }
-.backup-notice, .undo-notice { margin: 16px 48px 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 14px; line-height: 20px; }
+.backup-notice, .undo-notice { margin: 16px var(--inset) 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 14px; line-height: 20px; }
 .backup-notice p { margin: 0 0 8px; }
 .backup-notice>div, .undo-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
 .undo-notice>span { flex: 1; }
 .overdue-section { margin-bottom: 24px; }
+.overdue-icon { color: var(--warning); }
+.overdue-meta { color: var(--warning); font-weight: 500; }
+.time-badge.overdue { gap: 4px; background: var(--warning-surface); color: var(--warning); }
+.time-badge.overdue svg { width: 14px; height: 14px; }
 .overdue-hint { margin: -4px 16px 12px; font-size: 13px; line-height: 20px; color: var(--text-secondary); }
 .move-today, .move-tomorrow { margin-top: 8px; font-size: 13px; color: var(--link); text-decoration: underline; text-underline-offset: 3px; }
 .skip-task { margin-top: 8px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
@@ -124,6 +127,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .skipped-section, .ended-routines { margin-top: 24px; }
 .history-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 14px; line-height: 20px; }
 .history-item>span { min-width: 0; overflow-wrap: anywhere; }
+.history-state { display: inline-block; margin-inline-start: 8px; padding: 1px 8px; border-radius: 999px; background: var(--surface-subtle); color: var(--text-secondary); font-size: 12px; line-height: 18px; font-weight: 500; }
 .history-item button { flex-shrink: 0; }
 .ended-routines { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 14px; }
 .ended-routines summary { cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); }
@@ -133,14 +137,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .restore-content h2 { margin: 0 0 12px; font-size: 24px; line-height: 32px; font-weight: 650; }
 .restore-content p { color: var(--text-secondary); font-size: 14px; line-height: 20px; }
 .restore-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-@media (max-width: 860px) { .backup-notice, .undo-notice { margin-inline: 24px; } }
-@media (max-width: 560px) { .backup-notice, .undo-notice { margin-inline: 18px; } .overdue-hint { margin-inline: 18px; } }
-.sidebar-note { margin-top: auto; display: flex; gap: 10px; align-items: flex-start; margin: 32px 0 0; color: var(--text-secondary); }
-.sidebar-note svg { width: 20px; height: 20px; margin-top: 2px; }
-.sidebar-note p { font-size: 13px; line-height: 20px; margin: 0; }
-.sidebar-note p span { color: var(--text-secondary); }
-.storage-area { margin-top: auto; border-top: 1px solid var(--border); padding-top: 22px; }
-.task-file-panel { margin: 16px 40px 0; padding: 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.storage-area { border-top: 1px solid var(--border); }
+.task-file-panel { margin: 16px var(--inset) 0; padding: 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .task-file-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 .task-file-copy { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .task-file-copy strong { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
@@ -154,13 +152,10 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .task-file-panel[data-state="idle"] .status-dot, .task-file-panel[data-state="unsupported"] .status-dot { background: var(--text-secondary); }
 .task-file-panel .storage-area { margin-top: 14px; padding-top: 14px; }
 #fileChoiceDialog .restore-actions { flex-wrap: wrap; }
-@media (max-width: 1150px) { .task-file-panel { margin-inline: 30px; } }
-@media (max-width: 860px) { .task-file-panel { margin-inline: 24px; } }
-@media (max-width: 560px) { .task-file-panel { margin: 12px 18px 0; padding: 8px 12px; } }
 /* Optional recovery copies, collapsed under the task-file panel. */
-.recovery-panel { margin: 12px 36px 0; padding: 6px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; }
+.recovery-panel { margin: 12px var(--inset) 0; padding: 0 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; }
 .recovery-panel[data-state="paused"] { border-color: var(--warning); background: var(--warning-surface); }
-.recovery-panel summary { cursor: pointer; display: flex; align-items: center; min-height: 32px; font-weight: 600; font-size: 14px; line-height: 20px; }
+.recovery-panel summary { cursor: pointer; display: flex; align-items: center; min-height: 44px; font-weight: 600; font-size: 14px; line-height: 20px; }
 .recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; line-height: 18px; color: var(--text-secondary); }
 .recovery-intro, .recovery-status { margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
 .recovery-status:empty { display: none; }
@@ -168,7 +163,6 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .recovery-actions button, .recovery-list button { font-size: 14px; }
 .recovery-list { list-style: none; margin: 8px 0 0; padding: 0; }
 .recovery-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
-@media (max-width: 700px) { .recovery-panel { margin: 12px 16px 0; padding: 12px 14px; } }
 .saved-label { font-size: 14px; line-height: 20px; display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .saved-label>.status-dot { display: none; }
 .status-dot { height: 8px; width: 8px; flex-shrink: 0; border-radius: 50%; background: var(--text-secondary); }
@@ -176,11 +170,10 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .text-button { border: 0; background: none; font-size: 14px; line-height: 20px; color: var(--text-secondary); min-height: 32px; padding: 6px 0; display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; border-radius: 4px; }
 .text-button:hover { text-decoration: underline; text-underline-offset: 3px; color: var(--text); }
 .text-button svg { width: 16px; height: 16px; }
-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.topbar { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 40px; border-bottom: 1px solid var(--border); }
-.breadcrumb { font-size: 12px; color: var(--text-secondary); display: flex; gap: 12px; align-items: center; }
-.breadcrumb-divider { color: var(--text-secondary); }
-.breadcrumb b { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text); }
+main { --gutter: 32px; --inset: max(var(--gutter), calc((100% - 1440px) / 2 + var(--gutter))); flex: 1; min-width: 0; display: flex; flex-direction: column; }
+main:focus { outline: none; }
+.topbar { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px var(--inset); border-bottom: 1px solid var(--border); }
+.view-label { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text); }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 .primary-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); border-radius: 8px; min-height: 44px; font-size: 14px; line-height: 20px; font-weight: 600; padding: 10px 16px; white-space: nowrap; }
 .primary-button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -191,41 +184,31 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .theme-moon { opacity: 0; }
 [data-theme=dark] .theme-sun { opacity: 0; }
 [data-theme=dark] .theme-moon { opacity: 1; }
-.content { width: 100%; max-width: var(--content-max, 1380px); margin: 0 auto; padding: 28px 40px 32px; }
+.content { width: 100%; padding: 24px var(--inset) 32px; }
 /* The Coming up column appears only on wide screens, beside the checklist. */
-.coming-up { display: none; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 16px 12px 8px; }
-.coming-up h2 { margin: 0 4px; font-size: 18px; line-height: 26px; font-weight: 600; }
-.coming-up-hint { margin: 0 4px 8px; font-size: 13px; line-height: 20px; color: var(--text-secondary); }
-.coming-up-list { list-style: none; margin: 0; padding: 0; }
+.coming-up { margin-top: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 12px 12px 8px 16px; }
+.coming-up-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.coming-up-toggle { min-width: 72px; }
+.coming-up.collapsed .coming-up-list { display: none; }
+.coming-up h2 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; }
+.coming-up-hint { margin: 0; font-size: 13px; line-height: 20px; color: var(--text-secondary); }
+.coming-up-list { list-style: none; margin: 8px 0 0; padding: 0; }
 .coming-up-day { border-top: 1px solid var(--border); }
-.coming-up-open { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 12px; width: 100%; margin: 4px 0; padding: 8px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.coming-up-open { display: grid; min-height: 44px; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 12px; width: 100%; margin: 4px 0; padding: 8px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 .coming-up-open:hover { background: var(--hover); }
 .coming-up-date { font-size: 14px; line-height: 20px; font-weight: 600; }
 .coming-up-count { font-size: 12px; line-height: 18px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .coming-up-tasks { grid-column: 1 / -1; display: grid; gap: 2px; font-size: 13px; line-height: 20px; color: var(--text-secondary); }
 .coming-up-tasks span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .coming-up-open.empty .coming-up-date { font-weight: 500; color: var(--text-secondary); }
-@media (min-width: 1151px) {
-  /* Notices and the saving panels line up with the content below them instead of running edge to edge. */
-  .task-file-panel, .recovery-panel, .backup-notice, .undo-notice, .warning { margin-inline: max(40px, calc((100% - var(--content-max, 1380px)) / 2 + 40px)); }
-}
-@media (min-width: 1360px) {
-  /* No width cap: the content fills the screen beside the sidebar. */
-  :root { --content-max: 99999px; }
-  /* The day title and week strip stay stacked full width; Coming up sits beside the checklist below them. */
-  #dailyView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); column-gap: 28px; align-items: start; }
-  #dailyView > .page-heading, #dailyView > .week-section { grid-column: 1 / -1; }
-  #dailyView > .day-main { grid-column: 1; min-width: 0; }
-  #dailyView > .coming-up { display: block; grid-column: 2; position: sticky; top: 20px; }
-}
-.page-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 18px; }
+.page-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; gap: 12px 16px; }
 .eyebrow { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-secondary); margin: 0 0 4px; }
 h1 { font-size: 32px; line-height: 40px; font-weight: 650; letter-spacing: -.4px; margin: 0; }
 .subtitle { font-size: 14px; line-height: 20px; color: var(--text-secondary); margin: 4px 0 0; }
 .outline-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; min-height: 44px; padding: 10px 16px; font-size: 14px; line-height: 20px; font-weight: 500; white-space: nowrap; color: var(--text); }
 .outline-button:hover { background: var(--hover); }
 #jumpToday { min-height: 44px; }
-.week-section { margin-bottom: 20px; }
+.week-section { margin-bottom: 24px; }
 .week-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .week-heading>span { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text-secondary); }
 .week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
@@ -300,12 +283,12 @@ h1 { font-size: 32px; line-height: 40px; font-weight: 650; letter-spacing: -.4px
 .empty-state h3 { font-size: 18px; line-height: 26px; font-weight: 600; margin: 0 0 4px; }
 .empty-state p { color: var(--text-secondary); font-size: 14px; line-height: 20px; margin: 0; }
 .empty-state button { margin-top: 16px; }
-.main-footer { margin: auto 48px 0; padding: 24px 0; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; border-top: 1px solid var(--border); font-size: 13px; line-height: 20px; color: var(--text-secondary); }
+.main-footer { margin: auto var(--inset) 0; padding: 24px 0; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; border-top: 1px solid var(--border); font-size: 13px; line-height: 20px; color: var(--text-secondary); }
 .main-footer>span:last-of-type { font-weight: 600; color: var(--text); }
 .routines-card .checklist-header { border-bottom: 1px solid var(--border); }
 .routine-icon { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; border-radius: 8px; background: var(--surface-subtle); color: var(--text-secondary); }
 .routine-icon svg { width: 20px; height: 20px; }
-.warning { margin: 20px 48px 0; padding: 16px; background: var(--danger-surface); color: var(--text); border: 1px solid var(--danger); border-radius: 12px; font-size: 14px; line-height: 20px; }
+.warning { margin: 16px var(--inset) 0; padding: 16px; background: var(--danger-surface); color: var(--text); border: 1px solid var(--danger); border-radius: 12px; font-size: 14px; line-height: 20px; }
 .warning p { margin: 0; }
 .warning button { margin-top: 12px; }
 dialog { border: 1px solid var(--border); border-radius: 16px; padding: 0; max-width: 560px; max-height: calc(100dvh - 32px); width: calc(100% - 32px); background: var(--surface); color: var(--text); box-shadow: var(--dialog-shadow); }
@@ -392,7 +375,6 @@ a { color: var(--link); }
 .options-toggle:hover { background: var(--hover); }
 .options-hint { font-size: 13px; line-height: 20px; font-weight: 400; color: var(--text-secondary); }
 .dialog-actions { position: sticky; bottom: -24px; margin-bottom: -24px; padding-bottom: 24px; background: var(--surface); z-index: 2; }
-@media (max-width: 560px) { .list-order { padding-inline: 18px; } .task-actions { gap: 0; } .dialog-actions { bottom: -24px; margin-bottom: -24px; padding-bottom: 20px; } }
 /* Quiet feedback for navigation and task edits; content updates immediately. */
 .primary-button, .outline-button, .icon-button, .text-button, .nav-item, .check-button, .theme-toggle, .reminder-center-button, .week-day, .inline-add, .coming-up-open, .task-menu-toggle, .day-presets button, .frequency span, .weekday-picker span, .reminder-options span {
   transition: background-color .14s ease, border-color .14s ease, color .14s ease;
@@ -410,75 +392,89 @@ a { color: var(--link); }
 .delete-button { background: none; border: 1px solid transparent; border-radius: 8px; min-height: 44px; font-size: 14px; line-height: 20px; font-weight: 500; padding: 10px 0; color: var(--danger); }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--inverse); color: var(--on-inverse); border-radius: 12px; box-shadow: var(--menu-shadow); font-size: 14px; line-height: 20px; z-index: 9; max-width: calc(100% - 32px); }
 .toast button { border: 0; background: transparent; color: inherit; min-height: 32px; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-@media (min-width: 1800px) {
-  .sidebar { width: 308px; padding: 40px 30px 28px; }
-  .content { padding-top: 34px; }
+/* Sections that open and close show an arrow that points down when open. */
+.completed-tasks>summary, .ended-routines>summary, .recovery-panel>summary { list-style: none; }
+.completed-tasks>summary::-webkit-details-marker, .ended-routines>summary::-webkit-details-marker, .recovery-panel>summary::-webkit-details-marker { display: none; }
+.completed-tasks>summary::before, .ended-routines>summary::before, .recovery-panel>summary::before { content: ''; flex-shrink: 0; width: 7px; height: 7px; margin: 0 6px 0 2px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); }
+.completed-tasks[open]>summary::before, .ended-routines[open]>summary::before, .recovery-panel[open]>summary::before { transform: translateY(-2px) rotate(45deg); }
+.skip-link { position: absolute; left: 16px; top: -100px; z-index: 50; padding: 10px 16px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 600; }
+.skip-link:focus { top: 16px; }
+.coming-up-toggle[hidden] { display: none; }
+/* Wide screens: Coming up sits beside the checklist, always open, below the full-width day title and week. */
+@media (min-width: 1360px) {
+  #dailyView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) 280px; column-gap: 24px; align-items: start; }
+  #dailyView > .page-heading, #dailyView > .week-section { grid-column: 1 / -1; }
+  #dailyView > .day-main, #dailyView > .daily-footer { grid-column: 1; min-width: 0; }
+  #dailyView > .coming-up { grid-column: 2; grid-row: 3 / span 2; margin-top: 0; position: sticky; top: 24px; }
+  .coming-up-toggle { display: none; }
+  .coming-up.collapsed .coming-up-list { display: block; }
 }
-@media (max-width: 1150px) {
-  .sidebar { width: 260px; padding: 30px 20px 22px; }
-  .topbar { padding-inline: 30px; }
-  .breadcrumb-prefix, .breadcrumb-divider { display: none; }
-  .content { padding: 28px 30px 32px; }
-  .main-footer { margin-inline: 30px; }
-  .week-strip { gap: 8px; }
-  .checklist-header, .task-row { padding-inline: 22px; }
-}
-@media (max-width: 860px) {
+/* Below 960px the sidebar becomes a compact bar above the workspace, with the calendar behind a button. */
+@media (max-width: 959px) {
+  main { --gutter: 24px; }
   .app-shell { display: block; }
-  .sidebar { position: relative; width: 100%; min-height: 0; padding: 22px 24px 0; border-right: 0; border-bottom: 1px solid var(--border); display: block; }
-  .brand { font-size: 25px; }
-  .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
-  .tagline, .sidebar-note, .calendar-panel { display: none; }
-  .main-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 19px -8px 0; }
-  .nav-item { width: auto; padding: 11px 12px; border-radius: 8px 8px 0 0; min-height: 46px; font-size: 14px; gap: 9px; }
+  .sidebar { position: relative; width: 100%; min-height: 0; padding: 16px var(--gutter, 24px) 0; border-right: 0; border-bottom: 1px solid var(--border); display: block; }
+  .sidebar { --gutter: 24px; }
+  .calendar-panel { display: none; }
+  .main-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 12px 0 0; }
+  .nav-item { width: auto; border-radius: 8px 8px 0 0; }
   .nav-count, .quiet-count { margin-left: 8px; }
-  .nav-item svg { width: 18px; height: 18px; }
-  .calendar-mobile-toggle { display: inline-flex !important; position: absolute; right: 24px; top: 22px; margin: 0; padding: 8px 10px; min-height: 36px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
-  .sidebar.mobile-calendar .calendar-panel { display: block; padding: 18px 0; margin-bottom: 12px; max-width: 350px; }
+  .calendar-mobile-toggle { display: inline-flex !important; position: absolute; right: var(--gutter); top: 16px; margin: 0; padding: 6px 12px; min-height: 36px; border: 1px solid var(--control-border); border-radius: 8px; color: var(--text); }
+  .calendar-mobile-toggle:hover { text-decoration: none; background: var(--hover); }
+  .sidebar.mobile-calendar .calendar-panel { display: block; padding: 16px 0; margin-bottom: 16px; max-width: 360px; }
   .calendar-grid button { height: 40px; font-size: 14px; }
-  .topbar { min-height: 78px; padding: 15px 24px; }
-  .topbar-actions { gap: 16px; }
-  .content { padding: 24px; }
-  .page-heading { margin-bottom: 18px; }
-  .main-footer { margin-inline: 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; }
-  .main-footer>button { display: inline-flex !important; }
-  .mobile-storage { display: block !important; font-size: 12px; padding: 0 24px 20px; color: var(--text-secondary); text-align: center; }
-  .warning { margin-inline: 24px; }
 }
-@media (max-width: 560px) {
+/* Phones: 16px gutters, smaller title, and task buttons on their own row under the task text. */
+@media (max-width: 599px) {
+  main, .sidebar { --gutter: 16px; }
   h1 { font-size: 28px; line-height: 36px; }
-  .main-footer { margin-inline: 18px; }
-  .daily-footer { align-items: flex-start; text-align: center; }
-  .sidebar { padding: 18px 18px 0; }
-  .main-nav { gap: 2px; }
-  .nav-count, .quiet-count { margin-left: 2px; }
-  .calendar-mobile-toggle { top: 18px; right: 18px; font-size: 12px; }
-  .topbar { padding-inline: 18px; gap: 10px; }
-  .topbar-actions { gap: 12px; }
-  .theme-toggle { width: 44px; height: 44px; }
-  .content { padding: 22px 18px; }
-  .page-heading { align-items: flex-start; gap: 10px; }
-  .week-strip { gap: 5px; }
-  .week-day { min-height: 68px; border-radius: 9px; padding: 9px 1px 14px; gap: 5px; }
-  .checklist-header { padding: 20px 18px 18px; gap: 8px; }
+  .topbar { justify-content: flex-end; min-height: 0; padding-block: 8px; }
+  .view-label { display: none; }
+  .brand { font-size: 20px; line-height: 28px; }
+  .brand-mark { width: 32px; height: 32px; }
+  .nav-item { padding-inline: 10px; gap: 8px; }
+  .nav-count, .quiet-count { margin-left: 4px; }
+  .week-strip { gap: 4px; }
+  .week-day { min-height: 60px; border-radius: 8px; padding: 6px 1px 12px; }
+  .week-day .weekday { font-size: 12px; line-height: 18px; }
+  .week-day .number { font-size: 18px; line-height: 24px; }
   .daily-checklist-header { flex-wrap: wrap; gap: 12px; }
-  .daily-checklist-header .checklist-header-actions { max-width: 100%; margin-left: auto; }
-  .progress-track { margin-inline: 18px; }
-  .task-row { padding: 12px; gap: 8px; }
-  .task-actions { gap: 3px; }
-  .task-order .move-task { width: 36px; height: 34px; }
-  .empty-state { padding: 34px 18px; }
-  .daily-footer svg { margin-top: 2px; }
-  .warning { margin-inline: 18px; }
-  .form-row { gap: 12px; }
-  .weekday-picker { gap: 4px; }
-  .form-row label { font-size: 12px; }
-  .form-row input, .form-row select { font-size: 14px; padding-inline: 8px; }
-  .dialog-actions { flex-wrap: wrap; }
-  .dialog-actions>div { gap: 7px; }
-  .toast { bottom: 18px; }
+  .daily-checklist-header .checklist-header-actions { width: 100%; align-items: flex-start; }
+  .checklist-header-actions { text-align: left; }
+  .task-row { display: grid; grid-template-columns: 44px max-content minmax(0, 1fr); gap: 4px 8px; padding: 12px 12px 8px; min-height: 0; }
+  .task-row > .check-button, .task-row > .routine-icon { grid-column: 1; grid-row: 1; }
+  .task-row > .task-copy { grid-column: 2 / -1; grid-row: 1; }
+  .task-row > .task-order { grid-column: 2; grid-row: 2; display: flex; gap: 4px; padding-top: 0; }
+  .task-row > .task-actions { grid-column: 3; grid-row: 2; justify-self: start; }
+  .task-row:not(:has(> .task-order)) > .task-actions { grid-column: 2 / -1; }
+  .task-order .move-task { width: 44px; height: 44px; border-radius: 8px; }
+}
+/* The narrowest phones keep both views on one row by leaving out the view icons. */
+@media (max-width: 399px) {
+  .nav-item svg { display: none; }
+  .nav-item { padding-inline: 8px; }
+}
+@media (max-width: 599px) {
+  .history-item { flex-wrap: wrap; }
+  .daily-footer { align-items: flex-start; text-align: center; }
+  dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); }
+  #taskForm, .restore-content { padding: 16px; }
+  .dialog-actions { position: sticky; bottom: -16px; margin-bottom: -16px; padding-bottom: 16px; flex-wrap: wrap; }
+  .toast { bottom: 16px; }
   .reminder-panel { right: 16px; bottom: 16px; }
-  .topbar-actions { gap: 9px; }
+}
+/* Windows High Contrast and other forced-color modes: keep selection, completion and progress visible. */
+@media (forced-colors: active) {
+  .week-day.active, .calendar-grid .selected, .nav-item.active, .primary-button, .check-button[aria-pressed=true]:before,
+  .frequency input:checked+span, .weekday-picker input:checked+span, .reminder-options input:checked+span, .day-presets button[aria-pressed=true], .progress-track>div, .reminder-count {
+    forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight;
+  }
+  .week-day.active .weekday, .week-day.active .number, .check-button svg { color: HighlightText; }
+  .nav-item.active .nav-count, .nav-item.active .quiet-count { background: HighlightText; color: Highlight; }
+  .week-day.active .day-dot, .calendar-grid .selected.has-tasks:after { background: HighlightText; }
+  .status-dot, .week-day .day-dot, .calendar-grid .has-tasks:after { forced-color-adjust: none; background: CanvasText; }
+  .progress-track { border: 1px solid CanvasText; }
+  .check-button:before, .task-menu-content, .reminder-panel, .toast, dialog { border: 1px solid CanvasText; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *:before, *:after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }

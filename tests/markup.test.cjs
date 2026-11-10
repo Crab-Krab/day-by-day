@@ -40,6 +40,10 @@ for (const file of ['styles.css', 'theme.js', 'index.html', 'app.js']) {
   assert.deepEqual(found, [], `src/${file} still uses colors from the old green palette`);
 }
 assert.doesNotMatch(fs.readFileSync('src/styles.css', 'utf8'), /Georgia/, 'the serif headings were replaced by the system font');
+// 2.0 removed the decorative slogans and kept the footer line.
+for (const slogan of ['YOUR EVERYDAY SPACE', 'A little progress, every day.', 'Make room for what matters.', 'MAKE A LITTLE PLAN', 'A RHYTHM THAT WORKS FOR YOU', 'A fresh day. A little space']) assert.equal(html.includes(slogan), false, `slogan "${slogan}" came back`);
+assert.match(html, /Less remembering\. More doing\./, 'the footer line stays');
+assert.match(html, /<a class="skip-link" href="#mainContent">/, 'the skip link leads to the main content');
 console.log(`Markup passed: ${declared.length} unique element ids, all ${referenced.size} looked up by the scripts present, shared page parts and build tags intact.`);
 
 // A saved file using every part of format 5: routine versions, a completed snapshot, a skipped and a

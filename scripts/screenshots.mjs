@@ -26,6 +26,8 @@ const scenes = {
   reminders: async page => { await page.locator('#reminderPanel').waitFor(); },
   routines: async page => { await page.locator('#routinesNav').click(); await page.locator('#endedRoutines summary').click(); },
   editor: async page => { await page.locator('#addTask').click(); await page.locator('#toggleTaskOptions').click(); },
+  // On screens too narrow for its column, Coming up starts folded below the checklist.
+  'coming-up-open': async page => { if (await page.locator('#comingUpToggle').isVisible()) { await page.locator('#comingUpToggle').click(); await page.locator('#comingUp').scrollIntoViewIfNeeded(); } },
   'edit-routine': async page => { await page.locator('[data-id="gym"] .edit-task').first().click(); },
   'empty-day': async page => { await page.evaluate(() => { const input = document.getElementById('jumpDate'); input.value = '2026-11-01'; input.dispatchEvent(new Event('change')); }); }
 };
@@ -47,6 +49,7 @@ try {
       // The sample's 9:00 task has reminders, so the reminder panel opens. Only its own scene keeps it.
       if (name !== 'reminders') { await page.locator('#reminderPanel').waitFor({ timeout: 2000 }).catch(() => {}); if (await page.locator('#reminderPanel').isVisible()) await page.locator('#dismissAllReminders').click(); }
       await act(page);
+      await page.mouse.move(0, 0); // so no hover color shows in the picture
       await page.waitForTimeout(100);
       const dialog = await page.locator('dialog[open]').count();
       await page.screenshot({ path: path.join(output, `${name}-${width}-${theme}.png`), fullPage: !dialog });

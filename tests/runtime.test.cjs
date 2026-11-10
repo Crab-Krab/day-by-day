@@ -330,7 +330,7 @@ async function verifyOneTimeConversion() {
 track(verifyOneTimeConversion());
 async function verifyOverdue() {
   assert.ok(html.indexOf('id="overdueSection"')<html.indexOf('aria-label="Daily checklist"'));
-  assert.match(html,/id="overdueTitle"[^>]*>Overdue /);assert.equal(html.includes('Earlier, unfinished'),false);
+  assert.match(html,/id="overdueTitle"[^>]*>(?:<svg[^>]*aria-hidden="true"[^>]*>.*?<\/svg>)?Overdue /);assert.equal(html.includes('Earlier, unfinished'),false);
   const tasks=[
     {id:'old',title:'Yesterday',kind:'once',date:'2026-10-27'},
     {id:'once',title:'One-time deadline',kind:'once',date:'2026-10-28',time:'09:00',description:'Keep notes https://example.com'},
@@ -385,7 +385,7 @@ async function verifyOverdue() {
   editing.ids.taskList.querySelector('.edit-task').onclick();editing.ids.taskDescription.value='Unsaved notes';
   editing.clock(new Date(2026,9,28,10,0,1).getTime());editing.refresh();assert.equal(editing.ids.taskDialog.open,true);assert.equal(editing.ids.taskDescription.value,'Unsaved notes');
   editing.ids.taskForm.dispatch('submit');assert.equal(editing.state().tasks[0].description,'Unsaved notes');
-  assert.match(editing.ids.taskList.textContent,/remaining tasks are overdue/);assert.equal(editing.ids.progressBar.style.width,'0%');
+  assert.match(editing.ids.taskList.textContent,/left for today is overdue/);assert.equal(editing.ids.progressBar.style.width,'0%');
   editing.ids.overdueList.querySelector('.check-button').onclick();assert.equal(editing.ids.overdueSection.hidden,true);assert.equal(editing.ids.progressBar.style.width,'100%');
   console.log('Overdue runtime passed: section placement/wording, no duplicate rows/counts, completion focus/history, edit/reschedule, weekday arrows, skip/restore, timer/focus/visibility refresh, midnight, reload, and open-dialog safety.');
 }

@@ -7,6 +7,15 @@ Work in progress toward 2.0, a redesign of how the app looks. Saved data, storag
 - New look: grey surfaces in light and dark mode, with violet for actions, selection and focus. The green palette is gone, including the tab icon and browser color. The tab icon matches the logo in both themes and changes with the theme button.
 - One system font throughout, with a consistent text scale. Day and dialog titles no longer use a serif font, and the date above the day title is no longer in capitals.
 - Buttons, fields and choices share one size (44 pixels tall), corner shape and focus outline. Pressed buttons no longer shrink, and checkmarks no longer zoom in.
+- New layout: a narrower sidebar, and a workspace that stops widening at 1440 pixels so tasks don't stretch into long, sparse rows on big monitors. The top bar, saving panel, day title, week, checklist and footer line up.
+- On screens narrower than 1360 pixels, Coming up is now available below the checklist. Select Show to open it. Before, it was hidden on those screens.
+- The sidebar becomes a top bar below 960 pixels (was 860). Phones use 16-pixel margins.
+- On phones, each task's buttons (reorder, Edit, More) sit on their own row under the task text, so long titles have room. The reorder arrows are full-size there.
+- Decorative slogans are gone: the sidebar tagline and leaf note, the "Your everyday space" prefix, the dialog and routines headlines, and the general day subtitle. The footer stays. "All done for this day." appears only when it's true.
+- Empty days say "No tasks planned for" the date, and when everything left today is overdue the checklist points to the Overdue section. An empty progress bar is no longer shown.
+- Overdue uses amber: a clock beside the heading, the original due date, and the due time of today's late tasks. Skipped and moved dates are labeled in words.
+- Add task reads Add routine on the Weekly routines page. The routine order line now also says daily orders are unchanged.
+- Accessibility: a Skip to main content link, the current view announced in the navigation, an explanation of what the My day count includes, and support for Windows High Contrast mode. Completed, Ended routines and Recovery copies show an arrow that turns when opened.
 - Messages at the bottom of the screen use a neutral dark (or, in dark mode, light) style. Save problems use red, paused recovery copies use amber.
 - Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 2.0 redesign. The app itself is unchanged.
 

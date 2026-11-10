@@ -299,10 +299,10 @@
     }
   }
   function makeEmpty(routines = false, remainingOverdue = false) {
-    const box = el('div', 'empty-state'), illustration = el('div', 'empty-illustration'); illustration.append(icon(routines ? 'repeat' : 'leaf'));
-    box.append(illustration, el('h3', '', routines ? 'Find your weekly rhythm.' : remainingOverdue ? 'Your remaining tasks are overdue.' : 'What’s on your list?'), el('p', '', routines ? 'Add the things you do each week.\nThey’ll be ready when the day comes.' : remainingOverdue ? 'You can complete them in the Overdue section above.' : 'No tasks planned for this day.\nStart with one thing you’d like to get done.'));
-    box.querySelector('p').style.whiteSpace = 'pre-line';
-    if (routines) { const add = el('button', 'outline-button', '+ Add a routine'); add.type = 'button'; add.onclick = () => openTask(null, 'weekly'); box.append(add); }
+    const box = el('div', 'empty-state'), illustration = el('div', 'empty-illustration'); illustration.append(icon(routines ? 'repeat' : remainingOverdue ? 'clock' : 'calendar'));
+    const day = fmt(selected, { weekday: 'long', month: 'long', day: 'numeric' });
+    box.append(illustration, el('h3', '', routines ? 'Build your weekly routine' : remainingOverdue ? 'Everything left for today is overdue' : `No tasks planned for ${day}`), el('p', '', routines ? 'Add the things you do each week, and each day gets its own checkbox.' : remainingOverdue ? 'Complete or move those tasks in the Overdue section above.' : 'Add something you’d like to get done.'));
+    if (routines) { const add = el('button', 'outline-button', 'Add routine'); add.type = 'button'; add.prepend(icon('plus')); add.onclick = () => openTask(null, 'weekly'); box.append(add); }
     return box;
   }
   function taskRow(task, routine = false, peers = [task], occurrenceDate = selected, inOverdue = false) {
@@ -326,8 +326,11 @@
     }
     const secondary = el('div', 'task-menu-content');
     const copy = el('div', 'task-copy'), name = el('p', 'task-name', task.title), meta = el('div', 'task-meta');
-    meta.append(icon(task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
-    const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : ''), task.time ? formatTime(task.time) : 'All day');
+    if (pastDue) meta.classList.toggle('overdue-meta', true);
+    meta.append(icon(pastDue ? 'clock' : task.kind === 'weekly' ? 'repeat' : 'calendar'), document.createTextNode(task.kind === 'weekly' ? `${recurrenceLabel(weekdaysOf(task))}${routine ? ' · from ' + fmt(task.startDate, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}` : pastDue ? `Due ${fmt(task.date, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'One time'));
+    const lateToday = inOverdue && !done && occurrenceDate === today && Boolean(task.time);
+    const heading = el('div', 'task-heading'), time = el('span', 'time-badge' + (task.time ? ' timed' : '') + (lateToday ? ' overdue' : ''), task.time ? formatTime(task.time) : 'All day');
+    if (lateToday) { time.prepend(icon('clock')); time.setAttribute('aria-label', `Was due at ${formatTime(task.time)}`); }
     heading.append(name, time);
     if (task.reminders?.length) {
       // A small bell shows at a glance that a task will remind you. Details stay under More.
@@ -480,7 +483,14 @@
     });
     actions.append(edit, menu); row.append(actions); return row;
   }
-  // The Coming up column lists the 7 days after the selected day. It only shows on wide screens.
+  // The Coming up column lists the 7 days after the selected day. On wide screens it sits beside the
+  // checklist. On narrower screens it follows the checklist, folded until Show is selected.
+  $('comingUpToggle').onclick = () => {
+    const open = $('comingUp').classList.toggle('collapsed') === false;
+    $('comingUpToggle').setAttribute('aria-expanded', String(open)); $('comingUpToggle').textContent = open ? 'Hide' : 'Show';
+    $('comingUpToggle').setAttribute('aria-label', open ? 'Hide the next 7 days' : 'Show the next 7 days');
+  };
+  $('comingUpToggle').setAttribute('aria-label', 'Show the next 7 days');
   function renderComingUp() {
     const start = parseDate(selected);
     $('comingUpHint').textContent = selected === today ? 'Next 7 days' : `7 days after ${fmt(selected, { weekday: 'short', month: 'short', day: 'numeric' })}`;
@@ -510,6 +520,8 @@
     const overdueEarlier = overdue.filter(task => task.date < today);
     $('dailyView').hidden = view !== 'day'; $('routinesView').hidden = view !== 'routines';
     $('todayNav').classList.toggle('active', view === 'day'); $('routinesNav').classList.toggle('active', view === 'routines');
+    $('todayNav').setAttribute('aria-current', view === 'day' ? 'page' : 'false'); $('routinesNav').setAttribute('aria-current', view === 'routines' ? 'page' : 'false');
+    $('addTaskLabel').textContent = view === 'routines' ? 'Add routine' : 'Add task';
     $('todayCount').textContent = todayTasks.filter(t => !isDone(t.id, today)).length + overdueEarlier.length;
     const activeRoutines = data.tasks.filter(task => task.kind === 'weekly' && (!task.endedOn || task.endedOn > today));
     $('routineCount').textContent = activeRoutines.length;
@@ -517,7 +529,7 @@
     $('sortDay').hidden = !data.weekdayOrders[parseDate(selected).getDay()];
     $('sortDay').title = `Restore automatic sorting for ${DAYS[parseDate(selected).getDay()]}`;
     $('dayOrderScope').textContent = `${data.weekdayOrders[parseDate(selected).getDay()] ? 'Custom order' : 'Due time'} · reordering repeats every ${DAYS[parseDate(selected).getDay()]}`;
-    $('routineOrderScope').textContent = `${data.routineOrder ? 'Custom order' : 'Due time'} · catalog only`;
+    $('routineOrderScope').textContent = `${data.routineOrder ? 'Custom order' : 'Due time'} · catalog only, daily orders unchanged`;
     $('sortRoutines').hidden = !data.routineOrder;
     $('dateEyebrow').textContent = `${selected === today ? 'Today · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' })}`;
     $('dayTitle').textContent = DAYS[parseDate(selected).getDay()];
@@ -526,8 +538,8 @@
     const unfinished = tasks.filter(t => !isDone(t.id));
     const pending = unfinished.filter(task => selected !== today || !overdueTodayIds.has(task.id)), done = tasks.filter(t => isDone(t.id));
     $('taskTotal').textContent = tasks.length; $('completionText').textContent = tasks.length ? `${done.length} of ${tasks.length} complete` : ''; $('completionText').hidden = !tasks.length;
-    $('progressBar').style.width = `${tasks.length ? done.length / tasks.length * 100 : 0}%`;
-    $('daySubtitle').textContent = tasks.length && !unfinished.length && (selected !== today || !overdueEarlier.length) ? 'All done for this day. Enjoy a little breathing room.' : 'A fresh day. A little space to get things done.';
+    $('progressBar').style.width = `${tasks.length ? done.length / tasks.length * 100 : 0}%`; $('progressTrack').hidden = !tasks.length;
+    $('daySubtitle').hidden = !(tasks.length && !unfinished.length && (selected !== today || !overdueEarlier.length));
     const list = $('taskList'); list.replaceChildren();
     if (!tasks.length || (!pending.length && !done.length)) list.append(makeEmpty(false, selected === today && overdueToday.length > 0));
     pending.forEach(task => list.append(taskRow(task, false, pending)));
@@ -556,9 +568,11 @@
         const where = el('button', 'text-button moved-link', `Moved to ${fmt(moved.date, { weekday: 'short', month: 'short', day: 'numeric' })}`); where.type = 'button';
         where.setAttribute('aria-label', `${version.title} was moved to ${fmt(moved.date, { weekday: 'long', month: 'long', day: 'numeric' })}. Go to that day.`);
         where.onclick = () => { chooseDate(moved.date); if (!focusTask(moved.id)) $('inlineAdd').focus({ preventScroll: true }); };
-        item.append(el('span', '', version.title), where); return item;
+        const label = el('span', 'history-title'); label.append(document.createTextNode(version.title), el('span', 'history-state', 'Moved'));
+        item.append(label, where); return item;
       }
-      item.append(el('span', '', version.title));
+      const label = el('span', 'history-title'); label.append(document.createTextNode(version.title), el('span', 'history-state', 'Skipped'));
+      item.append(label);
       const restore = el('button', 'text-button restore-occurrence', 'Restore occurrence'); restore.type = 'button';
       restore.onclick = () => { task.exceptions = task.exceptions.filter(date => date !== selected); if (!save()) return; focusTask(task.id); notify('Occurrence restored.'); };
       item.append(restore); return item;
