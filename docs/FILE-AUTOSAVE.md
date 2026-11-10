@@ -39,7 +39,9 @@ Firefox and unsupported browsers continue to offer browser saving and manual bac
 Recovery copies keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake long after Undo has gone. They work in desktop Chrome and Edge, with or without file autosave.
 
 1. Open **Recovery copies** under the task-file panel and choose **Choose a folder**. Pick a private folder that stays on your computer, then allow editing.
-2. The app saves a first copy right away. After that, it saves a copy at most once an hour while you work, and right before you delete a task, end a routine, restore, or choose which copy to keep.
+2. The app saves a first copy right away. After that, it saves a copy at most once an hour while you work, and right before you delete a task, end a routine, restore, or choose which copy to keep. Deleting many tasks or ending many routines in a row saves one copy per 5 minutes, from before the first one, so a cleanup can't push out your older copies. Restoring and choosing which copy to keep always save a copy first.
+
+While a copy is being written, the panel says **Saving a recovery copy…** and the browser warns if you try to close the page. Wait for **Last copy** before closing.
 3. To go back, choose **Show copies**, then **Restore** beside the time you want. The app asks first, and saves a copy of your current tasks before replacing them.
 
 Copies go in a **Day-by-Day recovery copies** folder inside the folder you picked. When there are more than 20, the oldest is removed. The app only ever touches its own copies there, never your other files.
