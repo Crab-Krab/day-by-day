@@ -26,7 +26,8 @@ function fixture(){
   localStorage.removeItem('day-by-day.backup.v1');localStorage.removeItem('day-by-day.reminders.v1');
   window.__testDisk={name:'Tasks.json',raw:'',fail:false};
   const file={name:'Tasks.json',queryPermission:async()=> 'granted',requestPermission:async()=> 'granted',getFile:async()=>new Blob([window.__testDisk.raw]),createWritable:async()=>{let pending;return{write:async text=>{if(window.__testDisk.fail)throw Error('Simulated disk full');pending=text;},close:async()=>{window.__testDisk.raw=pending;},abort:async()=>{}};}};
-  Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:async()=>file});
+  // Create new task file asks for a folder. This one starts empty, so the app creates its file there.
+  Object.defineProperty(window,'showDirectoryPicker',{configurable:true,value:async()=>({name:'Tasks',getFileHandle:async(name,options={})=>{if(options.create)return file;throw Object.assign(Error('Missing'),{name:'NotFoundError'});}})});
   Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:async()=>[file]});
   // Keep test connections in the frame. Real IndexedDB persistence is tested separately.
   let record;
