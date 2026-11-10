@@ -159,6 +159,45 @@ async function main() {
     await page.emulateMedia({forcedColors:'active'});await page.setViewportSize({width:320,height:700});await page.goto(url);await page.waitForFunction(()=>window.DayByDay);
     assert.ok((await layout()).scroll<=320);await page.locator('#addTask').click();assert.ok(await page.locator('#taskTitle').isVisible());await page.locator('#cancelDialog').click();
     await page.emulateMedia({forcedColors:'none'});
+    // Actual visible conflict controls use simulated files, never the native file picker.
+    const choices = await context.newPage();
+    choices.on('pageerror',e=>errors.push(e.message));
+    await choices.setViewportSize({width:320,height:700});
+    await choices.clock.install({time:new Date('2026-11-10T14:00:00Z')});
+    const harness=fs.readFileSync(path.resolve('tests/ui-browser.html'),'utf8');
+    const fakeFiles=harness.slice(harness.indexOf('function fixture(){'),harness.indexOf('\nrun.onclick='));
+    await choices.addInitScript({content:fakeFiles+`\nfixture();const other=JSON.parse(localStorage.getItem('day-by-day.v1'));other.tasks[0].title='Different file task';window.__testDisk.raw=JSON.stringify(other);`});
+    await choices.goto(url);await choices.waitForFunction(()=>window.DayByDay&&document.getElementById('taskFilePanel').dataset.state==='idle');
+    const copies=await choices.evaluate(()=>({browser:localStorage.getItem('day-by-day.v1'),disk:window.__testDisk.raw}));
+    for(const theme of ['light','dark']) {
+      if(theme==='dark') await choices.locator('#themeToggle').click();
+      if(await choices.locator('#taskFileDetails').isHidden()) await choices.locator('#manageTaskFile').click();
+      await choices.locator('#openTaskFile').click();
+      await choices.locator('#fileChoiceDialog').waitFor({state:'visible'});
+      await choices.mouse.move(1,1); // Compare both candidates at rest, away from the opener's pointer.
+      const controls=await choices.evaluate(()=>{
+        const current=document.getElementById('fileChoiceCurrent'),disk=document.getElementById('fileChoiceDisk'),cancel=document.getElementById('fileChoiceCancel');
+        const appearance=n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return {color:s.color,background:s.backgroundColor,border:s.borderColor,top:r.top,bottom:r.bottom};};
+        return {current:appearance(current),disk:appearance(disk),cancel:appearance(cancel),last:cancel.parentElement.lastElementChild.id,overflow:document.getElementById('fileChoiceDialog').scrollWidth>document.getElementById('fileChoiceDialog').clientWidth};
+      });
+      assert.deepEqual(controls.current,controls.disk);assert.equal(controls.overflow,false);assert.equal(controls.last,'fileChoiceCancel');assert.ok(controls.cancel.top>=controls.current.bottom);
+      if(output) await choices.screenshot({path:path.join(output,`conflict-320-${theme}.png`)});
+      await choices.locator('#fileChoiceCancel').click();
+      assert.deepEqual(await choices.evaluate(()=>({browser:localStorage.getItem('day-by-day.v1'),disk:window.__testDisk.raw})),copies);
+    }
+    await choices.evaluate(async()=>{window.__testDisk.raw='';(await window.showOpenFilePicker())[0].name='A very long working task filename '.repeat(12)+'.json';});
+    await choices.locator('#createTaskFile').click();await choices.waitForFunction(()=>document.getElementById('taskFilePanel').dataset.state==='saved');
+    assert.ok(await choices.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    assert.ok((await choices.locator('#taskFileStatus').innerText()).length>300);
+    await choices.evaluate(()=>{const original=Storage.prototype.setItem;window.__restoreStorage=()=>Storage.prototype.setItem=original;Storage.prototype.setItem=function(key,value){if(key==='day-by-day.v1')throw Error('Simulated browser quota failure');return original.call(this,key,value);};});
+    await choices.locator('[data-id="walk"] .check-button').click();
+    await choices.waitForFunction(()=>document.getElementById('taskFilePanel').dataset.state==='saved');
+    assert.equal(await choices.locator('#saveStatus').innerText(),'Browser copy unavailable');assert.ok(await choices.locator('#storageWarning').isVisible());assert.ok(await choices.locator('#taskFileDetails').isVisible());
+    assert.ok(await choices.evaluate(()=>Object.values(JSON.parse(window.__testDisk.raw).completed).some(ids=>ids.includes('walk'))));
+    await choices.evaluate(()=>window.__restoreStorage());await choices.locator('#retrySave').click();
+    assert.equal(await choices.locator('#saveStatus').innerText(),'Saved in this browser');assert.ok(await choices.locator('#storageWarning').isHidden());
+    await choices.close();
+    console.log('PASS file states: equal conflict candidates with separate Cancel, preserved copies on cancel, long filename reflow, independent browser failure with a saved file, retry');
     assert.deepEqual(errors,[]);
     console.log('PASS forced colors and 320px reflow; no browser runtime errors');
   } finally { await context.close();await browser.close(); }
