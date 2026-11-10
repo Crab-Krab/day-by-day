@@ -33,9 +33,9 @@ Complete an earlier task on its original date, or choose **Move to today** to ch
 
 An unfinished timed task that becomes overdue **today** offers **Move to tomorrow**. It keeps its due time, notes, and reminder settings, disappears from today's list, and appears unchecked tomorrow. You stay on today's page and can Undo the move. For weekly routines, only today's occurrence moves as a separate one-time task; future repeats keep their schedule. If the routine already repeats tomorrow, both occurrences remain independently checkable. The moved task shows a **Moved from** link to its original date, and the original date shows a **Moved to** link instead of a Restore that would put it on both days.
 
-## Your data and updates
+## Your data
 
-Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** and choose a folder, such as a **Day by Day** folder inside Documents. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
+Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
 
 After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
 
@@ -43,19 +43,21 @@ The app automatically reopens its remembered file when the browser keeps access.
 
 Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows. If the browser cannot save a change, choose **Retry saving**, or the app retries with each later change. It asks before you close the tab with unsaved changes. If another tab saves different tasks meanwhile, the app asks which copy to keep.
 
-**Privacy and safety.** The app never connects to the internet, and the HTML includes a Content Security Policy, a browser rule that enforces this: the page can run only its own built-in code and can't load or send anything. One limit comes from how browsers treat local files. In Chrome and Edge, every HTML file you open from your own computer shares the same browser storage, so another local HTML file could read the tasks saved in this browser. Only open local HTML files you trust. A connected task file is not affected, since it needs your permission.
+If saved tasks can't be loaded, the warning offers **Download original saved data**, which exports the stored data unchanged so nothing is lost. See the [user guide](docs/USAGE.txt) for recovery details.
 
-Before updating:
+“Last backup exported” means a download was initiated, not that the file was saved successfully. Optional browser storage protection does not replace backups or prevent deliberate data clearing.
+
+## Privacy and safety
+
+The app never connects to the internet, and the HTML includes a Content Security Policy, a browser rule that enforces this: the page can run only its own built-in code and can't load or send anything. One limit comes from how browsers treat local files. In Chrome and Edge, every HTML file you open from your own computer shares the same browser storage, so another local HTML file could read the tasks saved in this browser. Only open local HTML files you trust. A connected task file is not affected, since it needs your permission.
+
+## Updating to a new version
 
 1. Use **Back up tasks** in your current copy and check that the JSON file downloaded.
 2. Download the latest HTML and replace your working file in the same location.
 3. Open it in the same browser. Use **Open task file** to reconnect your autosave JSON if needed. **Restore backup** replaces current tasks and completion history, including the connected autosave file.
 
 **Compatibility:** The current app writes saved-data format 5 and accepts formats 1–5. Versions before v1.2.0 cannot read format 5. Previously removed history cannot be reconstructed.
-
-If tasks fail to load, **Download original saved data** in the warning exports the untouched stored text for recovery. Backup avoids exporting an empty fallback session as a normal backup; unsaved session tasks export separately. See the [user guide](docs/USAGE.txt) for recovery details.
-
-“Last backup exported” means a download was initiated, not that the file was saved successfully. Optional browser storage protection does not replace backups or prevent deliberate data clearing.
 
 ## Reminders
 
@@ -65,7 +67,7 @@ Keep the file open and your computer awake. Reminders are **best effort**: backg
 
 In-app reminders need no notification permission and have no action-confirmation timeout. Desktop alerts depend on browser support and workplace policies. Completing a task suppresses its reminders.
 
-**Known Edge issue:** The checklist has intermittently stopped accepting clicks or focus. The task dialog now closes immediately, and the checklist stays usable while the app reconnects your task file at startup. Both address possible causes, but a long-term fix has not been confirmed. Resizing the window or opening **Add task** may restore it.
+**Known Edge issue:** In Edge, the checklist has occasionally stopped responding to clicks. Recent versions fix likely causes, but this isn't confirmed. If it happens, resizing the window or opening **Add task** may restore it. Please [report it](https://github.com/Crab-Krab/day-by-day/issues) with your Edge version and what you were doing.
 
 ## Development
 
@@ -78,8 +80,8 @@ Use **Node.js 22 or newer**. There are no packages to install.
 | `scripts/release-files.mjs` | Prepares the files attached to a GitHub release |
 | `scripts/preview.mjs` | Serves the app and browser checks on this computer |
 | `docs/TESTING.md` | Browser checks and the manual checklist before a release |
-| `tests/` | Scheduling, history/migration, theme, runtime, and file-storage checks, plus `browser.html` for real-browser checks |
-| `.github/workflows/` | Automated checks on every push and pull request, and the release publisher |
+| `tests/` | Scheduling, history/migration, theme, runtime, interface, and file-storage checks. `helpers/runtime.cjs` is the shared simulated browser, and `browser.html` and `ui-browser.html` run in real browsers |
+| `.github/workflows/` | Automated checks on every pull request and on `main`, real-browser checks in Chrome and Edge, and the release publisher |
 | `docs/USAGE.txt` | Detailed user guide |
 | `Day-by-Day.html` | Ready-to-use app generated from the source |
 
@@ -92,9 +94,9 @@ npm run build
 
 The build writes `Day-by-Day.html` and refreshes `SHA256SUMS.txt`. It stops with an error if `src/index.html` no longer contains a tag it needs to inline. Edit `src/`, preserve existing saved data, and commit the rebuilt HTML and checksums alongside code changes.
 
-For checks in a real browser, run `npm run preview` and follow [docs/TESTING.md](docs/TESTING.md), which also has the manual checklist to use before a release. GitHub Actions runs the tests on every push and pull request, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers. The same guide explains the optional interface browser tests, which GitHub runs in Chrome and Edge.
+For checks in a real browser, run `npm run preview` and follow [docs/TESTING.md](docs/TESTING.md), which also has the manual checklist to use before a release. GitHub Actions runs the tests on every pull request and on `main`, rebuilds, and fails if the committed HTML or checksums differ from the source. Automated checks do not replace testing the local file in real browsers. The same guide explains the optional interface browser tests, which GitHub runs in Chrome and Edge.
 
-To publish a release, set the version in `package.json`, add its `CHANGELOG.md` section and `docs/releases/vX.Y.Z.md` notes, and merge to `main`. Then open **Actions**, choose **Release**, and select **Run workflow** with the version. Leave **Dry run** on the first time to check everything without publishing. The workflow repeats the checks, creates the tag, and attaches the HTML, guides, license, and checksums.
+To publish a release, set the version in `package.json`, add its `CHANGELOG.md` section and `docs/releases/vX.Y.Z.md` notes, and merge to `main`. Then open **Actions**, choose **Release**, and select **Run workflow** with the version. Leave **Dry run** on the first time to check everything without publishing. The workflow repeats the checks, runs the browser checks in Chrome, creates the tag, and attaches the HTML, guides, license, and checksums.
 
 The main download link always serves the latest release. To try changes that are not released yet, download the [unreleased working HTML](https://github.com/Crab-Krab/day-by-day/raw/refs/heads/main/Day-by-Day.html) from `main`.
 
