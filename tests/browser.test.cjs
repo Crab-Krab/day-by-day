@@ -104,6 +104,25 @@ async function main() {
       assert.deepEqual(errors, []);
       await context.close();
     }
+    // Everyone opens the downloaded file straight from disk, so check that too: adding,
+    // reloading, no errors, no blocked content, and no requests beyond the file itself.
+    const local = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    const page = await local.newPage(), problems = [], requests = [];
+    page.on('pageerror', error => problems.push(error.message));
+    page.on('console', msg => { if (msg.type() === 'error') problems.push(msg.text()); });
+    page.on('request', request => { if (!/^(file|data|blob):/.test(request.url())) requests.push(request.url()); });
+    await page.addInitScript(() => document.addEventListener('securitypolicyviolation', event => console.error('Blocked by the page policy: ' + event.violatedDirective)));
+    await page.goto(require('node:url').pathToFileURL(path.join(root, 'Day-by-Day.html')).href);
+    await page.locator('#addTask').click();
+    await page.locator('#taskTitle').fill('Opened from disk');
+    await page.locator('#taskTitle').press('Enter');
+    await page.locator('#taskDialog').waitFor({ state: 'hidden' });
+    await page.reload();
+    assert.equal(await page.getByText('Opened from disk', { exact: true }).count(), 1);
+    assert.deepEqual(problems, []);
+    assert.deepEqual(requests, []);
+    console.log('PASS file:// opening: add, reload, no errors, nothing blocked, no outside requests');
+    await local.close();
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

@@ -1,87 +1,16 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const html = fs.readFileSync('src/index.html', 'utf8');
-const source = ['schedule.js', 'recovery.js', 'file-storage.js', 'app.js'].map(name => fs.readFileSync('src/' + name, 'utf8')).join('\n');
-// A small in-memory DOM exercises application events without a browser, network, or user data.
-function boot(storage, initialClock, options = {}) {
-  let clock = initialClock, uid = 0;
-  class Clock extends Date { constructor(...args) { super(...(args.length ? args : [clock])); } static now() { return clock; } }
-  const intervals = [], timeouts = new Map(), ids = {}, extras = {}, inputs = [], animations = [], notices = [], downloads = [], blobURLs = new Map();
-  let blobId = 0;
-  class DownloadURL extends URL {
-    static createObjectURL(blob) { const url=`blob:runtime-${++blobId}`;blobURLs.set(url,blob);return url; }
-    static revokeObjectURL(url) { blobURLs.delete(url); }
-  }
-  let timerId = 0;
-  class Node {
-    constructor(tag = 'div') { this.tagName = tag.toUpperCase(); this.children = []; this.dataset = {}; this.style = {}; this.attrs = {}; this.listeners = {}; this.className = ''; this._text = ''; this.value = ''; this.checked = false; this.hidden = false; this.disabled = false; this.open = false; }
-    set textContent(value) { this._text = String(value); this.children = []; }
-    get textContent() { return this._text + this.children.map(child => child.textContent).join(''); }
-    append(...children) { for (const child of children) { const node = typeof child === 'string' ? Object.assign(new Node('text'), {_text:child}) : child; node.parentNode = this; this.children.push(node); } }
-    prepend(...children) { for (const child of children.reverse()) { child.parentNode = this; this.children.unshift(child); } }
-    replaceChildren(...children) { this._text = ''; this.children = []; this.append(...children); }
-    setAttribute(key, value) { this.attrs[key] = String(value); }
-    getAttribute(key) { return this.attrs[key] ?? null; }
-    addEventListener(key, callback) { (this.listeners[key] ||= []).push(callback); }
-    dispatch(key) { for (const callback of this.listeners[key] || []) callback({preventDefault(){},target:this}); }
-    matches(selector) { if (selector.startsWith('.')) return this.className.split(' ').includes(selector.slice(1)); if (selector.startsWith('[data-move=')) return this.dataset.move === selector.match(/"(.*?)"/)[1]; return this.tagName.toLowerCase() === selector; }
-    querySelectorAll(selector) { return this.children.flatMap(child => [...(child.matches(selector) ? [child] : []), ...child.querySelectorAll(selector)]); }
-    querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
-    contains(node) { return this === node || this.children.some(child=>child.contains(node)); }
-    get classList() { return {toggle:(name, force) => { const names = new Set(this.className.split(' ').filter(Boolean)); const add = force === undefined ? !names.has(name) : force; add ? names.add(name) : names.delete(name); this.className = [...names].join(' '); return add; }}; }
-    focus() { document.activeElement = this; }
-    get isConnected() { return !this.detached; }
-    scrollIntoView() {}
-    getBoundingClientRect() { return {top:0,left:0,width:1}; }
-    showModal() { this.open = true; }
-    close() { this.open = false; queueMicrotask(() => this.dispatch('close')); }
-    click() { if(this.tagName==='A'&&this.download)downloads.push({name:this.download,blob:blobURLs.get(this.href)});this.onclick?.(); }
-    remove() { this.detached=true; if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); }
-    reset() { for (const input of inputs) { input.value = input.initialValue || ''; input.checked = input.initialChecked || false; } }
-  }
-  if (options.motion) Node.prototype.animate = function(frames, settings) {
-    let resolve, reject;
-    const animation = {node:this,frames,settings,cancelled:false,finished:new Promise((yes,no)=>{resolve=yes;reject=no;}),finish(){resolve();},cancel(){this.cancelled=true;reject(new Error('Animation cancelled'));}};
-    animations.push(animation); return animation;
-  };
-  for (const match of html.matchAll(/<(\w+)\b([^>]*\bid="([^"]+)"[^>]*)>/g)) { const node = new Node(match[1]); node.id = match[3]; node.hidden = /\bhidden\b/.test(match[2]); ids[node.id] = node; }
-  for (const match of html.matchAll(/<(?:input|textarea)\b([^>]*)>/g)) {
-    const attrs = match[1], id = attrs.match(/\bid="([^"]*)"/)?.[1], node = ids[id] || new Node('input');
-    node.name = attrs.match(/\bname="([^"]*)"/)?.[1]; node.type = attrs.match(/\btype="([^"]*)"/)?.[1]; node.value = attrs.match(/\bvalue="([^"]*)"/)?.[1] || ''; node.initialValue = node.value; node.checked = /\bchecked\b/.test(attrs); node.initialChecked = node.checked; inputs.push(node);
-  }
-  ids.undoNotice.append(ids.undoMessage,ids.undoAction,ids.dismissUndo);
-  ids.toast.append(ids.toastMessage,ids.dismissToast);
-  ids.taskForm.elements = {};
-  for (const name of ['kind','timing']) {
-    const radios = inputs.filter(input => input.name === name);
-    Object.defineProperty(radios, 'value', {get(){return this.find(input=>input.checked)?.value || '';},set(value){this.forEach(input=>input.checked=input.value===value);}});
-    ids.taskForm.elements[name] = radios;
-  }
-  const documentListeners={},windowListeners={};
-  const document = {title:'',hidden:false,body:new Node('body'),getElementById(id){if(!ids[id])throw Error('Missing element '+id);return ids[id];},createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag),createTextNode:text=>Object.assign(new Node('text'),{_text:String(text)}),querySelector(selector){return extras[selector] ||= new Node(selector==='main'?'main':'div');},querySelectorAll(selector){const name=selector.match(/name="(.*?)"/)?.[1];return inputs.filter(input=>input.name===name);},addEventListener:(name,callback)=>{(documentListeners[name] ||= []).push(callback);}};
-  const localStorage = {getItem:key=>{if(options.storageReadFails&&key==='day-by-day.v1')throw Error('Storage unavailable');return storage.get(key)??null;},setItem:(key,value)=>{if(options.storageWriteFails&&key==='day-by-day.v1')throw Error('Storage full');storage.set(key,String(value));}};
-  const context = {Date:Clock,Blob,document,localStorage,window:{isSecureContext:false,matchMedia:()=>({matches:Boolean(options.reducedMotion)}),addEventListener:(name,callback)=>{(windowListeners[name] ||= []).push(callback);},focus(){}},crypto:{randomUUID:()=>`runtime_${++uid}`},setTimeout:(fn,ms)=>{const id=++timerId;timeouts.set(id,{fn,ms,at:clock+ms});return id;},clearTimeout:id=>timeouts.delete(id),queueMicrotask,setInterval:(fn,ms)=>{intervals.push({fn,ms});return intervals.length;},console,Blob,URL:DownloadURL};
-  if(options.navigator)context.navigator=options.navigator;
-  if(options.fileWindow)Object.assign(context.window,options.fileWindow);
-  if(options.indexedDB)context.indexedDB=options.indexedDB;
-  if(options.secure)context.window.isSecureContext=true;
-  if(options.notifications) {
-    class Notice { static permission='granted'; constructor(title,settings){notices.push({title,settings});} close(){} }
-    context.Notification=Notice;context.window.Notification=Notice;context.window.isSecureContext=true;
-  }
-  vm.createContext(context); vm.runInContext(options.countSorts ? source.replace('function sortTasksByTime(tasks) {','function sortTasksByTime(tasks) { globalThis.sortCalls=(globalThis.sortCalls||0)+1;') : source,context);
-  function advance(ms) {
-    const until=clock+ms;
-    for(;;) {
-      const next=[...timeouts].filter(([,timer])=>timer.at<=until).sort((a,b)=>a[1].at-b[1].at)[0];
-      if(!next)break;
-      clock=Math.max(clock,next[1].at);timeouts.delete(next[0]);next[1].fn();
-    }
-    clock=until;
-  }
-  return {ids,inputs,context,storage,animations,notices,downloads,documentListeners,windowListeners,advance,flushTimeouts:()=>{const pending=[...timeouts.values()];timeouts.clear();pending.forEach(timer=>timer.fn());},clock:time=>clock=time,tick:()=>intervals.find(timer=>timer.ms===10000).fn(),refresh:()=>intervals.find(timer=>timer.ms===30000).fn(),state:()=>JSON.parse(storage.get('day-by-day.v1'))};
+const { boot, html, source } = require('./helpers/runtime.cjs');
+// Every async check is tracked, so one that never finishes fails the run instead of ending silently.
+let unfinished = 0;
+function track(check) {
+  unfinished++;
+  check.then(() => { unfinished--; }, error => { unfinished--; console.error(error); process.exitCode = 1; });
 }
+process.on('exit', code => {
+  if (unfinished && code === 0) { console.error(`${unfinished} runtime check(s) stopped before finishing: a step never completed.`); process.exitCode = 1; }
+});
 const clock = new Date(2026,9,28,9,45).getTime();
 const storage = new Map([['day-by-day.v1', JSON.stringify({version:2,tasks:[{id:'existing',title:'Existing routine',kind:'weekly',weekdays:[3],startDate:'2026-10-28'}],completed:{}})]]);
 let app = boot(storage,clock);
@@ -159,7 +88,7 @@ async function verifyMotion() {
   assert.equal(reduced.ids.taskDialog.open,false); assert.equal(reduced.animations.length,0);
   console.log('Motion passed: heading-only fades, no animation on checklist ancestors or rows, stable date controls, repeated edit cycles, interrupted dialogs, Escape, and reduced motion.');
 }
-verifyMotion().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyMotion());
 async function verifyDescriptions() {
   const notesApp = boot(new Map(),clock), notes='Check the queue.\nhttps://example.com/guide\n<script>alert(1)</script> javascript:alert(2)';
   notesApp.ids.addTask.onclick(); notesApp.ids.taskTitle.value='Opening checks'; notesApp.ids.taskDescription.value=notes;
@@ -201,7 +130,7 @@ async function verifyDescriptions() {
   assert.equal(longApp.ids.taskList.querySelector('.description-body').textContent,longNotes); assert.equal(longApp.ids.taskList.querySelector('.description-toggle').textContent,'Show less');
   console.log('Description runtime passed: visible short notes, long previews, Show more/less, complete URL targets, stable control nodes, create/edit/clear, recurring occurrences, reload, restore, and oversized input.');
 }
-verifyDescriptions().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyDescriptions());
 function verifyTimeSorting() {
   // Exercise sorting before any task is overdue; overdue grouping is tested below.
   const clock=new Date(2026,9,28,0,0).getTime();
@@ -293,7 +222,7 @@ async function verifyReliability() {
   assert.equal(newPast.ids.taskList.querySelector('.check-button').getAttribute('aria-label'),label);
   console.log('Reliability runtime passed: overdue completion/move/undo, saved dates, edit focus, accessible Undo placement, live announcements, calendar counting, backup nudges/status/reload, restore cancel, removed single-key shortcut, and past-time reminders.');
 }
-verifyReliability().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyReliability());
 async function verifyReminderCoordination() {
   const tasks=[{id:'shared',title:'Shared reminder',kind:'once',date:'2026-10-28',time:'10:00',reminders:[15]}];
   const shared=new Map([['day-by-day.v1',JSON.stringify({version:4,tasks,completed:{}})]]);
@@ -315,7 +244,7 @@ async function verifyReminderCoordination() {
   const unsupported=boot(new Map(),clock);assert.equal(unsupported.ids.protectStorage.hidden,true);
   console.log('Reminder coordination passed: shared-tab lock, duplicate suppression, unsupported-origin fallback, and optional storage protection grant/refusal.');
 }
-verifyReminderCoordination().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyReminderCoordination());
 async function verifyWeekdayOrdersAndHistory() {
   const clock=new Date(2026,9,28,8,0).getTime();
   const weekdays=[[1,2,3],[1,2],[1,3]],titles=['A','B','C'];
@@ -356,7 +285,7 @@ async function verifyWeekdayOrdersAndHistory() {
   assert.equal(restored.ids.storageWarning.hidden,true);assert.equal(restored.ids.endedRoutines.hidden,false);assert.equal(restored.ids.taskList.querySelectorAll('.task-row').some(row=>row.dataset.id==='a'),true);
   console.log('Weekday/history runtime passed: independent weekdays, future-week reuse, scoped reset, unchanged task array, dated edits, completed snapshots, skip/restore, ending without deletion, archive reload, read-only history, and backup migration.');
 }
-verifyWeekdayOrdersAndHistory().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyWeekdayOrdersAndHistory());
 async function verifyOneTimeConversion() {
   for (const [date,completed] of [['2026-10-28',false],['2026-10-28',true],['2026-10-20',false],['2026-10-20',true],['2026-10-30',false],['2026-10-30',true]]) {
     const original={id:'once',kind:'once',title:'Test task',description:'Notes https://example.com',date,time:'11:00',reminders:[15],reminderFrom:0};
@@ -398,7 +327,7 @@ async function verifyOneTimeConversion() {
   assert.equal(undo.state().tasks[0].date,'2026-10-28');
   console.log('Conversion runtime passed: enabled frequency controls, weekday presets, past/today/future and completed tasks, notes/time/reminders, IDs/orders/history, reload, fresh future checkboxes, and Undo.');
 }
-verifyOneTimeConversion().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyOneTimeConversion());
 async function verifyOverdue() {
   assert.ok(html.indexOf('id="overdueSection"')<html.indexOf('aria-label="Daily checklist"'));
   assert.match(html,/id="overdueTitle"[^>]*>Overdue /);assert.equal(html.includes('Earlier, unfinished'),false);
@@ -460,7 +389,7 @@ async function verifyOverdue() {
   editing.ids.overdueList.querySelector('.check-button').onclick();assert.equal(editing.ids.overdueSection.hidden,true);assert.equal(editing.ids.progressBar.style.width,'100%');
   console.log('Overdue runtime passed: section placement/wording, no duplicate rows/counts, completion focus/history, edit/reschedule, weekday arrows, skip/restore, timer/focus/visibility refresh, midnight, reload, and open-dialog safety.');
 }
-verifyOverdue().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyOverdue());
 async function verifyNotificationTimeouts() {
   const task={id:'test',kind:'once',title:'Test',date:'2026-10-28',time:'11:00'};
   const makeWork=()=>boot(new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[task],completed:{}})]]),clock);
@@ -508,7 +437,7 @@ async function verifyNotificationTimeouts() {
   reminders.ids.dismissAllReminders.onclick();assert.equal(reminders.ids.reminderPanel.hidden,true);
   console.log('Notification timing passed: 10-second boundaries, Undo expiry/use, manual dismissal, newer messages/mutations, hover/focus pauses, hidden tabs, live announcements, and persistent task reminders.');
 }
-verifyNotificationTimeouts().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyNotificationTimeouts());
 async function verifyLoadRecovery() {
   const key='day-by-day.v1';
   const valid={version:5,tasks:[{id:'kept',kind:'once',title:'Saved work',date:'2026-10-28'}],completed:{}};
@@ -556,7 +485,7 @@ async function verifyLoadRecovery() {
   assert.equal(work.ids.storageWarning.hidden,true);assert.equal(work.ids.downloadOriginalData.hidden,true);
   console.log('Load recovery passed: unchanged raw exports for malformed/invalid records, no empty fallback backups, separate session exports, protected originals, restore cancel/write failure/success, denied storage, quota errors, and cross-tab recovery.');
 }
-verifyLoadRecovery().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyLoadRecovery());
 async function verifyRoutineEditFixes() {
   const fields={title:'Original routine',description:'Original details',weekdays:[3],startDate:'2026-10-01',time:'11:00',reminders:[15],reminderFrom:0};
   const later={...fields,title:'Later planned routine',description:'Keep this future plan',time:'16:00'};
@@ -580,7 +509,7 @@ async function verifyRoutineEditFixes() {
   assert.deepEqual(reopened.state().tasks[0],original);
   console.log('Routine edit fixes passed: catalog defaults to today after future browsing, deliberate future-date edits, full Undo including future revisions/snapshots/exceptions/completions, visible catalog focus, and reload.');
 }
-verifyRoutineEditFixes().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyRoutineEditFixes());
 function verifyAnnouncementAndFocusFixes() {
   const key='day-by-day.v1';
   const tasks=['A','B','C','D'].map(title=>({id:title,title,kind:'once',date:'2026-10-28'}));
@@ -786,7 +715,7 @@ async function verifySecondReviewFixes() {
   assert.equal(app.ids.tabChoiceDialog.open,false);assert.ok(row(app,'b')); // with nothing unsaved, tabs stay in step automatically
   console.log('Second review fixes passed: done-and-skipped history, reminder edits against the effective routine version, 10 MB save limit with shrinking allowed, protected originals after a rejected restore, and asking which tab copy to keep.');
 }
-verifySecondReviewFixes().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifySecondReviewFixes());
 function verifyRetryButtons() {
   const key='day-by-day.v1',wed=new Date(2026,10,4,10).getTime(),options={storageWriteFails:true};
   const store=tasks=>new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]);
@@ -958,7 +887,7 @@ async function verifyRecoveryCopies() {
   assert.match(burst.ids.recoveryStatus.textContent,/^Last copy: .*before deleting a task/);assert.equal(leaving(),false);
   console.log('Recovery copies passed: off by default, first copy, hourly limit, copies before deleting, ending, restoring and which-copy choices, confirmed restore, unreadable copies, newest 20 kept, other files untouched, paused without blocking saving, reopening, turning off, one copy per 5 minutes during bursts, unique names, older names, and warning while a copy is still being written.');
 }
-verifyRecoveryCopies().catch(error=>{console.error(error);process.exitCode=1;});
+track(verifyRecoveryCopies());
 function verifyVisibleOverdueActionsAndBell() {
   const key='day-by-day.v1',wed=new Date(2026,10,4,19).getTime();
   const tasks=[{id:'late',kind:'once',title:'Late call',date:'2026-11-04',time:'18:00',reminders:[15]},{id:'older',kind:'once',title:'Old chore',date:'2026-11-02'},{id:'plain',kind:'once',title:'Plain',date:'2026-11-04'}];

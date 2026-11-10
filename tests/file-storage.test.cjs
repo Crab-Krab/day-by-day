@@ -182,9 +182,7 @@ async function main() {
   await Promise.all([one.controller.flush(),two.controller.flush()]);
   assert.equal(JSON.parse(shared.raw).tasks[0].title,'Winner');assert.match(two.title(),/not saved/);assert.equal(shared.maxActive,1);
   // Integrate the real app's form/save/load paths with the file controller.
-  const harnessSource=fs.readFileSync('tests/runtime.test.cjs','utf8');
-  const harness={require,console,Blob,URL,queueMicrotask};vm.createContext(harness);
-  vm.runInContext(harnessSource.slice(0,harnessSource.indexOf('const clock = new Date'))+';this.boot=boot;',harness);
+  const harness=require('./helpers/runtime.cjs');
   const realFile=disk(),realStore={},cache=new Map();
   const options={fileWindow:{isSecureContext:true,showDirectoryPicker:async()=>folderWith(realFile),showOpenFilePicker:async()=>[realFile]},indexedDB:idb(realStore)};
   let integrated=harness.boot(cache,new Date(2026,10,1,10).getTime(),options);await settle();
