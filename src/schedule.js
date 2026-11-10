@@ -5,6 +5,8 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.DayByDayCore = factory();
 })(typeof window !== 'undefined' ? window : globalThis, function () {
+  // Task files, backups and recovery copies over 10 MB are refused, so the app never keeps data past that size.
+  const SIZE_LIMIT = 10000000;
   const DAYS = Array.from({ length: 7 }, (_, day) => weekdayLabel(day));
   function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
   function weekdayLabel(day, style = 'long') { return new Intl.DateTimeFormat(undefined, { weekday: style }).format(new Date(2026, 0, 4 + day, 12)); }
@@ -234,5 +236,5 @@
     }
     return { version: 5, tasks, completed, weekdayOrders, routineOrder };
   }
-  return Object.freeze({ DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate });
+  return Object.freeze({ SIZE_LIMIT, DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate });
 });

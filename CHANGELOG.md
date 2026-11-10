@@ -9,6 +9,10 @@
 - File tests now fail when a step hangs, instead of ending silently with success.
 - Deleting many tasks or ending many routines in a row saves one recovery copy per 5 minutes, from before the first one, so a cleanup can't push out older copies. Copies before restoring or choosing which copy to keep are always saved.
 - While a recovery copy is being written, the panel says **Saving a recovery copy…** and closing the page warns first, since closing then could leave the copy empty.
+- If two tabs save at almost the same moment, the later one asks which copy to keep instead of erasing the earlier change.
+- Saving a task that another tab deleted or changed while you were editing now asks first. A deleted task can be saved as a new one. The app no longer reports **Task updated.** when nothing was saved, and deleting an already-deleted task says so.
+- Skipped routine days that the routine no longer runs on are no longer offered for **Restore occurrence**, which used to report success while restoring nothing.
+- Keep the 10 MB limit in one place and remove an unreachable message.
 - Recovery copy names now include a random part, so two app windows saving in the same millisecond keep both copies. Copies with older names still appear and restore.
 
 ## 1.6.0 — 2026-11-07

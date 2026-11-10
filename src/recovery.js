@@ -1,7 +1,7 @@
 'use strict';
 // Optional recovery copies: earlier versions of your tasks, kept in a folder you choose.
 // Copies never stop your tasks from saving. If the folder can't be used, copies pause and the panel says so.
-window.createRecoveryCopies = function ({ validate, getData, restore, now = () => Date.now() }) {
+window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore, now = () => Date.now() }) {
   const $ = id => document.getElementById(id);
   const FOLDER = 'Day-by-Day recovery copies', KEEP = 20, HOUR = 3600000, BURST = 5 * 60000;
   // Repeated small actions, like deleting many tasks, make one copy per 5 minutes, so a cleanup can't push out older copies.
@@ -139,7 +139,7 @@ window.createRecoveryCopies = function ({ validate, getData, restore, now = () =
         button.onclick = async () => {
           try {
             const file = await copy.handle.getFile();
-            if (file.size > 10000000) throw new Error('too large');
+            if (file.size > sizeLimit) throw new Error('too large');
             const next = validate(JSON.parse(await file.text()));
             await restore(next, `${when(copy.stamp)}, ${LABELS[copy.reason]}`);
           } catch (_) { show('This copy could not be read, so nothing was changed. Choose another copy.'); }

@@ -204,7 +204,12 @@ closing the tab asks for confirmation, unless a connected task file already hold
 your changes. Use Back up tasks to keep a copy if the warning stays. If another
 tab saves different tasks during that time, the app asks which copy to keep:
 this tab's tasks or the other tab's. Download this tab's tasks first if you want
-both.
+both. The app also asks if two tabs save at almost the same moment, instead of
+letting the later save erase the earlier one.
+
+If you edit a task while another tab deletes or changes it, Save asks before
+doing anything. For a deleted task you can save your version as a new task. For
+a changed task you can replace the other tab's changes or keep editing.
 
 Task files and backups larger than 10 MB cannot be opened. If a change would make
 your tasks larger than that, the app does not keep the change and explains why.
