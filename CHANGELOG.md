@@ -4,7 +4,7 @@
 
 Work in progress toward 2.0, a redesign of how the app looks. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged.
 
-- New look: grey surfaces in light and dark mode, with violet for actions, selection and focus. The green palette is gone, including the tab icon and browser color.
+- New look: grey surfaces in light and dark mode, with violet for actions, selection and focus. The green palette is gone, including the tab icon and browser color. The tab icon matches the logo in both themes and changes with the theme button.
 - One system font throughout, with a consistent text scale. Day and dialog titles no longer use a serif font, and the date above the day title is no longer in capitals.
 - Buttons, fields and choices share one size (44 pixels tall), corner shape and focus outline. Pressed buttons no longer shrink, and checkmarks no longer zoom in.
 - Messages at the bottom of the screen use a neutral dark (or, in dark mode, light) style. Save problems use red, paused recovery copies use amber.
