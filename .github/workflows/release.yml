@@ -30,6 +30,9 @@ jobs:
       VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Later steps never push, so the token isn't left on disk for them.
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -44,10 +47,18 @@ jobs:
           [[ "$(node -p "require('./package.json').version")" == "$VERSION" ]] || fail "package.json does not say $VERSION."
           [[ -f "docs/releases/v$VERSION.md" ]] || fail "docs/releases/v$VERSION.md is missing."
           grep -q "^## $VERSION " CHANGELOG.md || fail "CHANGELOG.md has no $VERSION section."
-          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then fail "Tag v$VERSION already exists."; fi
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$VERSION" > /dev/null 2>&1; then fail "Tag v$VERSION already exists."; fi
           if gh release view "v$VERSION" > /dev/null 2>&1; then fail "Release v$VERSION already exists."; fi
       - name: Run tests
         run: npm test
+      # A release also needs the real-browser checks to pass on this exact commit.
+      - name: Install isolated browser test tools
+        run: npm install --prefix "$RUNNER_TEMP/day-by-day-browser" --no-save --package-lock=false playwright@1.62.1
+      - name: Run browser checks in Chrome
+        env:
+          DAY_BY_DAY_PLAYWRIGHT_PATH: ${{ runner.temp }}/day-by-day-browser/node_modules/playwright
+          DAY_BY_DAY_BROWSER_CHANNEL: chrome
+        run: npm run test:browser
       - name: Check the committed HTML and checksums match the source
         run: |
           node scripts/build.mjs

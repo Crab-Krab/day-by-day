@@ -23,6 +23,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Later steps never push, so the token isn't left on disk for them.
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -37,7 +40,7 @@ jobs:
         run: npm run test:browser
       - name: Save browser screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ui-browser-screenshots-${{ matrix.browser }}
           path: ${{ runner.temp }}/day-by-day-browser-results

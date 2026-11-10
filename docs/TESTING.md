@@ -6,7 +6,7 @@ Day by Day has three kinds of checks. Each one catches things the others can't.
 | --- | --- | --- |
 | Automated tests | `npm test` (GitHub runs them on every push) | Scheduling, history, saving, and the app's screens in a simulated browser |
 | Browser checks | `npm run preview`, then open the printed browser-checks address and select **Run browser checks** | The real built app in a real browser: adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links |
-| Interface browser tests (optional) | `npm run test:browser`, after installing Playwright as shown below. GitHub runs them in Chrome and Edge on every pull request and on main. | 51 interface checks at desktop and phone widths, with animations on and off: quick entry, task menus, collapsing Completed, saving panel, real mouse and keyboard input, plus all browser checks above. Screenshots are saved for review |
+| Interface browser tests (optional) | `npm run test:browser`, after installing Playwright as shown below. GitHub runs them in Chrome and Edge on every pull request and on main, and the release workflow runs them in Chrome before publishing. | Interface checks at desktop and phone widths, with animations on and off: quick entry, task menus, collapsing Completed, saving panel, real mouse and keyboard input, plus all browser checks above. Screenshots are saved for review |
 | Manual checklist | Below, before a release | File permission prompts and other browser behavior that can't be automated |
 
 Run the browser checks in desktop Chrome or Edge, and in Firefox when a change touches the calendar, dialogs, or saving. They use only the preview page's own storage, put back whatever was there, and never touch your everyday tasks. Stop the preview with Ctrl+C.
@@ -34,7 +34,10 @@ Use a test JSON file in a test folder, never your everyday task file. Open the d
 - [ ] With the app open, edit the JSON in a text editor and save it. The next change pauses saving instead of overwriting it. **Reconnect task file** asks which copy to keep. Try both answers and Cancel.
 - [ ] Let the browser forget file permission (or remove it in site settings), reopen the HTML, change a task, and choose **Reconnect task file**. It saves without asking which copy to keep.
 - [ ] With a working file connected, choose **Change file** and pick a file that isn't a task file. The message says it wasn't opened, and the next change still saves to the original file.
-- [ ] Make a copy of a test task file with history. Clear site data, choose **Create new task file**, select that copy, and confirm Replace. Check whether the copy was emptied before the app read it (audit F-01), and record the Chrome or Edge version and result.
+- [ ] Put a copy of a test task file with history in a test folder as `Day-by-Day-tasks.json`. Clear site data, choose **Create new task file**, and pick that folder. The tasks load and the file is unchanged. Repeat with different tasks in the browser: the app asks which to keep, and **Cancel** leaves the file unchanged.
+- [ ] Choose **Create new task file** and try a top-level folder such as Documents or Desktop. Note whether the browser refuses it, then pick a subfolder.
+
+Why Create new task file uses a folder: in Chrome 157 on Windows 11 (November 2026), choosing an existing task file in v1.6.0's Save dialog and confirming Replace emptied it before the app could read it. The file went from 351 to 100 bytes with no question asked (audit F-01). The app no longer uses a Save dialog for task files.
 - [ ] **Disconnect**, then check the JSON file is still on disk.
 
 **Recovery copies (Chrome or Edge)**

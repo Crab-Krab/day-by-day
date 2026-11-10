@@ -8,12 +8,13 @@ Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
 The downloaded file works without an internet connection or account.
 
 AUTOMATIC FILE SAVING (CHROME / EDGE)
-Choose Create new task file to save a new file, named like
-Day-by-Day-tasks-2026-11-10.json, in a permanent local folder. Allow editing
-access. Each task change saves automatically; wait for Saved to before closing
-or signing out. If you already have a task JSON or backup, use Open task file
-instead; it becomes the live autosave file. Never pick an existing task file in
-the Create new task file dialog, because saving over a file empties it.
+Choose Create new task file, then choose a folder that stays on your computer,
+such as a new Day by Day folder inside Documents. The app saves your tasks there
+as Day-by-Day-tasks.json. Allow editing access. Each task change saves
+automatically; wait for Saved to before closing or signing out. If that folder
+already has a task file, the app opens it instead of replacing it. If you keep a
+task JSON or backup somewhere else, use Open task file; it becomes the live
+autosave file.
 
 After a successful file connection, saving controls collapse to one status row.
 Choose Manage to see file controls, browser saving, Back up tasks, and Restore

@@ -1,7 +1,9 @@
 name: Checks
 
 on:
+  # Pull requests run these checks once. Pushes to main check the merged result.
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -15,6 +17,9 @@ jobs:
         node: [22, 24]
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Later steps never push, so the token isn't left on disk for them.
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}

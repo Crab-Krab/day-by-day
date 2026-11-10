@@ -35,7 +35,7 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 
 ## Your data and updates
 
-Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, always choose **Open task file** instead. Saving over an existing file in the create dialog empties it.
+Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** and choose a folder, such as a **Day by Day** folder inside Documents. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
 
 After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
 
@@ -67,7 +67,7 @@ In-app reminders need no notification permission and have no action-confirmation
 
 ## Development
 
-Use **Node.js 20 or newer**. There are no packages to install.
+Use **Node.js 22 or newer**. There are no packages to install.
 
 | Path | Purpose |
 | --- | --- |

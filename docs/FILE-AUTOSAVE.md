@@ -5,8 +5,9 @@ Use the updated Day-by-Day.html in current desktop Chrome or Edge. No installati
 ## First setup
 
 1. Keep the HTML in a permanent folder. If tasks are in an older copy, export a backup from that copy before replacing it.
-2. If your tasks are already visible, click **Create new task file**. Save the suggested file, named like **Day-by-Day-tasks-2026-11-10.json**, in a permanent local folder such as Documents. Avoid temporary folders.
-3. If you already have a task JSON or exported backup, click **Open task file** and select it instead. Never pick an existing task file in the **Create new task file** dialog: saving over a file empties it before the app can read it. That file becomes the live autosave file; make a separate copy first if you want to keep the original backup unchanged.
+2. If your tasks are already visible, click **Create new task file** and choose a folder that stays on your computer. Make a new folder for it, such as **Documents\\Day by Day**, since browsers refuse some top-level and system folders. Avoid temporary folders. The app creates **Day-by-Day-tasks.json** there.
+   - If the folder already has **Day-by-Day-tasks.json**, or **Day-by-Day-data.json** from an older version, the app opens it instead of replacing it. If your browser has different tasks, it asks which to keep first.
+3. If you already have a task JSON or exported backup somewhere else, click **Open task file** and select it instead. That file becomes the live autosave file; make a separate copy first if you want to keep the original backup unchanged.
 4. Allow editing when the browser asks. If offered **Allow on every visit**, this can make reopening smoother.
 5. Make changes normally. Each task change starts a save automatically. Wait for **Saved to** and your file's name before closing the tab or signing out.
 
