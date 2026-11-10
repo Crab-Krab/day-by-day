@@ -35,7 +35,9 @@ Use a test JSON file in a test folder, never your everyday task file. Open the d
 - [ ] Let the browser forget file permission (or remove it in site settings), reopen the HTML, change a task, and choose **Reconnect task file**. It saves without asking which copy to keep.
 - [ ] With a working file connected, choose **Change file** and pick a file that isn't a task file. The message says it wasn't opened, and the next change still saves to the original file.
 - [ ] Put a copy of a test task file with history in a test folder as `Day-by-Day-tasks.json`. Clear site data, choose **Create new task file**, and pick that folder. The tasks load and the file is unchanged. Repeat with different tasks in the browser: the app asks which to keep, and **Cancel** leaves the file unchanged.
-- [ ] Choose **Create new task file** and try a top-level folder such as Documents or Desktop. Note whether the browser refuses it, then pick a subfolder.
+- [ ] Choose **Create new task file**, pick Documents itself, and check the panel then says **No folder chosen** with a subfolder suggestion. Pick a subfolder and check **Saved to** appears.
+
+Which folders Chrome allows: in Chrome 157 on Windows 11 (November 2026), the folder picker refused Documents, Desktop, Downloads and the user folder itself with "can't open this folder because it contains system files", including Documents and Desktop redirected to OneDrive. A subfolder such as `Documents\dbd-subfolder-test` was allowed after an "Allow this site to edit files?" prompt. A refusal, **Don't Allow**, and Cancel all reach the app the same way, so it shows one hint for all three.
 
 Why Create new task file uses a folder: in Chrome 157 on Windows 11 (November 2026), choosing an existing task file in v1.6.0's Save dialog and confirming Replace emptied it before the app could read it. The file went from 351 to 100 bytes with no question asked (audit F-01). The app no longer uses a Save dialog for task files.
 - [ ] **Disconnect**, then check the JSON file is still on disk.

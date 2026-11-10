@@ -213,6 +213,8 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     } catch (error) {
       // A rejected new file never pauses the file that was already saving.
       if (error.name !== 'AbortError') { if (oldWorking && handle === oldHandle) keptMessage = failMessage(error); else fail(error); }
+      // Chrome reports a refused folder, Don't Allow, and Cancel the same way, so give a hint instead of nothing.
+      else if (creating && !handle) status('No folder chosen', 'Chrome doesn\'t allow Documents, Desktop, Downloads or your user folder themselves. Make a folder inside one, such as Documents\\Day by Day, and choose that. Already have a task file? Choose Open task file.', 'idle');
     } finally {
       setBusy(false);
       if (handle && !paused) {

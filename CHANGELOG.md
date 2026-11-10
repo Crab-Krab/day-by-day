@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- If **Create new task file** ends without a folder, because Chrome refused a top-level folder such as Documents, permission was declined, or the dialog was cancelled, the panel now says **No folder chosen** and suggests making a folder such as `Documents\Day by Day`. Before, nothing visible happened.
+
 ## 1.6.2 — 2026-11-10
 
 - **Create new task file** now asks for a folder and creates `Day-by-Day-tasks.json` there, instead of using a Save dialog. A manual test confirmed that Chrome empties a file chosen in a Save dialog before the app can read it. If the chosen folder already has a task file, including the older `Day-by-Day-data.json`, the app opens it and asks which tasks to keep when they differ, and never replaces it.

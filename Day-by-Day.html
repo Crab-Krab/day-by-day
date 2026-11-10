@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-0jL1EYnvS6YXkrMOXrpWPu+HmUkrxoDeHVEeVm7NRVs=' 'sha256-pPFrcxe7mjBQsNody96bKfRxxycKmbSp9qdunovdVzE='; style-src 'sha256-XBSXfslSO05q/Lw93V8JiH1qZlZ3yNRlOlhs48mD/to='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-0jL1EYnvS6YXkrMOXrpWPu+HmUkrxoDeHVEeVm7NRVs=' 'sha256-tPujQjLr22cogDb0NHb7Ok3/Hg+/5sVcv+WpWQmkRTo='; style-src 'sha256-XBSXfslSO05q/Lw93V8JiH1qZlZ3yNRlOlhs48mD/to='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#236653">
   <meta name="description" content="A little space for everything you want to do. A daily checklist with weekly routines and a built-in calendar.">
@@ -1293,6 +1293,8 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     } catch (error) {
       // A rejected new file never pauses the file that was already saving.
       if (error.name !== 'AbortError') { if (oldWorking && handle === oldHandle) keptMessage = failMessage(error); else fail(error); }
+      // Chrome reports a refused folder, Don't Allow, and Cancel the same way, so give a hint instead of nothing.
+      else if (creating && !handle) status('No folder chosen', 'Chrome doesn\'t allow Documents, Desktop, Downloads or your user folder themselves. Make a folder inside one, such as Documents\\Day by Day, and choose that. Already have a task file? Choose Open task file.', 'idle');
     } finally {
       setBusy(false);
       if (handle && !paused) {

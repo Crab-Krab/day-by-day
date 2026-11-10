@@ -141,6 +141,10 @@ async function main() {
     assert.equal(cleaned.state().tasks[0].title,'Old history');assert.equal(JSON.parse(existing.raw).tasks[0].title,'Old history');
     assert.match(cleaned.nodes.taskFileDetail.textContent,/already had a task file/);
   }
+  // A refused folder, Don't Allow, or Cancel all arrive as AbortError, so the panel suggests a subfolder.
+  const refused=boot({data:sample('No folder')});refused.window.showDirectoryPicker=async()=>{throw Object.assign(Error('Aborted'),{name:'AbortError'});};
+  await refused.controller.init();await refused.click('createTaskFile');
+  assert.equal(refused.title(),'No folder chosen');assert.match(refused.nodes.taskFileDetail.textContent,/Documents\\Day by Day/);assert.equal(refused.controller.isConnected(),false);
   // With different tasks in the browser, it asks which to keep, and Cancel leaves the file untouched.
   const kept=disk(JSON.stringify(sample('Old history')),'Day-by-Day-tasks.json'),askingNew=boot({data:sample("Browser tasks"),file:kept});
   await askingNew.controller.init();const choosing=askingNew.click('createTaskFile');await settle();assert.equal(askingNew.nodes.fileChoiceDialog.open,true);
