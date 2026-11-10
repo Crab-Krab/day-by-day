@@ -16,7 +16,13 @@ Work in progress toward 2.0, a redesign of how the app looks. Saved data, storag
 - Overdue uses amber: a clock beside the heading, the original due date, and the due time of today's late tasks. Skipped and moved dates are labeled in words.
 - Add task reads Add routine on the Weekly routines page. The routine order line now also says daily orders are unchanged.
 - Accessibility: a Skip to main content link, the current view announced in the navigation, an explanation of what the My day count includes, and support for Windows High Contrast mode. Completed, Ended routines and Recovery copies show an arrow that turns when opened.
-- Messages at the bottom of the screen use a neutral dark (or, in dark mode, light) style. Save problems use red, paused recovery copies use amber.
+- Messages at the bottom of the screen use the same card style as Undo. Save problems use red, paused recovery copies use amber.
+- Task editor: One time / Every week, the Repeat on days and the routine's changes-from date are always shown, before More options, which now holds notes, time and reminders. New tasks and routines open compact. Titles say Add routine, Edit routine or Edit task.
+- Problems are explained under the field they concern, and the field is marked, while the message is still announced to screen readers. A routine with no days no longer shows the hint twice.
+- An ended routine's history shows a notice that it can't be changed, and its fields look read-only. Delete task and End routine are red outlined buttons, on their own row on phones.
+- Saving: one status row, Browser saving only when no task file is connected, and a check mark when saved to a file. It no longer opens by itself unless something needs attention. Manage shows three groups: Task file, Browser copy and backups (now as buttons), and Recovery copies, which moved inside. Paused recovery copies are noted in the status row.
+- Which-copy dialogs: neither choice looks preferred, and Cancel sits apart from them.
+- With Reduce motion on, View this day jumps to the task instead of scrolling smoothly.
 - Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 2.0 redesign. The app itself is unchanged.
 
 ## 1.6.3 — 2026-11-10

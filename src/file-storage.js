@@ -16,11 +16,13 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
   const snapshot = () => JSON.stringify(validate(getData()));
   const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
-  function status(title, detail, state = 'idle') {
+  // Problems open the details. Ordinary browser-only saving and an unsupported browser are quiet
+  // one-line notes (compact), with Manage for the rest.
+  function status(title, detail, state = 'idle', compact = false) {
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
-    if (state === 'error' || state === 'idle' || state === 'unsupported') showDetails();
+    if (state === 'error' || (state === 'idle' && !compact)) showDetails();
     if (state === 'idle' || state === 'unsupported') hasSaved = false;
     if (state === 'saved' && !hasSaved) { showDetails(false); hasSaved = true; }
     // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
@@ -33,7 +35,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.'); }
+  function idleStatus() { status('Browser saving only', 'No task file is connected, so your tasks are saved in this browser. Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.', 'idle', true); }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;
@@ -270,7 +272,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     // The remembered connection may be slow. Keep the checklist usable; attach()
     // waits for an open editor, then compares the latest browser and file copies.
     setBusy(true, false);
-    status('Looking for your task file…', 'Checking the connection saved in this browser.');
+    status('Looking for your task file…', 'Checking the connection saved in this browser.', 'idle', true);
     let failed = false, lookupFailed = false;
     try {
       const record = await connection('get');

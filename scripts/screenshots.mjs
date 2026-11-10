@@ -28,6 +28,18 @@ const scenes = {
   editor: async page => { await page.locator('#addTask').click(); await page.locator('#toggleTaskOptions').click(); },
   // On screens too narrow for its column, Coming up starts folded below the checklist.
   'coming-up-open': async page => { if (await page.locator('#comingUpToggle').isVisible()) { await page.locator('#comingUpToggle').click(); await page.locator('#comingUp').scrollIntoViewIfNeeded(); } },
+  'saving-open': async page => { await page.locator('#manageTaskFile').click(); },
+  // A routine with no days shows its message under the days, with More options still folded.
+  'editor-error': async page => {
+    await page.locator('#addTask').click(); await page.locator('#taskTitle').fill('Stretch');
+    await page.locator('label:has(input[name="kind"][value="weekly"])').click();
+    for (const box of await page.locator('input[name="weekdays"]:checked').all()) await box.evaluate(input => input.click());
+    await page.locator('#saveTask').click();
+  },
+  'routine-history': async page => {
+    await page.locator('#routinesNav').click(); await page.locator('#endedRoutines summary').click();
+    await page.locator('#endedRoutineList .text-button').first().click(); await page.locator('[data-id="piano"] .edit-task').first().click();
+  },
   'edit-routine': async page => { await page.locator('[data-id="gym"] .edit-task').first().click(); },
   'empty-day': async page => { await page.evaluate(() => { const input = document.getElementById('jumpDate'); input.value = '2026-11-01'; input.dispatchEvent(new Event('change')); }); }
 };

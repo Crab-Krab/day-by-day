@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-df8FEI60dZn3jEXPeOfUmL0cqqBYlQM6BVEzP7JMhI8=' 'sha256-p1mGn1s9QrFX7o64AJ2tTlsHmEJ1CkggwG/UV8jOiUs='; style-src 'sha256-BuFWOmTdB3GPEK84Uhv1f1vMJprad7UhmRYJ/OFDnic='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-df8FEI60dZn3jEXPeOfUmL0cqqBYlQM6BVEzP7JMhI8=' 'sha256-7yn4VuO/2KdEMwqGRxWuD6g+YEiLYMYbVXCl4DTzWfQ='; style-src 'sha256-mIbqjvNSoZftTzmK81LzKhCYuYPoJOFAbApfs26RpeQ='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f7f8">
   <meta name="description" content="A little space for everything you want to do. A daily checklist with weekly routines and a built-in calendar.">
@@ -164,30 +164,36 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .history-item button { flex-shrink: 0; }
 .ended-routines { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 14px; }
 .ended-routines summary { cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); }
-.routine-changes { margin-top: 24px; padding: 16px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 12px; }
+.routine-changes { margin-top: 16px; padding: 16px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 12px; }
 #overdueList>.task-row:last-child { border-radius: 0 0 11px 11px; }
 .restore-content { padding: 24px; }
 .restore-content h2 { margin: 0 0 12px; font-size: 24px; line-height: 32px; font-weight: 650; }
 .restore-content p { color: var(--text-secondary); font-size: 14px; line-height: 20px; }
 .restore-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.storage-area { border-top: 1px solid var(--border); }
 .task-file-panel { margin: 16px var(--inset) 0; padding: 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .task-file-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 .task-file-copy { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .task-file-copy strong { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
 .task-file-summary .text-button { margin: 0; flex-shrink: 0; }
-.task-file-details>p { margin: 8px 0 12px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+.saving-group>p { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
 .task-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .task-file-actions button { font-size: 14px; }
 .task-file-panel[data-state="error"] { border-color: var(--danger); }
 .task-file-panel[data-state="error"] .status-dot { background: var(--danger); }
 .task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--text); }
+.task-file-panel[data-state="saved"] .status-dot { width: 6px; height: 11px; margin: 0 3px 3px; border-radius: 0; background: none; border-right: 2px solid var(--text); border-bottom: 2px solid var(--text); transform: rotate(45deg); }
+.recovery-summary { padding: 1px 8px; border-radius: 999px; background: var(--warning-surface); color: var(--warning); font-size: 12px; line-height: 18px; font-weight: 600; white-space: nowrap; }
+/* Inside Manage: Task file, Browser copy and backups, and Recovery copies, one after another. */
+.task-file-details { padding-bottom: 12px; }
+.saving-group { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.saving-group h3 { margin: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.task-file-details .recovery-panel summary { min-height: 44px; }
 .task-file-panel[data-state="idle"] .status-dot, .task-file-panel[data-state="unsupported"] .status-dot { background: var(--text-secondary); }
-.task-file-panel .storage-area { margin-top: 14px; padding-top: 14px; }
 #fileChoiceDialog .restore-actions { flex-wrap: wrap; }
+#fileChoiceCancel { margin-right: auto; }
 /* Optional recovery copies, collapsed under the task-file panel. */
-.recovery-panel { margin: 12px var(--inset) 0; padding: 0 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; }
-.recovery-panel[data-state="paused"] { border-color: var(--warning); background: var(--warning-surface); }
+.recovery-panel { font-size: 13px; }
+.recovery-panel[data-state="paused"] .recovery-state { color: var(--warning); font-weight: 600; }
 .recovery-panel summary { cursor: pointer; display: flex; align-items: center; min-height: 44px; font-weight: 600; font-size: 14px; line-height: 20px; }
 .recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; line-height: 18px; color: var(--text-secondary); }
 .recovery-intro, .recovery-status { margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
@@ -347,7 +353,7 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 .frequency input:focus-visible+span, .weekday-picker input:focus-visible+span, .reminder-options input:focus-visible+span { outline: 3px solid var(--focus); outline-offset: 2px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .form-row.weekly-date { grid-template-columns: 1fr; }
-.weekly-days { border: 0; padding: 0; margin: 0 0 24px; min-width: 0; }
+.weekly-days { border: 0; padding: 0; margin: 16px 0 0; min-width: 0; }
 .day-presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
 .day-presets button { min-height: 32px; padding: 4px 12px; border: 1px solid var(--control-border); border-radius: 8px; font-size: 13px; line-height: 20px; color: var(--text); background: var(--surface); }
 .day-presets button:hover { background: var(--hover); }
@@ -419,12 +425,23 @@ a { color: var(--link); }
 @keyframes backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
 @keyframes notice-enter { from { opacity: 0; } to { opacity: 1; } }
 .form-error { font-size: 14px; line-height: 20px; color: var(--danger); margin: 16px 0 0; }
+.field-error { margin: 8px 0 0; color: var(--danger); font-size: 13px; line-height: 20px; font-weight: 500; }
+input[aria-invalid=true], textarea[aria-invalid=true] { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+#weeklyDays[aria-invalid=true] .weekday-picker span { border-color: var(--danger); }
+.form-notice { margin: -8px 0 16px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); color: var(--text); font-size: 14px; line-height: 20px; }
+.kind-choice { margin: 16px 0 0; }
+/* Read-only fields (an ended routine's history) look settled rather than editable. */
+input:not([type=radio]):not([type=checkbox]):disabled, textarea:disabled { background: var(--surface-subtle); border-color: var(--border); color: var(--text-secondary); -webkit-text-fill-color: var(--text-secondary); opacity: 1; }
+.frequency input:disabled+span, .weekday-picker input:disabled+span, .reminder-options input:disabled+span, .day-presets button:disabled { cursor: default; background: var(--surface-subtle); border-color: var(--border); color: var(--text-secondary); box-shadow: none; }
+.frequency input:checked:disabled+span, .weekday-picker input:checked:disabled+span, .reminder-options input:checked:disabled+span { background: var(--selection); border-color: var(--control-border); color: var(--on-selection); }
+.weekday-picker label:has(input:disabled):hover span { background: var(--surface-subtle); }
 .form-error:empty { display: none; }
 .dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 24px; }
 .dialog-actions>div { margin-left: auto; display: flex; gap: 8px; }
-.delete-button { background: none; border: 1px solid transparent; border-radius: 8px; min-height: 44px; font-size: 14px; line-height: 20px; font-weight: 500; padding: 10px 0; color: var(--danger); }
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--inverse); color: var(--on-inverse); border-radius: 12px; box-shadow: var(--menu-shadow); font-size: 14px; line-height: 20px; z-index: 9; max-width: calc(100% - 32px); }
-.toast button { border: 0; background: transparent; color: inherit; min-height: 32px; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.delete-button.outline-button { color: var(--danger); border-color: var(--danger); }
+.delete-button.outline-button:hover { background: var(--danger-surface); }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--menu-shadow); font-size: 14px; line-height: 20px; z-index: 9; max-width: calc(100% - 32px); }
+.toast button { border: 0; background: transparent; color: var(--link); min-height: 32px; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 /* Sections that open and close show an arrow that points down when open. */
 .completed-tasks>summary, .ended-routines>summary, .recovery-panel>summary { list-style: none; }
 .completed-tasks>summary::-webkit-details-marker, .ended-routines>summary::-webkit-details-marker, .recovery-panel>summary::-webkit-details-marker { display: none; }
@@ -493,6 +510,9 @@ a { color: var(--link); }
   dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); }
   #taskForm, .restore-content { padding: 16px; }
   .dialog-actions { position: sticky; bottom: -16px; margin-bottom: -16px; padding-bottom: 16px; flex-wrap: wrap; }
+  .dialog-actions .delete-button { flex-basis: 100%; }
+  .restore-actions > button { flex: 1 1 auto; }
+  #fileChoiceCancel { margin-right: 0; }
   .toast { bottom: 16px; }
   .reminder-panel { right: 16px; bottom: 16px; }
 }
@@ -580,13 +600,14 @@ a { color: var(--link); }
     <main id="mainContent" tabindex="-1">
       <header class="topbar"><p class="view-label" id="viewBreadcrumb">My day</p><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span id="addTaskLabel">Add task</span></button></div></header>
       <section id="taskFilePanel" class="task-file-panel" aria-label="Saving and backups">
-        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Keep your tasks in a file</strong></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="true" aria-controls="taskFileDetails">Hide details</button></div>
-        <div id="taskFileDetails" class="task-file-details"><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
-        <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Create new task file</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div>
-      <div class="storage-area"><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><button class="text-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button class="text-button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div>
+        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Browser saving only</strong><span id="recoverySummary" class="recovery-summary" hidden>Recovery copies paused</span></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="false" aria-controls="taskFileDetails">Manage</button></div>
+        <div id="taskFileDetails" class="task-file-details" hidden>
+          <section class="saving-group" aria-labelledby="taskFileGroupTitle"><h3 id="taskFileGroupTitle">Task file</h3><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
+          <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Create new task file</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div></section>
+          <section class="saving-group storage-area" aria-labelledby="browserGroupTitle"><h3 id="browserGroupTitle">Browser copy and backups</h3><div class="saved-label"><span class="status-dot"></span><span id="saveStatus">Saved in this browser</span></div><p>Your tasks stay on this device.</p><p id="lastBackup" class="backup-status"></p><button type="button" id="protectStorage" class="text-button" hidden>Request storage protection</button><p id="storageProtectionStatus" class="backup-status"></p><div class="task-file-actions"><button type="button" class="outline-button" id="backupBtn"><svg><use href="#i-download"/></svg>Back up tasks</button><button type="button" class="outline-button" id="restoreBtn">Restore backup</button></div><input type="file" id="restoreFile" accept="application/json,.json" hidden></section>
+          <details id="recoveryPanel" class="saving-group recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
         </div>
       </section>
-      <details id="recoveryPanel" class="recovery-panel" hidden><summary>Recovery copies <span id="recoveryState" class="recovery-state">Off</span></summary><p class="recovery-intro">Keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake. A copy is saved at most once an hour while you work, and right before deleting a task, ending a routine, restoring, or choosing which copy to keep. Copies never stop your tasks from saving. Works in desktop Chrome and Edge.</p><div class="recovery-actions"><button type="button" id="chooseRecoveryFolder" class="outline-button">Choose a folder</button><button type="button" id="showRecoveryCopies" class="outline-button" hidden>Show copies</button><button type="button" id="stopRecoveryCopies" class="text-button" hidden>Turn off</button></div><p id="recoveryStatus" class="recovery-status" role="status"></p><ul id="recoveryList" class="recovery-list"></ul></details>
       <div id="storageWarning" class="warning" role="alert" hidden><p id="storageWarningText"></p><button type="button" id="retrySave" class="outline-button" hidden>Retry saving</button><button type="button" id="downloadOriginalData" class="outline-button" hidden>Download original saved data</button></div>
       <aside id="backupNotice" class="backup-notice" hidden><p id="backupNoticeText"></p><div><button type="button" id="backupNow" class="outline-button">Back up now</button><button type="button" id="backupLater" class="text-button">Remind me tomorrow</button></div></aside>
       <div id="undoNotice" class="undo-notice" role="group" aria-label="Undo last change" hidden><span id="undoMessage"></span><button type="button" id="undoAction" class="outline-button">Undo</button><button type="button" id="dismissUndo" class="text-button">Dismiss</button></div>
@@ -606,24 +627,25 @@ a { color: var(--link); }
   </div>
   <dialog id="taskDialog" aria-labelledby="dialogTitle">
     <form id="taskForm"><div class="dialog-heading"><div><h2 id="dialogTitle">Add a task</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
-      <label for="taskTitle">What would you like to do?</label><input id="taskTitle" name="title" placeholder="e.g. Water the plants" maxlength="200" required autocomplete="off">
-      <div id="scheduleDateRow"><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31"></div>
-      <button type="button" id="toggleTaskOptions" class="options-toggle" aria-expanded="false" aria-controls="taskOptions"><span id="taskOptionsLabel">More options</span><span class="options-hint">Notes, repeat, time &amp; reminders</span></button>
-      <div id="taskOptions" hidden>
-      <div class="description-field"><label for="taskDescription">Description <span class="optional-label">(optional)</span></label><textarea id="taskDescription" name="description" rows="4" maxlength="5000" placeholder="Add details, notes, or https:// links…" aria-describedby="descriptionHint"></textarea><p class="field-hint" id="descriptionHint">Up to 5,000 characters. Web links become clickable in your checklist.</p></div>
-      <fieldset class="frequency"><legend>How often?</legend><label><input type="radio" name="kind" value="once" checked><span><svg><use href="#i-calendar"/></svg>One time</span></label><label><input type="radio" name="kind" value="weekly"><span><svg><use href="#i-repeat"/></svg>Every week</span></label></fieldset>
-      <fieldset id="weeklyDays" class="weekly-days" hidden><legend>Repeat on</legend><div class="day-presets"><button type="button" id="workdaysPreset">Mon–Fri</button><button type="button" id="everydayPreset">Every day</button></div><div class="weekday-picker"><label><input type="checkbox" name="weekdays" value="1" aria-label="Monday"><span>Mon</span></label><label><input type="checkbox" name="weekdays" value="2" aria-label="Tuesday"><span>Tue</span></label><label><input type="checkbox" name="weekdays" value="3" aria-label="Wednesday"><span>Wed</span></label><label><input type="checkbox" name="weekdays" value="4" aria-label="Thursday"><span>Thu</span></label><label><input type="checkbox" name="weekdays" value="5" aria-label="Friday"><span>Fri</span></label><label><input type="checkbox" name="weekdays" value="6" aria-label="Saturday"><span>Sat</span></label><label><input type="checkbox" name="weekdays" value="0" aria-label="Sunday"><span>Sun</span></label></div></fieldset>
-      <div id="routineChanges" class="routine-changes" hidden><label for="taskEffectiveDate">Apply changes / end routine from</label><input type="date" id="taskEffectiveDate" min="1900-01-01" max="9999-12-31"><p class="field-hint">Earlier dates and completed occurrences keep their details. Saving replaces changes scheduled from this date onward. End routine stops new occurrences starting on this date.</p></div>
+      <p class="form-notice" id="readOnlyNotice" hidden>This routine has ended. Its days and completion history are kept for reference and can't be changed.</p>
+      <label for="taskTitle">What would you like to do?</label><input id="taskTitle" name="title" placeholder="e.g. Water the plants" maxlength="200" required autocomplete="off"><p class="field-error" id="taskTitleError" hidden></p>
+      <fieldset class="frequency kind-choice"><legend>How often?</legend><label><input type="radio" name="kind" value="once" checked><span><svg><use href="#i-calendar"/></svg>One time</span></label><label><input type="radio" name="kind" value="weekly"><span><svg><use href="#i-repeat"/></svg>Every week</span></label></fieldset>
+      <div id="scheduleDateRow"><label for="taskDate" id="dateFieldLabel">Date</label><input type="date" id="taskDate" required min="1900-01-01" max="9999-12-31"><p class="field-error" id="taskDateError" hidden></p></div>
+      <fieldset id="weeklyDays" class="weekly-days" hidden><legend>Repeat on</legend><div class="day-presets"><button type="button" id="workdaysPreset">Mon–Fri</button><button type="button" id="everydayPreset">Every day</button></div><div class="weekday-picker"><label><input type="checkbox" name="weekdays" value="1" aria-label="Monday"><span>Mon</span></label><label><input type="checkbox" name="weekdays" value="2" aria-label="Tuesday"><span>Tue</span></label><label><input type="checkbox" name="weekdays" value="3" aria-label="Wednesday"><span>Wed</span></label><label><input type="checkbox" name="weekdays" value="4" aria-label="Thursday"><span>Thu</span></label><label><input type="checkbox" name="weekdays" value="5" aria-label="Friday"><span>Fri</span></label><label><input type="checkbox" name="weekdays" value="6" aria-label="Saturday"><span>Sat</span></label><label><input type="checkbox" name="weekdays" value="0" aria-label="Sunday"><span>Sun</span></label></div><p class="field-error" id="weekdaysError" hidden></p></fieldset>
+      <div id="routineChanges" class="routine-changes" hidden><label for="taskEffectiveDate">Apply changes / end routine from</label><input type="date" id="taskEffectiveDate" min="1900-01-01" max="9999-12-31"><p class="field-error" id="taskEffectiveDateError" hidden></p><p class="field-hint">Earlier dates and completed occurrences keep their details. Saving replaces changes scheduled from this date onward. End routine stops new occurrences starting on this date.</p></div>
       <p class="form-hint" id="scheduleHint"></p>
+      <button type="button" id="toggleTaskOptions" class="options-toggle" aria-expanded="false" aria-controls="taskOptions"><span id="taskOptionsLabel">More options</span><span class="options-hint">Notes, time &amp; reminders</span></button>
+      <div id="taskOptions" hidden>
+      <div class="description-field"><label for="taskDescription">Description <span class="optional-label">(optional)</span></label><textarea id="taskDescription" name="description" rows="4" maxlength="5000" placeholder="Add details, notes, or https:// links…" aria-describedby="descriptionHint"></textarea><p class="field-error" id="taskDescriptionError" hidden></p><p class="field-hint" id="descriptionHint">Up to 5,000 characters. Web links become clickable in your checklist.</p></div>
       <fieldset class="frequency timing-choice"><legend>Task time</legend><label><input type="radio" name="timing" value="allday" checked><span><svg><use href="#i-sun"/></svg>All day</span></label><label><input type="radio" name="timing" value="timed"><span><svg><use href="#i-clock"/></svg>Specific time</span></label></fieldset>
-      <div id="taskTimingFields" hidden><label for="taskTime">Due at</label><input type="time" id="taskTime" step="60"><fieldset class="reminder-choices"><legend>Remind me before</legend><div class="reminder-options"><label><input type="checkbox" name="reminders" value="5"><span>5 min</span></label><label><input type="checkbox" name="reminders" value="15"><span>15 min</span></label><label><input type="checkbox" name="reminders" value="30"><span>30 min</span></label><label><input type="checkbox" name="reminders" value="60"><span>1 hr</span></label></div><p class="form-hint">Select one or more, or leave all unchecked for no reminder.</p></fieldset><div class="notification-note"><p>Reminders are best effort. Keep this file open and the computer awake. Sleeping or suspended tabs can delay alerts; existing tasks can catch up when it resumes.</p><button type="button" class="outline-button" id="enableNotifications">Enable desktop alerts</button><p id="notificationStatus" role="status"></p></div></div>
+      <div id="taskTimingFields" hidden><label for="taskTime">Due at</label><input type="time" id="taskTime" step="60"><p class="field-error" id="taskTimeError" hidden></p><fieldset class="reminder-choices"><legend>Remind me before</legend><div class="reminder-options"><label><input type="checkbox" name="reminders" value="5"><span>5 min</span></label><label><input type="checkbox" name="reminders" value="15"><span>15 min</span></label><label><input type="checkbox" name="reminders" value="30"><span>30 min</span></label><label><input type="checkbox" name="reminders" value="60"><span>1 hr</span></label></div><p class="form-hint">Select one or more, or leave all unchecked for no reminder.</p></fieldset><div class="notification-note"><p>Reminders are best effort. Keep this file open and the computer awake. Sleeping or suspended tabs can delay alerts; existing tasks can catch up when it resumes.</p><button type="button" class="outline-button" id="enableNotifications">Enable desktop alerts</button><p id="notificationStatus" role="status"></p></div></div>
       </div>
       <p class="form-error" id="formError" role="alert"></p>
-      <div class="dialog-actions"><button type="button" class="delete-button" id="deleteTask" hidden>Delete task</button><div><button type="button" class="outline-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button" id="saveTask">Add task</button></div></div>
+      <div class="dialog-actions"><button type="button" class="delete-button outline-button" id="deleteTask" hidden>Delete task</button><div><button type="button" class="outline-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button" id="saveTask">Add task</button></div></div>
     </form>
   </dialog>
   <dialog id="restoreDialog" aria-labelledby="restoreTitle"><div class="restore-content"><h2 id="restoreTitle">Restore backup?</h2><p id="restoreMessage">This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.</p><div class="restore-actions"><button type="button" id="cancelRestore" class="outline-button">Cancel</button><button type="button" id="confirmRestore" class="primary-button">Restore backup</button></div></div></dialog>
-  <dialog id="tabChoiceDialog" aria-labelledby="tabChoiceTitle"><div class="restore-content"><h2 id="tabChoiceTitle">Another tab changed your tasks</h2><p>This tab has changes that aren't saved yet, and another tab has saved a different copy of your tasks. Choose which copy to keep. The other copy will be replaced.</p><button type="button" id="tabChoiceBackup" class="text-button">Download this tab's tasks</button><div class="restore-actions"><button type="button" id="tabChoiceOther" class="outline-button">Load the other tab's tasks</button><button type="button" id="tabChoiceKeep" class="primary-button">Keep this tab's tasks</button></div></div></dialog>
+  <dialog id="tabChoiceDialog" aria-labelledby="tabChoiceTitle"><div class="restore-content"><h2 id="tabChoiceTitle">Another tab changed your tasks</h2><p>This tab has changes that aren't saved yet, and another tab has saved a different copy of your tasks. Choose which copy to keep. The other copy will be replaced.</p><button type="button" id="tabChoiceBackup" class="text-button">Download this tab's tasks</button><div class="restore-actions"><button type="button" id="tabChoiceOther" class="outline-button">Load the other tab's tasks</button><button type="button" id="tabChoiceKeep" class="outline-button">Keep this tab's tasks</button></div></div></dialog>
   <dialog id="fileChoiceDialog" aria-labelledby="fileChoiceTitle"><div class="restore-content"><h2 id="fileChoiceTitle">Choose which tasks to keep</h2><p id="fileChoiceMessage"></p><p>The other copy will be replaced. Download your current tasks first if you need both.</p><button type="button" id="fileChoiceBackup" class="text-button">Download current tasks</button><div class="restore-actions"><button type="button" id="fileChoiceCancel" class="outline-button">Cancel</button><button type="button" id="fileChoiceCurrent" class="outline-button">Use current tasks</button><button type="button" id="fileChoiceDisk" class="outline-button">Use file tasks</button></div></div></dialog>
   <div id="toast" class="toast" hidden><span id="toastMessage"></span><button type="button" id="dismissToast" aria-label="Dismiss notification">Dismiss</button></div>
   <div id="statusAnnouncement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -893,6 +915,7 @@ window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore,
     $('recoveryPanel').hidden = !supported;
     $('recoveryPanel').dataset.state = state;
     $('recoveryState').textContent = state === 'on' ? 'On' : state === 'paused' ? 'Paused' : 'Off';
+    $('recoverySummary').hidden = !supported || state !== 'paused';
     $('chooseRecoveryFolder').hidden = state === 'on';
     $('chooseRecoveryFolder').textContent = state === 'paused' ? 'Turn copies back on' : 'Choose a folder';
     $('showRecoveryCopies').hidden = state !== 'on';
@@ -1055,11 +1078,13 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
   const snapshot = () => JSON.stringify(validate(getData()));
   const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
-  function status(title, detail, state = 'idle') {
+  // Problems open the details. Ordinary browser-only saving and an unsupported browser are quiet
+  // one-line notes (compact), with Manage for the rest.
+  function status(title, detail, state = 'idle', compact = false) {
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
-    if (state === 'error' || state === 'idle' || state === 'unsupported') showDetails();
+    if (state === 'error' || (state === 'idle' && !compact)) showDetails();
     if (state === 'idle' || state === 'unsupported') hasSaved = false;
     if (state === 'saved' && !hasSaved) { showDetails(false); hasSaved = true; }
     // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
@@ -1072,7 +1097,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.'); }
+  function idleStatus() { status('Browser saving only', 'No task file is connected, so your tasks are saved in this browser. Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.', 'idle', true); }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;
@@ -1309,7 +1334,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     // The remembered connection may be slow. Keep the checklist usable; attach()
     // waits for an open editor, then compares the latest browser and file copies.
     setBusy(true, false);
-    status('Looking for your task file…', 'Checking the connection saved in this browser.');
+    status('Looking for your task file…', 'Checking the connection saved in this browser.', 'idle', true);
     let failed = false, lookupFailed = false;
     try {
       const record = await connection('get');
@@ -1561,7 +1586,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     if (problem) {
       data = JSON.parse(lastGood); render();
       const message = `Change not saved. ${problem} Delete unused tasks or history first.`;
-      if ($('taskDialog').open) $('formError').textContent = message;
+      if ($('taskDialog').open) formProblem(message);
       notify(message);
       return false;
     }
@@ -1955,7 +1980,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
     const source = data.tasks.find(task => task.id === editingId);
-    if (weekly) setTaskOptions(true);
+    if (!editingId && !editingReadOnly) { $('dialogTitle').textContent = weekly ? 'Add routine' : 'Add task'; $('saveTask').textContent = weekly ? 'Add routine' : 'Add task'; }
     const converting = source?.kind === 'once' && weekly;
     $('routineChanges').hidden = !(source?.kind === 'weekly' && weekly);
     const date = $('taskDate').value;
@@ -1965,6 +1990,27 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('workdaysPreset').setAttribute('aria-pressed', String(days.length === 5 && [1, 2, 3, 4, 5].every(day => days.includes(day))));
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
+  const fieldErrors = { taskTitle: 'taskTitleError', taskDate: 'taskDateError', weeklyDays: 'weekdaysError', taskTime: 'taskTimeError', taskEffectiveDate: 'taskEffectiveDateError', taskDescription: 'taskDescriptionError' };
+  const describedBy = { taskDescription: 'descriptionHint' };
+  function clearFormProblems() {
+    $('formError').textContent = ''; $('formError').classList.toggle('sr-only', false); $('scheduleHint').hidden = false;
+    for (const [id, errorId] of Object.entries(fieldErrors)) {
+      $(errorId).hidden = true; $(errorId).textContent = '';
+      $(id).setAttribute('aria-invalid', 'false'); $(id).setAttribute('aria-describedby', describedBy[id] || '');
+    }
+  }
+  // Shows a problem. With a field, the message sits under that field, which is marked invalid; the
+  // form-level message (an alert) stays for screen readers but is not shown twice.
+  function formProblem(message, id = null) {
+    clearFormProblems();
+    $('formError').textContent = message;
+    if (!id) return;
+    $(fieldErrors[id]).textContent = message; $(fieldErrors[id]).hidden = false;
+    $(id).setAttribute('aria-invalid', 'true'); $(id).setAttribute('aria-describedby', [describedBy[id], fieldErrors[id]].filter(Boolean).join(' '));
+    $('formError').classList.toggle('sr-only', true);
+    if (id === 'weeklyDays') $('scheduleHint').hidden = true;
+  }
+  for (const id of ['taskTitle', 'taskDate', 'taskTime', 'taskEffectiveDate', 'taskDescription']) $(id).addEventListener('input', () => { if ($('formError').textContent) clearFormProblems(); });
   function setTaskOptions(expanded) {
     $('taskOptions').hidden = !expanded;
     $('toggleTaskOptions').setAttribute('aria-expanded', String(expanded));
@@ -1977,7 +2023,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }, true);
   $('toggleTaskOptions').onclick = () => {
     if (!$('taskOptions').hidden && $('taskForm').elements.timing.value === 'timed' && !validTime($('taskTime').value)) {
-      $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return;
+      formProblem('Choose a valid time, or select All day.', 'taskTime'); $('taskTime').focus(); return;
     }
     setTaskOptions($('taskOptions').hidden);
   };
@@ -1988,11 +2034,11 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
-    setTaskOptions(Boolean(task) || kind === 'weekly');
+    setTaskOptions(Boolean(task));
     editingId = task?.id || null; $('taskForm').reset();
     // The task as stored when the window opened, to notice if another tab changes or deletes it meanwhile.
-    editingBase = source ? JSON.stringify(data.tasks.find(item => item.id === source.id) || null) : null; $('formError').textContent = '';
-    $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
+    editingBase = source ? JSON.stringify(data.tasks.find(item => item.id === source.id) || null) : null; clearFormProblems();
+    $('dialogTitle').textContent = task ? task.kind === 'weekly' ? 'Edit routine' : 'Edit task' : 'Add task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
     [...$('taskForm').elements.kind].forEach(input => { input.disabled = source?.kind === 'weekly'; });
     $('taskEffectiveDate').value = effective; $('taskEffectiveDate').min = today;
@@ -2011,10 +2057,11 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('workdaysPreset').disabled = $('everydayPreset').disabled = editingReadOnly;
     $('saveTask').hidden = editingReadOnly;
     $('cancelDialog').textContent = editingReadOnly ? 'Close' : 'Cancel';
+    $('readOnlyNotice').hidden = !editingReadOnly;
     if (editingReadOnly) {
       $('dialogTitle').textContent = 'Routine history';
       $('deleteTask').hidden = true; $('routineChanges').hidden = true;
-      $('scheduleHint').textContent = 'This routine has ended. Saved occurrences and completion history are kept for reference.';
+      $('scheduleHint').textContent = '';
     }
     $('taskDialog').showModal();
     taskFormStart = taskFormState();
@@ -2024,34 +2071,35 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   $('taskForm').addEventListener('submit', event => {
     event.preventDefault();
     if (!$('taskDialog').open) return;
+    clearFormProblems();
     const title = $('taskTitle').value.trim();
     const description = $('taskDescription').value.trim();
     const kind = $('taskForm').elements.kind.value;
     const date = $('taskDate').value;
     if (editingReadOnly) return;
-    if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
-    if (description.length > 5000) { setTaskOptions(true); $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
-    if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
+    if (!title) { formProblem('Give your task a name.', 'taskTitle'); $('taskTitle').focus(); return; }
+    if (description.length > 5000) { setTaskOptions(true); formProblem('Use up to 5,000 characters for the description.', 'taskDescription'); $('taskDescription').focus(); return; }
+    if (!validDate(date)) { formProblem('Choose a valid date.', 'taskDate'); $('taskDate').focus(); return; }
     const weekdays = selectedWeekdays();
-    if (kind === 'weekly' && !weekdays.length) { setTaskOptions(true); $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
+    if (kind === 'weekly' && !weekdays.length) { formProblem('Select at least one day for this routine.', 'weeklyDays'); weekdayInputs[0].focus(); return; }
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
-    if (time !== null && !validTime(time)) { setTaskOptions(true); $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
+    if (time !== null && !validTime(time)) { setTaskOptions(true); formProblem('Choose a valid time, or select All day.', 'taskTime'); $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     let previous = data.tasks.find(task => task.id === editingId);
     // Another tab may have deleted or changed this task while the window was open.
     if (editingId && !previous) {
-      if (!window.confirm('This task was deleted in another tab while you were editing it. Save your version as a new task?\n\nChoose Cancel to keep editing without saving.')) { $('formError').textContent = 'Not saved. This task was deleted in another tab.'; return; }
+      if (!window.confirm('This task was deleted in another tab while you were editing it. Save your version as a new task?\n\nChoose Cancel to keep editing without saving.')) { formProblem('Not saved. This task was deleted in another tab.'); return; }
       editingId = null; editingBase = null;
     } else if (editingId && JSON.stringify(previous) !== editingBase) {
-      if (!window.confirm('This task was changed in another tab while you were editing it. Save your version and replace those changes?\n\nChoose Cancel to keep editing without saving.')) { $('formError').textContent = 'Not saved. Close and reopen the task to see the other tab\'s changes.'; return; }
+      if (!window.confirm('This task was changed in another tab while you were editing it. Save your version and replace those changes?\n\nChoose Cancel to keep editing without saving.')) { formProblem('Not saved. Close and reopen the task to see the other tab\'s changes.'); return; }
       editingBase = JSON.stringify(previous);
     }
     // Keep saved data within the limits the app accepts when it loads.
-    if (!previous && data.tasks.length >= 20000) { $('formError').textContent = 'You have reached the 20,000-task limit. Delete unused tasks before adding more.'; return; }
+    if (!previous && data.tasks.length >= 20000) { formProblem('You have reached the 20,000-task limit. Delete unused tasks before adding more.'); return; }
     const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
-    if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
-    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { setTaskOptions(true); $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    if (previous?.kind === 'weekly' && kind !== 'weekly') { formProblem('Create a separate one-time task and end this routine to keep its history.'); return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { formProblem('Choose a changes-from date on or after today and before the routine ends.', 'taskEffectiveDate'); $('taskEffectiveDate').focus(); return; }
     // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
     const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
@@ -2061,7 +2109,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     const converted = previous?.kind === 'once' && kind === 'weekly';
     const begins = converted && date < today ? today : date;
     const record = kind === 'weekly' ? previous?.kind === 'weekly' ? reviseRoutine(previous, task, effective, data.completed) : createRoutine(task, previous, begins, data.completed) : task;
-    if (record.versions?.length > 2000) { $('formError').textContent = 'This routine has reached its limit of 2,000 dated changes. Create a new routine and end this one.'; return; }
+    if (record.versions?.length > 2000) { formProblem('This routine has reached its limit of 2,000 dated changes. Create a new routine and end this one.'); return; }
     dialogFocusTarget = { taskId: id };
     const wasEditing = Boolean(editingId);
     if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? record : t);
@@ -2088,16 +2136,16 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   $('taskDate').onchange = updateHint;
   [...$('taskForm').elements.kind].forEach(radio => radio.onchange = updateHint);
   [...$('taskForm').elements.timing].forEach(radio => radio.onchange = updateTimingFields);
-  weekdayInputs.forEach(input => { input.onchange = () => { $('formError').textContent = ''; updateHint(); }; });
-  $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
-  $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
+  weekdayInputs.forEach(input => { input.onchange = () => { clearFormProblems(); updateHint(); }; });
+  $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); clearFormProblems(); updateHint(); };
+  $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); clearFormProblems(); updateHint(); };
   $('deleteTask').onclick = () => {
     if (editingReadOnly) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId);
     if (!task) { closeTaskDialog(); notify('This task was already deleted in another tab.'); return; }
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
-      if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      if (!validDate(effective) || effective < today) { formProblem('Choose an end date on or after today.', 'taskEffectiveDate'); $('taskEffectiveDate').focus(); return; }
       recovery?.keep('end-routine');
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
@@ -2271,7 +2319,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
       const dismiss = el('button', 'icon-button'); dismiss.type = 'button'; dismiss.setAttribute('aria-label', `Dismiss reminder for ${task.title}`); dismiss.append(icon('close'));
       dismiss.onclick = () => { reminderLog.alerts = reminderLog.alerts.filter(item => item.taskId !== alert.taskId || item.date !== alert.date || item.time !== alert.time); persistReminderLog(); renderReminderPanel(); };
       heading.append(dismiss); card.append(heading, el('p', '', `Due ${fmt(alert.date, { weekday: 'short', month: 'short', day: 'numeric' })} at ${formatTime(alert.time)}`));
-      const viewTask = el('button', 'text-button', 'View this day'); viewTask.type = 'button'; viewTask.onclick = () => { chooseDate(alert.date); reminderPanelOpen = false; renderReminderPanel(); const row = [...$('taskList').querySelectorAll('.task-row')].find(item => item.dataset.id === alert.taskId); row?.scrollIntoView({ block: 'center', behavior: 'smooth' }); row?.focus({ preventScroll: true }); }; card.append(viewTask); container.append(card);
+      const viewTask = el('button', 'text-button', 'View this day'); viewTask.type = 'button'; viewTask.onclick = () => { chooseDate(alert.date); reminderPanelOpen = false; renderReminderPanel(); const row = [...$('taskList').querySelectorAll('.task-row')].find(item => item.dataset.id === alert.taskId); row?.scrollIntoView({ block: 'center', behavior: motionEnabled() ? 'smooth' : 'auto' }); row?.focus({ preventScroll: true }); }; card.append(viewTask); container.append(card);
     }
   }
   reminderButton.onclick = () => { reminderPanelOpen = !reminderPanelOpen; renderReminderPanel(); if (!reminderLog.alerts.length) notify('No active reminders. Add a time and reminder intervals when editing a task.'); };

@@ -217,7 +217,7 @@
     if (problem) {
       data = JSON.parse(lastGood); render();
       const message = `Change not saved. ${problem} Delete unused tasks or history first.`;
-      if ($('taskDialog').open) $('formError').textContent = message;
+      if ($('taskDialog').open) formProblem(message);
       notify(message);
       return false;
     }
@@ -611,7 +611,7 @@
     const weekly = $('taskForm').elements.kind.value === 'weekly'; $('dateFieldLabel').textContent = weekly ? 'Starting on' : 'Date';
     $('weeklyDays').hidden = !weekly;
     const source = data.tasks.find(task => task.id === editingId);
-    if (weekly) setTaskOptions(true);
+    if (!editingId && !editingReadOnly) { $('dialogTitle').textContent = weekly ? 'Add routine' : 'Add task'; $('saveTask').textContent = weekly ? 'Add routine' : 'Add task'; }
     const converting = source?.kind === 'once' && weekly;
     $('routineChanges').hidden = !(source?.kind === 'weekly' && weekly);
     const date = $('taskDate').value;
@@ -621,6 +621,27 @@
     $('workdaysPreset').setAttribute('aria-pressed', String(days.length === 5 && [1, 2, 3, 4, 5].every(day => days.includes(day))));
     $('everydayPreset').setAttribute('aria-pressed', String(days.length === 7));
   }
+  const fieldErrors = { taskTitle: 'taskTitleError', taskDate: 'taskDateError', weeklyDays: 'weekdaysError', taskTime: 'taskTimeError', taskEffectiveDate: 'taskEffectiveDateError', taskDescription: 'taskDescriptionError' };
+  const describedBy = { taskDescription: 'descriptionHint' };
+  function clearFormProblems() {
+    $('formError').textContent = ''; $('formError').classList.toggle('sr-only', false); $('scheduleHint').hidden = false;
+    for (const [id, errorId] of Object.entries(fieldErrors)) {
+      $(errorId).hidden = true; $(errorId).textContent = '';
+      $(id).setAttribute('aria-invalid', 'false'); $(id).setAttribute('aria-describedby', describedBy[id] || '');
+    }
+  }
+  // Shows a problem. With a field, the message sits under that field, which is marked invalid; the
+  // form-level message (an alert) stays for screen readers but is not shown twice.
+  function formProblem(message, id = null) {
+    clearFormProblems();
+    $('formError').textContent = message;
+    if (!id) return;
+    $(fieldErrors[id]).textContent = message; $(fieldErrors[id]).hidden = false;
+    $(id).setAttribute('aria-invalid', 'true'); $(id).setAttribute('aria-describedby', [describedBy[id], fieldErrors[id]].filter(Boolean).join(' '));
+    $('formError').classList.toggle('sr-only', true);
+    if (id === 'weeklyDays') $('scheduleHint').hidden = true;
+  }
+  for (const id of ['taskTitle', 'taskDate', 'taskTime', 'taskEffectiveDate', 'taskDescription']) $(id).addEventListener('input', () => { if ($('formError').textContent) clearFormProblems(); });
   function setTaskOptions(expanded) {
     $('taskOptions').hidden = !expanded;
     $('toggleTaskOptions').setAttribute('aria-expanded', String(expanded));
@@ -633,7 +654,7 @@
   }, true);
   $('toggleTaskOptions').onclick = () => {
     if (!$('taskOptions').hidden && $('taskForm').elements.timing.value === 'timed' && !validTime($('taskTime').value)) {
-      $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return;
+      formProblem('Choose a valid time, or select All day.', 'taskTime'); $('taskTime').focus(); return;
     }
     setTaskOptions($('taskOptions').hidden);
   };
@@ -644,11 +665,11 @@
     if (source?.kind === 'weekly') task = resolveTask(source, editingReadOnly ? selected : effective, editingReadOnly) || source;
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
-    setTaskOptions(Boolean(task) || kind === 'weekly');
+    setTaskOptions(Boolean(task));
     editingId = task?.id || null; $('taskForm').reset();
     // The task as stored when the window opened, to notice if another tab changes or deletes it meanwhile.
-    editingBase = source ? JSON.stringify(data.tasks.find(item => item.id === source.id) || null) : null; $('formError').textContent = '';
-    $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
+    editingBase = source ? JSON.stringify(data.tasks.find(item => item.id === source.id) || null) : null; clearFormProblems();
+    $('dialogTitle').textContent = task ? task.kind === 'weekly' ? 'Edit routine' : 'Edit task' : 'Add task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
     [...$('taskForm').elements.kind].forEach(input => { input.disabled = source?.kind === 'weekly'; });
     $('taskEffectiveDate').value = effective; $('taskEffectiveDate').min = today;
@@ -667,10 +688,11 @@
     $('workdaysPreset').disabled = $('everydayPreset').disabled = editingReadOnly;
     $('saveTask').hidden = editingReadOnly;
     $('cancelDialog').textContent = editingReadOnly ? 'Close' : 'Cancel';
+    $('readOnlyNotice').hidden = !editingReadOnly;
     if (editingReadOnly) {
       $('dialogTitle').textContent = 'Routine history';
       $('deleteTask').hidden = true; $('routineChanges').hidden = true;
-      $('scheduleHint').textContent = 'This routine has ended. Saved occurrences and completion history are kept for reference.';
+      $('scheduleHint').textContent = '';
     }
     $('taskDialog').showModal();
     taskFormStart = taskFormState();
@@ -680,34 +702,35 @@
   $('taskForm').addEventListener('submit', event => {
     event.preventDefault();
     if (!$('taskDialog').open) return;
+    clearFormProblems();
     const title = $('taskTitle').value.trim();
     const description = $('taskDescription').value.trim();
     const kind = $('taskForm').elements.kind.value;
     const date = $('taskDate').value;
     if (editingReadOnly) return;
-    if (!title) { $('formError').textContent = 'Give your task a name.'; $('taskTitle').focus(); return; }
-    if (description.length > 5000) { setTaskOptions(true); $('formError').textContent = 'Use up to 5,000 characters for the description.'; $('taskDescription').focus(); return; }
-    if (!validDate(date)) { $('formError').textContent = 'Choose a valid date.'; return; }
+    if (!title) { formProblem('Give your task a name.', 'taskTitle'); $('taskTitle').focus(); return; }
+    if (description.length > 5000) { setTaskOptions(true); formProblem('Use up to 5,000 characters for the description.', 'taskDescription'); $('taskDescription').focus(); return; }
+    if (!validDate(date)) { formProblem('Choose a valid date.', 'taskDate'); $('taskDate').focus(); return; }
     const weekdays = selectedWeekdays();
-    if (kind === 'weekly' && !weekdays.length) { setTaskOptions(true); $('formError').textContent = 'Select at least one day for this routine.'; weekdayInputs[0].focus(); return; }
+    if (kind === 'weekly' && !weekdays.length) { formProblem('Select at least one day for this routine.', 'weeklyDays'); weekdayInputs[0].focus(); return; }
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
-    if (time !== null && !validTime(time)) { setTaskOptions(true); $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
+    if (time !== null && !validTime(time)) { setTaskOptions(true); formProblem('Choose a valid time, or select All day.', 'taskTime'); $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
     let previous = data.tasks.find(task => task.id === editingId);
     // Another tab may have deleted or changed this task while the window was open.
     if (editingId && !previous) {
-      if (!window.confirm('This task was deleted in another tab while you were editing it. Save your version as a new task?\n\nChoose Cancel to keep editing without saving.')) { $('formError').textContent = 'Not saved. This task was deleted in another tab.'; return; }
+      if (!window.confirm('This task was deleted in another tab while you were editing it. Save your version as a new task?\n\nChoose Cancel to keep editing without saving.')) { formProblem('Not saved. This task was deleted in another tab.'); return; }
       editingId = null; editingBase = null;
     } else if (editingId && JSON.stringify(previous) !== editingBase) {
-      if (!window.confirm('This task was changed in another tab while you were editing it. Save your version and replace those changes?\n\nChoose Cancel to keep editing without saving.')) { $('formError').textContent = 'Not saved. Close and reopen the task to see the other tab\'s changes.'; return; }
+      if (!window.confirm('This task was changed in another tab while you were editing it. Save your version and replace those changes?\n\nChoose Cancel to keep editing without saving.')) { formProblem('Not saved. Close and reopen the task to see the other tab\'s changes.'); return; }
       editingBase = JSON.stringify(previous);
     }
     // Keep saved data within the limits the app accepts when it loads.
-    if (!previous && data.tasks.length >= 20000) { $('formError').textContent = 'You have reached the 20,000-task limit. Delete unused tasks before adding more.'; return; }
+    if (!previous && data.tasks.length >= 20000) { formProblem('You have reached the 20,000-task limit. Delete unused tasks before adding more.'); return; }
     const id = editingId || newTaskId();
     const effective = $('taskEffectiveDate').value;
-    if (previous?.kind === 'weekly' && kind !== 'weekly') { $('formError').textContent = 'Create a separate one-time task and end this routine to keep its history.'; return; }
-    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { setTaskOptions(true); $('formError').textContent = 'Choose a changes-from date on or after today and before the routine ends.'; $('taskEffectiveDate').focus(); return; }
+    if (previous?.kind === 'weekly' && kind !== 'weekly') { formProblem('Create a separate one-time task and end this routine to keep its history.'); return; }
+    if (previous?.kind === 'weekly' && (!validDate(effective) || effective < today || (previous.endedOn && effective >= previous.endedOn))) { formProblem('Choose a changes-from date on or after today and before the routine ends.', 'taskEffectiveDate'); $('taskEffectiveDate').focus(); return; }
     // Compare with the routine as set up on the edited date, not a later scheduled change.
     // Changed reminder choices count too, so adding one to an overdue task sends no old alert.
     const before = previous?.kind === 'weekly' ? resolveTask(previous, effective, false) || previous : previous;
@@ -717,7 +740,7 @@
     const converted = previous?.kind === 'once' && kind === 'weekly';
     const begins = converted && date < today ? today : date;
     const record = kind === 'weekly' ? previous?.kind === 'weekly' ? reviseRoutine(previous, task, effective, data.completed) : createRoutine(task, previous, begins, data.completed) : task;
-    if (record.versions?.length > 2000) { $('formError').textContent = 'This routine has reached its limit of 2,000 dated changes. Create a new routine and end this one.'; return; }
+    if (record.versions?.length > 2000) { formProblem('This routine has reached its limit of 2,000 dated changes. Create a new routine and end this one.'); return; }
     dialogFocusTarget = { taskId: id };
     const wasEditing = Boolean(editingId);
     if (wasEditing) data.tasks = data.tasks.map(t => t.id === id ? record : t);
@@ -744,16 +767,16 @@
   $('taskDate').onchange = updateHint;
   [...$('taskForm').elements.kind].forEach(radio => radio.onchange = updateHint);
   [...$('taskForm').elements.timing].forEach(radio => radio.onchange = updateTimingFields);
-  weekdayInputs.forEach(input => { input.onchange = () => { $('formError').textContent = ''; updateHint(); }; });
-  $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); $('formError').textContent = ''; updateHint(); };
-  $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
+  weekdayInputs.forEach(input => { input.onchange = () => { clearFormProblems(); updateHint(); }; });
+  $('workdaysPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5]); clearFormProblems(); updateHint(); };
+  $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); clearFormProblems(); updateHint(); };
   $('deleteTask').onclick = () => {
     if (editingReadOnly) return;
     const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId);
     if (!task) { closeTaskDialog(); notify('This task was already deleted in another tab.'); return; }
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
-      if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
+      if (!validDate(effective) || effective < today) { formProblem('Choose an end date on or after today.', 'taskEffectiveDate'); $('taskEffectiveDate').focus(); return; }
       recovery?.keep('end-routine');
       const previousEnd = task.endedOn;
       const previousSnapshots = task.snapshots;
@@ -927,7 +950,7 @@
       const dismiss = el('button', 'icon-button'); dismiss.type = 'button'; dismiss.setAttribute('aria-label', `Dismiss reminder for ${task.title}`); dismiss.append(icon('close'));
       dismiss.onclick = () => { reminderLog.alerts = reminderLog.alerts.filter(item => item.taskId !== alert.taskId || item.date !== alert.date || item.time !== alert.time); persistReminderLog(); renderReminderPanel(); };
       heading.append(dismiss); card.append(heading, el('p', '', `Due ${fmt(alert.date, { weekday: 'short', month: 'short', day: 'numeric' })} at ${formatTime(alert.time)}`));
-      const viewTask = el('button', 'text-button', 'View this day'); viewTask.type = 'button'; viewTask.onclick = () => { chooseDate(alert.date); reminderPanelOpen = false; renderReminderPanel(); const row = [...$('taskList').querySelectorAll('.task-row')].find(item => item.dataset.id === alert.taskId); row?.scrollIntoView({ block: 'center', behavior: 'smooth' }); row?.focus({ preventScroll: true }); }; card.append(viewTask); container.append(card);
+      const viewTask = el('button', 'text-button', 'View this day'); viewTask.type = 'button'; viewTask.onclick = () => { chooseDate(alert.date); reminderPanelOpen = false; renderReminderPanel(); const row = [...$('taskList').querySelectorAll('.task-row')].find(item => item.dataset.id === alert.taskId); row?.scrollIntoView({ block: 'center', behavior: motionEnabled() ? 'smooth' : 'auto' }); row?.focus({ preventScroll: true }); }; card.append(viewTask); container.append(card);
     }
   }
   reminderButton.onclick = () => { reminderPanelOpen = !reminderPanelOpen; renderReminderPanel(); if (!reminderLog.alerts.length) notify('No active reminders. Add a time and reminder intervals when editing a task.'); };

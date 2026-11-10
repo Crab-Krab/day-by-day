@@ -21,6 +21,7 @@ window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore,
     $('recoveryPanel').hidden = !supported;
     $('recoveryPanel').dataset.state = state;
     $('recoveryState').textContent = state === 'on' ? 'On' : state === 'paused' ? 'Paused' : 'Off';
+    $('recoverySummary').hidden = !supported || state !== 'paused';
     $('chooseRecoveryFolder').hidden = state === 'on';
     $('chooseRecoveryFolder').textContent = state === 'paused' ? 'Turn copies back on' : 'Choose a folder';
     $('showRecoveryCopies').hidden = state !== 'on';

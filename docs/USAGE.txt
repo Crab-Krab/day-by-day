@@ -8,7 +8,8 @@ Open Day-by-Day.html in Chrome, Edge, Firefox, or another modern browser.
 The downloaded file works without an internet connection or account.
 
 AUTOMATIC FILE SAVING (CHROME / EDGE)
-Choose Create new task file, then choose a folder that stays on your computer,
+Until a task file is connected, the line above the day says Browser saving only.
+Choose Manage there, then Create new task file, then choose a folder that stays on your computer,
 such as a new Day by Day folder inside Documents. The app saves your tasks there
 as Day-by-Day-tasks.json. Allow editing access. Each task change saves
 automatically; wait for Saved to before closing or signing out. If that folder
@@ -16,9 +17,10 @@ already has a task file, the app opens it instead of replacing it. If you keep a
 task JSON or backup somewhere else, use Open task file; it becomes the live
 autosave file.
 
-After a successful file connection, saving controls collapse to one status row.
-Choose Manage to see file controls, browser saving, Back up tasks, and Restore
-backup together. Setup and file-saving errors show the details automatically.
+Saving shows as one status row. Choose Manage to see three groups: Task file
+(open, create, reconnect or disconnect), Browser copy and backups (Back up tasks
+and Restore backup), and Recovery copies. Setup and file-saving errors show the
+details automatically, and paused recovery copies are noted in the status row.
 
 The app automatically reopens the remembered file when browser access survives.
 If permission expires, click Reconnect task file. If daily browser cleanup clears
@@ -49,9 +51,11 @@ button to show the month. The first Tab press offers Skip to main content. With 
 one day of the month calendar, and the arrow keys move by day or week, including
 into the next or previous month.
 
-Use + Add task to enter a task and date, then Add task. More options reveals
-notes, One time / Every week, time, and reminders. Editing an existing task
-opens the full editor; Add task in Weekly routines opens repeat controls.
+Use + Add task to enter a task and date, then Add task. One time / Every week
+and the Repeat on days are always shown; More options reveals notes, time, and
+reminders. Editing an existing task opens the full editor; Add routine in Weekly
+routines starts with Every week selected. A problem, such as a routine with no
+days, is explained under the field it concerns.
 Click outside the task window to close it, like Cancel. If you have typed or
 changed anything, the app asks before discarding it.
 For weekly tasks, select any combination of weekdays under Repeat on.
@@ -189,7 +193,7 @@ warns before replacing unreadable data; cancel keeps the original untouched.
 
 RECOVERY COPIES (OPTIONAL, CHROME / EDGE)
 Recovery copies keep up to 20 earlier versions of your tasks in a folder you
-choose. Open Recovery copies under the task-file panel and choose a folder. A
+choose. Choose Manage in the saving row, open Recovery copies, and choose a folder. A
 copy is saved at most once an hour while you work, and right before deleting a
 task, ending a routine, restoring, or choosing which copy to keep. Many deletes
 or endings in a row save one copy per 5 minutes, from before the first one, so

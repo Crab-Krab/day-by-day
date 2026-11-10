@@ -48,6 +48,8 @@ async function main() {
       for (const width of [1366, 390]) {
         await standalone.setViewportSize({ width, height: 900 });
         await standalone.goto(`http://127.0.0.1:${server.address().port}/Day-by-Day.html`);
+        // With no task file yet, saving shows one line; Manage opens the file controls, as a person would.
+        if (await standalone.locator('#taskFileDetails').isHidden()) await standalone.locator('#manageTaskFile').click();
         await standalone.locator('#createTaskFile').click();
         await standalone.locator('#taskFilePanel[data-state="saved"]').waitFor();
         const label = `trusted input ${width}px ${reducedMotion}`;

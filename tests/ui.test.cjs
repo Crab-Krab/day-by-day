@@ -28,12 +28,26 @@ quick.ids.toggleTaskOptions.onclick(); assert.equal(quick.ids.taskOptions.hidden
 quick.ids.taskForm.elements.timing.value = 'timed'; quick.ids.taskForm.elements.timing[1].onchange();
 quick.ids.toggleTaskOptions.onclick();
 assert.equal(quick.ids.taskOptions.hidden, false); assert.match(quick.ids.formError.textContent, /valid time/);
+// The message sits under the time field, which is marked invalid; the form-level alert stays for screen readers.
+assert.equal(quick.ids.taskTimeError.hidden, false); assert.match(quick.ids.taskTimeError.textContent, /valid time/);
+assert.equal(quick.ids.taskTime.getAttribute('aria-invalid'), 'true'); assert.match(quick.ids.taskTime.getAttribute('aria-describedby'), /taskTimeError/);
+assert.match(quick.ids.formError.className, /sr-only/);
 quick.ids.taskTime.value = '13:30'; quick.ids.toggleTaskOptions.onclick();
 assert.equal(quick.ids.taskOptions.hidden, true);
 quick.ids.taskForm.dispatch('submit'); assert.equal(quick.state().tasks[0].time, '13:30');
+assert.equal(quick.ids.taskTimeError.hidden, true); assert.equal(quick.ids.taskTime.getAttribute('aria-invalid'), 'false');
+// Repeat choices sit before More options, so a new routine shows its days while notes, time and reminders stay folded.
+const { html } = require('./helpers/runtime.cjs');
+for (const id of ['taskTitle', 'weeklyDays', 'routineChanges']) assert.ok(html.indexOf(`id="${id}"`) < html.indexOf('id="toggleTaskOptions"'), `${id} comes before More options`);
+assert.ok(html.indexOf('name="kind"') < html.indexOf('id="toggleTaskOptions"'), 'One time / Every week comes before More options');
 quick.ids.routinesNav.onclick(); quick.ids.addTask.onclick();
-assert.equal(quick.ids.taskOptions.hidden, false); assert.equal(quick.ids.weeklyDays.hidden, false);
-console.log('Quick-entry UI passed: compact defaults, full edit/routine controls, toggling, hidden-time validation, preserved values, and duplicate-submit protection.');
+assert.equal(quick.ids.taskOptions.hidden, true); assert.equal(quick.ids.weeklyDays.hidden, false);
+assert.equal(quick.ids.dialogTitle.textContent, 'Add routine'); assert.equal(quick.ids.saveTask.textContent, 'Add routine');
+for (const input of quick.inputs.filter(input => input.name === 'weekdays')) input.checked = false;
+quick.ids.taskTitle.value = 'No days'; quick.ids.taskForm.dispatch('submit');
+assert.equal(quick.ids.weekdaysError.hidden, false); assert.equal(quick.ids.weeklyDays.getAttribute('aria-invalid'), 'true'); assert.equal(quick.ids.taskOptions.hidden, true);
+quick.ids.cancelDialog.onclick();
+console.log('Quick-entry UI passed: compact defaults, repeat choices before More options, full edit controls, toggling, hidden-time validation shown at the field, preserved values, and duplicate-submit protection.');
 
 const app = boot(saved(), clock);
 assert.match(app.ids.dayOrderScope.textContent, /Due time.*every Wednesday/);

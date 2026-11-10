@@ -131,30 +131,36 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .history-item button { flex-shrink: 0; }
 .ended-routines { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 14px; }
 .ended-routines summary { cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 12px 16px; font-weight: 600; color: var(--text-secondary); }
-.routine-changes { margin-top: 24px; padding: 16px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 12px; }
+.routine-changes { margin-top: 16px; padding: 16px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 12px; }
 #overdueList>.task-row:last-child { border-radius: 0 0 11px 11px; }
 .restore-content { padding: 24px; }
 .restore-content h2 { margin: 0 0 12px; font-size: 24px; line-height: 32px; font-weight: 650; }
 .restore-content p { color: var(--text-secondary); font-size: 14px; line-height: 20px; }
 .restore-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.storage-area { border-top: 1px solid var(--border); }
 .task-file-panel { margin: 16px var(--inset) 0; padding: 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .task-file-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 .task-file-copy { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .task-file-copy strong { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
 .task-file-summary .text-button { margin: 0; flex-shrink: 0; }
-.task-file-details>p { margin: 8px 0 12px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+.saving-group>p { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
 .task-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .task-file-actions button { font-size: 14px; }
 .task-file-panel[data-state="error"] { border-color: var(--danger); }
 .task-file-panel[data-state="error"] .status-dot { background: var(--danger); }
 .task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--text); }
+.task-file-panel[data-state="saved"] .status-dot { width: 6px; height: 11px; margin: 0 3px 3px; border-radius: 0; background: none; border-right: 2px solid var(--text); border-bottom: 2px solid var(--text); transform: rotate(45deg); }
+.recovery-summary { padding: 1px 8px; border-radius: 999px; background: var(--warning-surface); color: var(--warning); font-size: 12px; line-height: 18px; font-weight: 600; white-space: nowrap; }
+/* Inside Manage: Task file, Browser copy and backups, and Recovery copies, one after another. */
+.task-file-details { padding-bottom: 12px; }
+.saving-group { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.saving-group h3 { margin: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.task-file-details .recovery-panel summary { min-height: 44px; }
 .task-file-panel[data-state="idle"] .status-dot, .task-file-panel[data-state="unsupported"] .status-dot { background: var(--text-secondary); }
-.task-file-panel .storage-area { margin-top: 14px; padding-top: 14px; }
 #fileChoiceDialog .restore-actions { flex-wrap: wrap; }
+#fileChoiceCancel { margin-right: auto; }
 /* Optional recovery copies, collapsed under the task-file panel. */
-.recovery-panel { margin: 12px var(--inset) 0; padding: 0 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; }
-.recovery-panel[data-state="paused"] { border-color: var(--warning); background: var(--warning-surface); }
+.recovery-panel { font-size: 13px; }
+.recovery-panel[data-state="paused"] .recovery-state { color: var(--warning); font-weight: 600; }
 .recovery-panel summary { cursor: pointer; display: flex; align-items: center; min-height: 44px; font-weight: 600; font-size: 14px; line-height: 20px; }
 .recovery-state { margin-inline-start: 8px; font-weight: 500; font-size: 12px; line-height: 18px; color: var(--text-secondary); }
 .recovery-intro, .recovery-status { margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
@@ -314,7 +320,7 @@ textarea { display: block; resize: vertical; min-height: 112px; max-height: 40vh
 .frequency input:focus-visible+span, .weekday-picker input:focus-visible+span, .reminder-options input:focus-visible+span { outline: 3px solid var(--focus); outline-offset: 2px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .form-row.weekly-date { grid-template-columns: 1fr; }
-.weekly-days { border: 0; padding: 0; margin: 0 0 24px; min-width: 0; }
+.weekly-days { border: 0; padding: 0; margin: 16px 0 0; min-width: 0; }
 .day-presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
 .day-presets button { min-height: 32px; padding: 4px 12px; border: 1px solid var(--control-border); border-radius: 8px; font-size: 13px; line-height: 20px; color: var(--text); background: var(--surface); }
 .day-presets button:hover { background: var(--hover); }
@@ -386,12 +392,23 @@ a { color: var(--link); }
 @keyframes backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
 @keyframes notice-enter { from { opacity: 0; } to { opacity: 1; } }
 .form-error { font-size: 14px; line-height: 20px; color: var(--danger); margin: 16px 0 0; }
+.field-error { margin: 8px 0 0; color: var(--danger); font-size: 13px; line-height: 20px; font-weight: 500; }
+input[aria-invalid=true], textarea[aria-invalid=true] { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+#weeklyDays[aria-invalid=true] .weekday-picker span { border-color: var(--danger); }
+.form-notice { margin: -8px 0 16px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); color: var(--text); font-size: 14px; line-height: 20px; }
+.kind-choice { margin: 16px 0 0; }
+/* Read-only fields (an ended routine's history) look settled rather than editable. */
+input:not([type=radio]):not([type=checkbox]):disabled, textarea:disabled { background: var(--surface-subtle); border-color: var(--border); color: var(--text-secondary); -webkit-text-fill-color: var(--text-secondary); opacity: 1; }
+.frequency input:disabled+span, .weekday-picker input:disabled+span, .reminder-options input:disabled+span, .day-presets button:disabled { cursor: default; background: var(--surface-subtle); border-color: var(--border); color: var(--text-secondary); box-shadow: none; }
+.frequency input:checked:disabled+span, .weekday-picker input:checked:disabled+span, .reminder-options input:checked:disabled+span { background: var(--selection); border-color: var(--control-border); color: var(--on-selection); }
+.weekday-picker label:has(input:disabled):hover span { background: var(--surface-subtle); }
 .form-error:empty { display: none; }
 .dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 24px; }
 .dialog-actions>div { margin-left: auto; display: flex; gap: 8px; }
-.delete-button { background: none; border: 1px solid transparent; border-radius: 8px; min-height: 44px; font-size: 14px; line-height: 20px; font-weight: 500; padding: 10px 0; color: var(--danger); }
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--inverse); color: var(--on-inverse); border-radius: 12px; box-shadow: var(--menu-shadow); font-size: 14px; line-height: 20px; z-index: 9; max-width: calc(100% - 32px); }
-.toast button { border: 0; background: transparent; color: inherit; min-height: 32px; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.delete-button.outline-button { color: var(--danger); border-color: var(--danger); }
+.delete-button.outline-button:hover { background: var(--danger-surface); }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--menu-shadow); font-size: 14px; line-height: 20px; z-index: 9; max-width: calc(100% - 32px); }
+.toast button { border: 0; background: transparent; color: var(--link); min-height: 32px; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 /* Sections that open and close show an arrow that points down when open. */
 .completed-tasks>summary, .ended-routines>summary, .recovery-panel>summary { list-style: none; }
 .completed-tasks>summary::-webkit-details-marker, .ended-routines>summary::-webkit-details-marker, .recovery-panel>summary::-webkit-details-marker { display: none; }
@@ -460,6 +477,9 @@ a { color: var(--link); }
   dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); }
   #taskForm, .restore-content { padding: 16px; }
   .dialog-actions { position: sticky; bottom: -16px; margin-bottom: -16px; padding-bottom: 16px; flex-wrap: wrap; }
+  .dialog-actions .delete-button { flex-basis: 100%; }
+  .restore-actions > button { flex: 1 1 auto; }
+  #fileChoiceCancel { margin-right: 0; }
   .toast { bottom: 16px; }
   .reminder-panel { right: 16px; bottom: 16px; }
 }
