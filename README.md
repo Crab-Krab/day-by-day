@@ -43,6 +43,8 @@ The app automatically reopens its remembered file when the browser keeps access.
 
 Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows. If the browser cannot save a change, choose **Retry saving**, or the app retries with each later change. It asks before you close the tab with unsaved changes. If another tab saves different tasks meanwhile, the app asks which copy to keep.
 
+**Privacy and safety.** The app never connects to the internet, and the HTML includes a Content Security Policy, a browser rule that enforces this: the page can run only its own built-in code and can't load or send anything. One limit comes from how browsers treat local files. In Chrome and Edge, every HTML file you open from your own computer shares the same browser storage, so another local HTML file could read the tasks saved in this browser. Only open local HTML files you trust. A connected task file is not affected, since it needs your permission.
+
 Before updating:
 
 1. Use **Back up tasks** in your current copy and check that the JSON file downloaded.

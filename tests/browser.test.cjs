@@ -121,7 +121,17 @@ async function main() {
     assert.equal(await page.getByText('Opened from disk', { exact: true }).count(), 1);
     assert.deepEqual(problems, []);
     assert.deepEqual(requests, []);
-    console.log('PASS file:// opening: add, reload, no errors, nothing blocked, no outside requests');
+    // The page policy is really in force: code the app didn't ship is refused, and nothing can connect out.
+    const refused = await page.evaluate(() => new Promise(resolve => {
+      const seen = [];
+      document.addEventListener('securitypolicyviolation', event => { seen.push(event.violatedDirective.split('-')[0]); if (seen.length === 2) resolve(seen.sort()); });
+      const extra = document.createElement('script'); extra.textContent = 'window.notShipped = true'; document.head.append(extra);
+      fetch('https://example.com/').catch(() => {});
+      setTimeout(() => resolve(seen.sort()), 2000);
+    }));
+    assert.deepEqual(refused, ['connect', 'script']);
+    assert.equal(await page.evaluate(() => window.notShipped), undefined);
+    console.log('PASS file:// opening: add, reload, no errors, nothing blocked, no outside requests, and the page policy refuses outside code and connections');
     await local.close();
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 }
