@@ -663,7 +663,7 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
     </form>
   </dialog>
   <dialog id="restoreDialog" aria-labelledby="restoreTitle"><div class="restore-content"><h2 id="restoreTitle">Restore backup?</h2><p id="restoreMessage">This replaces the tasks and completion history in this browser. Export a backup first if you want to keep your current copy.</p><div class="restore-actions"><button type="button" id="cancelRestore" class="outline-button">Cancel</button><button type="button" id="confirmRestore" class="primary-button">Restore backup</button></div></div></dialog>
-  <dialog id="tabChoiceDialog" aria-labelledby="tabChoiceTitle"><div class="restore-content"><h2 id="tabChoiceTitle">Another tab changed your tasks</h2><p>This tab has changes the browser could not save. Another tab has since saved a different copy of your tasks. Choose which copy to keep. The other copy will be replaced.</p><button type="button" id="tabChoiceBackup" class="text-button">Download this tab's tasks</button><div class="restore-actions"><button type="button" id="tabChoiceOther" class="outline-button">Load the other tab's tasks</button><button type="button" id="tabChoiceKeep" class="primary-button">Keep this tab's tasks</button></div></div></dialog>
+  <dialog id="tabChoiceDialog" aria-labelledby="tabChoiceTitle"><div class="restore-content"><h2 id="tabChoiceTitle">Another tab changed your tasks</h2><p>This tab has changes that aren't saved yet, and another tab has saved a different copy of your tasks. Choose which copy to keep. The other copy will be replaced.</p><button type="button" id="tabChoiceBackup" class="text-button">Download this tab's tasks</button><div class="restore-actions"><button type="button" id="tabChoiceOther" class="outline-button">Load the other tab's tasks</button><button type="button" id="tabChoiceKeep" class="primary-button">Keep this tab's tasks</button></div></div></dialog>
   <dialog id="fileChoiceDialog" aria-labelledby="fileChoiceTitle"><div class="restore-content"><h2 id="fileChoiceTitle">Choose which tasks to keep</h2><p id="fileChoiceMessage"></p><p>The other copy will be replaced. Download your current tasks first if you need both.</p><button type="button" id="fileChoiceBackup" class="text-button">Download current tasks</button><div class="restore-actions"><button type="button" id="fileChoiceCancel" class="outline-button">Cancel</button><button type="button" id="fileChoiceCurrent" class="outline-button">Use current tasks</button><button type="button" id="fileChoiceDisk" class="outline-button">Use file tasks</button></div></div></dialog>
   <div id="toast" class="toast" hidden><span id="toastMessage"></span><button type="button" id="dismissToast" aria-label="Dismiss notification">Dismiss</button></div>
   <div id="statusAnnouncement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -676,6 +676,8 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.DayByDayCore = factory();
 })(typeof window !== 'undefined' ? window : globalThis, function () {
+  // Task files, backups and recovery copies over 10 MB are refused, so the app never keeps data past that size.
+  const SIZE_LIMIT = 10000000;
   const DAYS = Array.from({ length: 7 }, (_, day) => weekdayLabel(day));
   function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
   function weekdayLabel(day, style = 'long') { return new Intl.DateTimeFormat(undefined, { weekday: style }).format(new Date(2026, 0, 4 + day, 12)); }
@@ -905,13 +907,13 @@ dialog::backdrop { animation: backdrop-enter .2s ease-out both; }
     }
     return { version: 5, tasks, completed, weekdayOrders, routineOrder };
   }
-  return Object.freeze({ DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate });
+  return Object.freeze({ SIZE_LIMIT, DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate });
 });
 
 'use strict';
 // Optional recovery copies: earlier versions of your tasks, kept in a folder you choose.
 // Copies never stop your tasks from saving. If the folder can't be used, copies pause and the panel says so.
-window.createRecoveryCopies = function ({ validate, getData, restore, now = () => Date.now() }) {
+window.createRecoveryCopies = function ({ sizeLimit, validate, getData, restore, now = () => Date.now() }) {
   const $ = id => document.getElementById(id);
   const FOLDER = 'Day-by-Day recovery copies', KEEP = 20, HOUR = 3600000, BURST = 5 * 60000;
   // Repeated small actions, like deleting many tasks, make one copy per 5 minutes, so a cleanup can't push out older copies.
@@ -1049,7 +1051,7 @@ window.createRecoveryCopies = function ({ validate, getData, restore, now = () =
         button.onclick = async () => {
           try {
             const file = await copy.handle.getFile();
-            if (file.size > 10000000) throw new Error('too large');
+            if (file.size > sizeLimit) throw new Error('too large');
             const next = validate(JSON.parse(await file.text()));
             await restore(next, `${when(copy.stamp)}, ${LABELS[copy.reason]}`);
           } catch (_) { show('This copy could not be read, so nothing was changed. Choose another copy.'); }
@@ -1078,7 +1080,7 @@ window.createRecoveryCopies = function ({ validate, getData, restore, now = () =
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
+window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -1145,7 +1147,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   async function readFile(target, allowEmpty = false) {
     const file = await target.getFile();
-    if (file.size > 10000000) throw new Error('Choose a Day by Day JSON file smaller than 10 MB.');
+    if (file.size > sizeLimit) throw new Error('Choose a Day by Day JSON file smaller than 10 MB.');
     const raw = await file.text();
     if (!raw.trim() && allowEmpty) return { raw, canonical: null, data: null };
     let data;
@@ -1189,7 +1191,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     return callback();
   }
   async function writeSnapshot(text) {
-    if (new Blob([text]).size > 10000000) throw new Error('These tasks exceed the 10 MB task-file limit. Export a backup and reduce the task data before saving.');
+    if (new Blob([text]).size > sizeLimit) throw new Error('These tasks exceed the 10 MB task-file limit. Export a backup and reduce the task data before saving.');
     await withFileLock(async () => {
       // Exclusive mode and the second read protect against another writer between
       // our last read and acquiring the writable stream. Never silently overwrite.
@@ -1376,7 +1378,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   const KEY = 'day-by-day.v1';
   let fileStore = null, recovery = null;
   const $ = id => document.getElementById(id);
-  const { DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate } = window.DayByDayCore;
+  const { SIZE_LIMIT, DAYS, dateKey, weekdayLabel, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, routineFields, createRoutine, routineVersion, resolveTask, scheduled, completedSnapshots, reviseRoutine, orderByIds, moveOrderedId, lastRoutineDate, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, descriptionPreview, descriptionParts, dueTime, formatTime, reminderKey, dueReminders, validate } = window.DayByDayCore;
   const activeMotion = new WeakMap();
   function motionEnabled() { return typeof $('dailyView').animate === 'function' && (typeof window.matchMedia !== 'function' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
   function playMotion(element, frames, options = {}) {
@@ -1426,6 +1428,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   const empty = () => ({ version: 5, tasks: [], completed: {}, weekdayOrders: {}, routineOrder: null });
   let data = empty(), persistent = true, loadFailed = false, originalSavedData = null, browserUnsaved = false;
+  // The browser copy as this tab last read or wrote it. If storage holds something else, another tab saved first.
+  let storedText = null;
   function storageError(message) {
     if (fileStore?.isConnected()) message = 'The browser copy could not be saved. Check the task-file status above to confirm your JSON file is saved.';
     fileStore?.showDetails();
@@ -1436,15 +1440,13 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('saveStatus').textContent = fileStore?.isConnected() ? 'Browser copy unavailable' : loadFailed ? 'Not saved · recover original data' : 'Not saved · back up your tasks';
   }
   try {
-    originalSavedData = localStorage.getItem(KEY);
+    originalSavedData = storedText = localStorage.getItem(KEY);
     if (originalSavedData) data = validate(JSON.parse(originalSavedData));
     originalSavedData = null;
   } catch (_) {
     loadFailed = true;
     storageError(originalSavedData === null ? 'Saved tasks could not be accessed. Changes will last only for this session. Browser storage may be unavailable.' : 'Saved tasks could not be loaded. Your original saved data has been kept untouched. Download it for recovery before restoring a backup. Changes will last only for this session.');
   }
-  // Task files and backups over 10 MB are refused when opened, so the app never keeps data past that size.
-  const SIZE_LIMIT = 10000000;
   function savedBytes(value) {
     const text = JSON.stringify(value, null, 2) + '\n';
     return typeof Blob === 'function' ? new Blob([text]).size : text.length;
@@ -1452,7 +1454,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   // The last accepted data, used to undo a change that fails the checks in save().
   let lastGood = JSON.stringify(data), lastGoodBytes = savedBytes(data);
   function rememberGood() { lastGood = JSON.stringify(data); lastGoodBytes = savedBytes(data); }
-  let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null, editingReadOnly = false;
+  let today = dateKey(new Date()), selected = today, month = parseDate(today), view = 'day', editingId = null, editingReadOnly = false, editingBase = null;
   let renderedOverdueKey = '';
   function overdueKey(tasks) { return JSON.stringify(tasks.map(task => [task.date, task.id])); }
   const expandedDescriptions = new Set();
@@ -1550,8 +1552,16 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   function writeBrowserCopy(replaceUnreadable, text = JSON.stringify(data)) {
     // Saved data that could not be read stays untouched for recovery until the user restores over it.
     if (loadFailed && !replaceUnreadable) { browserUnsaved = true; return; }
+    // Two tabs saving at nearly the same moment would otherwise overwrite each other's change.
+    // Ask which copy to keep instead. A connected task file is authoritative, so it skips this check.
+    if (!replaceUnreadable && !fileStore?.ownsCache()) {
+      let current = storedText;
+      try { current = localStorage.getItem(KEY); } catch (_) { /* Reading failed; the write below reports it. */ }
+      if (current !== storedText) { browserUnsaved = true; chooseTab(current); return; }
+    }
     try {
       localStorage.setItem(KEY, text);
+      storedText = text;
       browserUnsaved = false;
       // Retry after every failure, so a temporary problem such as a full disk clears itself.
       if (!persistent && !loadFailed) { $('storageWarning').hidden = true; $('saveStatus').textContent = 'Saved in this browser'; }
@@ -1910,7 +1920,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('overdueSection').hidden = selected !== today || !overdue.length;
     $('overdueCount').textContent = overdue.length;
     $('overdueList').replaceChildren(...overdueEarlier.map(task => taskRow(task, false, [task], task.date, true)), ...overdueToday.map(task => taskRow(task, false, overdueToday, today, true)));
-    const skipped = data.tasks.filter(task => task.kind === 'weekly' && task.exceptions?.includes(selected) && (!task.endedOn || selected < task.endedOn));
+    // Only list skips that restoring would bring back. A routine later changed to other days no longer runs on this date.
+    const skipped = data.tasks.filter(task => task.kind === 'weekly' && task.exceptions?.includes(selected) && (!task.endedOn || selected < task.endedOn) && scheduled({ ...task, exceptions: [] }, selected));
     $('skippedSection').hidden = !skipped.length;
     $('skippedList').replaceChildren(...skipped.map(task => {
       const item = el('div', 'history-item'), version = resolveTask(task, selected) || task;
@@ -1995,7 +2006,9 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     dialogCycle++;
     dialogFocusTarget = { taskId: task?.id, fallback: document.activeElement };
     setTaskOptions(Boolean(task) || kind === 'weekly');
-    editingId = task?.id || null; $('taskForm').reset(); $('formError').textContent = '';
+    editingId = task?.id || null; $('taskForm').reset();
+    // The task as stored when the window opened, to notice if another tab changes or deletes it meanwhile.
+    editingBase = source ? JSON.stringify(data.tasks.find(item => item.id === source.id) || null) : null; $('formError').textContent = '';
     $('dialogTitle').textContent = task ? 'Edit task' : 'Add a task'; $('saveTask').textContent = task ? 'Save changes' : 'Add task'; $('deleteTask').hidden = !task;
     $('deleteTask').textContent = task?.kind === 'weekly' ? 'End routine' : 'Delete task';
     [...$('taskForm').elements.kind].forEach(input => { input.disabled = source?.kind === 'weekly'; });
@@ -2041,7 +2054,15 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     const time = $('taskForm').elements.timing.value === 'timed' ? $('taskTime').value : null;
     if (time !== null && !validTime(time)) { setTaskOptions(true); $('formError').textContent = 'Choose a valid time, or select All day.'; $('taskTime').focus(); return; }
     const reminders = time ? reminderInputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => b - a) : [];
-    const previous = data.tasks.find(task => task.id === editingId);
+    let previous = data.tasks.find(task => task.id === editingId);
+    // Another tab may have deleted or changed this task while the window was open.
+    if (editingId && !previous) {
+      if (!window.confirm('This task was deleted in another tab while you were editing it. Save your version as a new task?\n\nChoose Cancel to keep editing without saving.')) { $('formError').textContent = 'Not saved. This task was deleted in another tab.'; return; }
+      editingId = null; editingBase = null;
+    } else if (editingId && JSON.stringify(previous) !== editingBase) {
+      if (!window.confirm('This task was changed in another tab while you were editing it. Save your version and replace those changes?\n\nChoose Cancel to keep editing without saving.')) { $('formError').textContent = 'Not saved. Close and reopen the task to see the other tab\'s changes.'; return; }
+      editingBase = JSON.stringify(previous);
+    }
     // Keep saved data within the limits the app accepts when it loads.
     if (!previous && data.tasks.length >= 20000) { $('formError').textContent = 'You have reached the 20,000-task limit. Delete unused tasks before adding more.'; return; }
     const id = editingId || newTaskId();
@@ -2089,7 +2110,8 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   $('everydayPreset').onclick = () => { selectWeekdays([1, 2, 3, 4, 5, 6, 0]); $('formError').textContent = ''; updateHint(); };
   $('deleteTask').onclick = () => {
     if (editingReadOnly) return;
-    const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId); if (!task) return;
+    const task = data.tasks.find(t => t.id === editingId), index = data.tasks.findIndex(t => t.id === editingId);
+    if (!task) { closeTaskDialog(); notify('This task was already deleted in another tab.'); return; }
     if (task.kind === 'weekly') {
       const effective = $('taskEffectiveDate').value;
       if (!validDate(effective) || effective < today) { setTaskOptions(true); $('formError').textContent = 'Choose an end date on or after today.'; $('taskEffectiveDate').focus(); return; }
@@ -2106,7 +2128,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     }
     dialogFocusTarget = { taskId: data.tasks[index + 1]?.id || data.tasks[index - 1]?.id };
     recovery?.keep('delete');
-    data.tasks.splice(index, 1); if (!save()) return; closeTaskDialog(); notify(task.kind === 'weekly' ? 'Weekly routine deleted.' : 'Task deleted.', () => { data.tasks.splice(index, 0, task); });
+    data.tasks.splice(index, 1); if (!save()) return; closeTaskDialog(); notify('Task deleted.', () => { data.tasks.splice(index, 0, task); });
   };
   for (const id of ['closeDialog', 'cancelDialog']) $(id).onclick = closeTaskDialog;
   $('taskDialog').addEventListener('cancel', event => { event.preventDefault(); closeTaskDialog(); });
@@ -2206,7 +2228,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   $('restoreFile').onchange = async () => {
     const file = $('restoreFile').files[0]; if (!file) return;
     try {
-      if (file.size > 10000000) throw new Error('This file is too large. Choose a Day by Day backup under 10 MB.');
+      if (file.size > SIZE_LIMIT) throw new Error('This file is too large. Choose a Day by Day backup under 10 MB.');
       await replaceAllTasks(validate(JSON.parse(await file.text())));
     } catch (error) { notify(error instanceof SyntaxError ? 'This is not a valid JSON backup.' : error.message); }
     finally { $('restoreFile').value = ''; }
@@ -2318,6 +2340,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   function loadOtherTab(value) {
     data = value ? validate(JSON.parse(value)) : empty();
+    storedText = value;
     loadFailed = false; originalSavedData = null; persistent = true; browserUnsaved = false; rememberGood();
     $('storageWarning').hidden = true; $('downloadOriginalData').hidden = true; $('saveStatus').textContent = 'Saved in this browser';
     undoNotice.hide();
@@ -2335,7 +2358,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     $('tabChoiceDialog').close();
     try { recovery?.keep('choice', otherTabValue ? JSON.parse(otherTabValue) : empty()); } catch (_) { /* Unreadable tasks can't be copied. */ }
     // The other tab already replaced any unreadable original in storage, so this tab may write again.
-    loadFailed = false;
+    loadFailed = false; storedText = otherTabValue;
     writeBrowserCopy(false);
     if (!browserUnsaved && originalSavedData !== null) {
       $('storageWarning').hidden = false; $('downloadOriginalData').hidden = false; $('retrySave').hidden = true;
@@ -2407,10 +2430,10 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
-  recovery = window.createRecoveryCopies({ validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label) });
+  recovery = window.createRecoveryCopies({ sizeLimit: SIZE_LIMIT, validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label) });
   void recovery.init();
   fileStore = window.createTaskFileStorage({
-    getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
+    sizeLimit: SIZE_LIMIT, getData: () => data, validate, backup, hasRecovery: () => loadFailed, keepCopy: (reason, value) => recovery.keep(reason, value),
     waitForEditor: () => $('taskDialog').open ? new Promise(resolve => $('taskDialog').addEventListener('close', resolve, { once: true })) : null,
     applyData(next) {
       data = validate(next); undoNotice.hide();

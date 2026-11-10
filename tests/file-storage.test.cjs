@@ -40,7 +40,7 @@ function boot({data=empty(),store={},file=disk(),supported=true,storageFails=fal
     showSaveFilePicker:async()=>file, showOpenFilePicker:async()=>[file]};
   const context={window,document:{getElementById:node,querySelector:()=>shell},indexedDB:database||idb(store,storageFails),setTimeout:quickTimeouts?(fn,ms)=>ms===4000?(queueMicrotask(fn),0):setTimeout(fn,ms):setTimeout,clearTimeout,console,Blob,navigator:{locks}};
   vm.createContext(context);vm.runInContext(source,context);
-  const controller=window.createTaskFileStorage({getData:()=>state,validate:valid,applyData:value=>state=valid(value),backup:()=>{},hasRecovery:()=>recovery,keepCopy});
+  const controller=window.createTaskFileStorage({sizeLimit:helpers.SIZE_LIMIT,getData:()=>state,validate:valid,applyData:value=>state=valid(value),backup:()=>{},hasRecovery:()=>recovery,keepCopy});
   return {controller,nodes,window,store,file,listeners,shell,state:()=>state,change(value){state=value;controller.changed();},click:id=>nodes[id].onclick(),title:()=>nodes.taskFileStatus.textContent};
 }
 async function main() {

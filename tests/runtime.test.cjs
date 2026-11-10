@@ -773,7 +773,7 @@ async function verifySecondReviewFixes() {
   const options={storageWriteFails:true},plain={id:'a',kind:'once',title:'Mine',date:'2026-11-04'};
   const other=JSON.stringify({version:5,tasks:[plain,{id:'b',kind:'once',title:'From other tab',date:'2026-11-04'}],completed:{}});
   const warns=target=>{let prevented=false;for(const fn of target.windowListeners.beforeunload||[])fn({preventDefault(){prevented=true;}});return prevented;};
-  const otherTabSaves=target=>{for(const fn of target.windowListeners.storage||[])fn({key,newValue:other});};
+  const otherTabSaves=target=>{target.storage.set(key,other);for(const fn of target.windowListeners.storage||[])fn({key,newValue:other});}; // a real browser has already stored it
   app=boot(store([plain]),wed,options);row(app,'a').querySelector('.check-button').onclick();otherTabSaves(app);
   assert.equal(app.ids.tabChoiceDialog.open,true);assert.equal(row(app,'a').querySelector('.check-button').getAttribute('aria-pressed'),'true');assert.equal(row(app,'b'),undefined);assert.equal(app.ids.storageWarning.hidden,false);
   app.ids.tabChoiceDialog.dispatch('cancel');assert.equal(app.ids.tabChoiceDialog.open,true); // Escape cannot skip the choice
@@ -1038,3 +1038,45 @@ function verifyClickOutsideTaskDialog() {
   console.log('Click outside task window passed: closes when untouched, asks before discarding typed changes, and ignores clicks inside or drags that start inside.');
 }
 verifyClickOutsideTaskDialog();
+function verifyAuditTabFixes() {
+  const key='day-by-day.v1',clock=new Date(2026,10,4,10).getTime();
+  const store=tasks=>new Map([[key,JSON.stringify({version:5,tasks,completed:{}})]]);
+  const row=(app,id)=>app.ids.taskList.querySelectorAll('.task-row').find(item=>item.dataset.id===id);
+  const titles=storage=>JSON.parse(storage.get(key)).tasks.map(task=>task.title).sort();
+  const hears=(app,value)=>{app.storage.set(key,value);for(const fn of app.windowListeners.storage||[])fn({key,newValue:value});};
+  const task={id:'a',kind:'once',title:'Original',date:'2026-11-04'};
+  // Two tabs saving before either hears about the other: the second asks instead of overwriting (audit AUD-01).
+  const shared=store([task]),one=boot(shared,clock),two=boot(shared,clock);
+  one.ids.addTask.onclick();one.ids.taskTitle.value='From tab one';one.ids.taskForm.dispatch('submit');
+  two.ids.addTask.onclick();two.ids.taskTitle.value='From tab two';two.ids.taskForm.dispatch('submit');
+  assert.deepEqual(titles(shared),['From tab one','Original']);assert.equal(two.ids.tabChoiceDialog.open,true);
+  two.ids.tabChoiceKeep.onclick();assert.deepEqual(titles(shared),['From tab two','Original']); // an explicit choice, never a silent loss
+  // Editing a task another tab deleted: asks, and Cancel keeps the window and the draft (audits AUD-02, F-06).
+  let asked=[],answer=false;const app=boot(store([task]),clock);app.context.window.confirm=message=>{asked.push(message);return answer;};
+  row(app,'a').querySelector('.edit-task').onclick();app.ids.taskTitle.value='My draft';
+  hears(app,JSON.stringify({version:5,tasks:[],completed:{}}));app.ids.taskForm.dispatch('submit');
+  assert.match(asked[0],/deleted in another tab/);assert.equal(app.ids.taskDialog.open,true);assert.equal(app.ids.taskTitle.value,'My draft');
+  assert.match(app.ids.formError.textContent,/Not saved/);assert.notEqual(app.ids.toastMessage.textContent,'Task updated.');
+  // Saving as a new task keeps the draft.
+  answer=true;app.ids.taskForm.dispatch('submit');assert.equal(app.ids.taskDialog.open,false);assert.deepEqual(titles(app.storage),['My draft']);
+  // Editing a task another tab renamed: asks before replacing their change.
+  const mine=app.state().tasks[0];asked=[];answer=false;
+  row(app,mine.id).querySelector('.edit-task').onclick();app.ids.taskTitle.value='My second draft';
+  hears(app,JSON.stringify({version:5,tasks:[{...mine,title:'Renamed elsewhere'}],completed:{}}));app.ids.taskForm.dispatch('submit');
+  assert.match(asked[0],/changed in another tab/);assert.equal(app.ids.taskDialog.open,true);assert.deepEqual(titles(app.storage),['Renamed elsewhere']);
+  answer=true;app.ids.taskForm.dispatch('submit');assert.deepEqual(titles(app.storage),['My second draft']);
+  // An ordinary edit with no other tab asks nothing.
+  asked=[];row(app,mine.id).querySelector('.edit-task').onclick();app.ids.taskTitle.value='Plain edit';app.ids.taskForm.dispatch('submit');
+  assert.equal(asked.length,0);assert.equal(app.ids.toastMessage.textContent,'Task updated.');
+  // Deleting a task another tab already deleted says so.
+  row(app,mine.id).querySelector('.edit-task').onclick();hears(app,JSON.stringify({version:5,tasks:[],completed:{}}));app.ids.deleteTask.onclick();
+  assert.equal(app.ids.taskDialog.open,false);assert.equal(app.ids.toastMessage.textContent,'This task was already deleted in another tab.');
+  // A skipped day the routine no longer runs on isn't offered for restoring (audit F-07).
+  const routine={id:'r',kind:'weekly',title:'Tuesday routine',weekdays:[2],startDate:'2026-10-01',exceptions:['2026-11-09','2026-11-10']};
+  const skips=boot(store([routine]),clock);
+  skips.ids.jumpDate.value='2026-11-09';skips.ids.jumpDate.onchange();assert.equal(skips.ids.skippedSection.hidden,true); // a Monday
+  skips.ids.jumpDate.value='2026-11-10';skips.ids.jumpDate.onchange();assert.equal(skips.ids.skippedSection.hidden,false); // a Tuesday
+  skips.ids.skippedList.querySelector('.restore-occurrence').onclick();assert.equal(skips.ids.toastMessage.textContent,'Occurrence restored.');assert.ok(row(skips,'r'));
+  console.log('Audit tab fixes passed: near-simultaneous saves ask which copy to keep, edits to tasks deleted or changed in another tab ask first, ordinary edits ask nothing, and only restorable skipped days are listed.');
+}
+verifyAuditTabFixes();

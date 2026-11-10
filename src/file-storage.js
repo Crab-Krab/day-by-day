@@ -1,7 +1,7 @@
 'use strict';
 // File contents are the durable store. IndexedDB remembers only the connection
 // and the last synchronized state; losing browser data never deletes the file.
-window.createTaskFileStorage = function ({ getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
+window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
   const $ = id => document.getElementById(id);
   const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
@@ -68,7 +68,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   async function readFile(target, allowEmpty = false) {
     const file = await target.getFile();
-    if (file.size > 10000000) throw new Error('Choose a Day by Day JSON file smaller than 10 MB.');
+    if (file.size > sizeLimit) throw new Error('Choose a Day by Day JSON file smaller than 10 MB.');
     const raw = await file.text();
     if (!raw.trim() && allowEmpty) return { raw, canonical: null, data: null };
     let data;
@@ -112,7 +112,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     return callback();
   }
   async function writeSnapshot(text) {
-    if (new Blob([text]).size > 10000000) throw new Error('These tasks exceed the 10 MB task-file limit. Export a backup and reduce the task data before saving.');
+    if (new Blob([text]).size > sizeLimit) throw new Error('These tasks exceed the 10 MB task-file limit. Export a backup and reduce the task data before saving.');
     await withFileLock(async () => {
       // Exclusive mode and the second read protect against another writer between
       // our last read and acquiring the writable stream. Never silently overwrite.
