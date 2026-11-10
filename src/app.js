@@ -519,8 +519,8 @@
     $('dayOrderScope').textContent = `${data.weekdayOrders[parseDate(selected).getDay()] ? 'Custom order' : 'Due time'} · reordering repeats every ${DAYS[parseDate(selected).getDay()]}`;
     $('routineOrderScope').textContent = `${data.routineOrder ? 'Custom order' : 'Due time'} · catalog only`;
     $('sortRoutines').hidden = !data.routineOrder;
-    $('dateEyebrow').textContent = `${selected === today ? 'TODAY · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}`;
-    $('dayTitle').replaceChildren(document.createTextNode(DAYS[parseDate(selected).getDay()]), el('span', '', '.'));
+    $('dateEyebrow').textContent = `${selected === today ? 'Today · ' : ''}${fmt(selected, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    $('dayTitle').textContent = DAYS[parseDate(selected).getDay()];
     $('jumpToday').hidden = selected === today;
     const tasks = selected === today ? todayTasks : tasksOn(selected);
     const unfinished = tasks.filter(t => !isDone(t.id));

@@ -32,6 +32,14 @@ assert.match(html, /<meta name="theme-color"/, 'theme.js needs the theme-color m
 for (const tag of ['<link rel="stylesheet" href="styles.css">', '<script src="theme.js"></script>', '<script src="app.js" defer></script>', '<script src="schedule.js" defer></script>', '<script src="recovery.js" defer></script>', '<script src="file-storage.js" defer></script>']) {
   assert.equal(html.split(tag).length - 1, 1, `index.html must contain ${tag} once for the build`);
 }
+// The 2.0 palette replaced the green one everywhere: styles, theme colors, and the tab icon.
+const legacyGreens = ['236653', '1b5142', '397a5f', '3c8062', 'dfe8d7', '2c604b', 'd0dfc6', 'f2f5ed', 'e8eee0', 'f8faf4', '68785f', '96643d', '7a8d6e', 'f6f7f2', 'eef1e8', '243c34', '151c19', '202b25', '85a970', '79a16d', 'd6e8c6', 'd2e7ba', '284f3e', '3b6046', 'e0efb7', 'fff2df', '815218', '17291f', '070d0a'];
+for (const file of ['styles.css', 'theme.js', 'index.html', 'app.js']) {
+  const text = fs.readFileSync('src/' + file, 'utf8').toLowerCase();
+  const found = legacyGreens.filter(hex => text.includes('#' + hex) || text.includes('%23' + hex));
+  assert.deepEqual(found, [], `src/${file} still uses colors from the old green palette`);
+}
+assert.doesNotMatch(fs.readFileSync('src/styles.css', 'utf8'), /Georgia/, 'the serif headings were replaced by the system font');
 console.log(`Markup passed: ${declared.length} unique element ids, all ${referenced.size} looked up by the scripts present, shared page parts and build tags intact.`);
 
 // A saved file using every part of format 5: routine versions, a completed snapshot, a skipped and a

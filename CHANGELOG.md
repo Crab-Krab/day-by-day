@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+Work in progress toward 2.0, a redesign of how the app looks. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged.
+
+- New look: grey surfaces in light and dark mode, with violet for actions, selection and focus. The green palette is gone, including the tab icon and browser color.
+- One system font throughout, with a consistent text scale. Day and dialog titles no longer use a serif font, and the date above the day title is no longer in capitals.
+- Buttons, fields and choices share one size (44 pixels tall), corner shape and focus outline. Pressed buttons no longer shrink, and checkmarks no longer zoom in.
+- Messages at the bottom of the screen use a neutral dark (or, in dark mode, light) style. Save problems use red, paused recovery copies use amber.
 - Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 2.0 redesign. The app itself is unchanged.
 
 ## 1.6.3 — 2026-11-10

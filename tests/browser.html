@@ -97,7 +97,7 @@ run.onclick = async () => {
     app.$('nextMonth').click(); app.$('nextMonth').click();
     check(app.$('calendarGrid').querySelectorAll('button[tabindex="0"]').length === 1, 'After changing month, exactly one calendar day can be reached with Tab');
     app.$('jumpDate').value = '2026-12-31'; app.$('jumpDate').dispatchEvent(new Event('change', { bubbles: true }));
-    check(app.$('dateEyebrow').textContent.includes('DECEMBER 31, 2026'), 'Go to date opens the typed date');
+    check(app.$('dateEyebrow').textContent.includes('December 31, 2026'), 'Go to date opens the typed date');
     const lastDay = app.$('calendarGrid').querySelector('[data-date="2026-12-31"]');
     lastDay.focus(); lastDay.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     check(app.doc.activeElement.dataset.date === '2027-01-01', 'Arrow keys move into the next year and keep focus');

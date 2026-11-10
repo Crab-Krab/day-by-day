@@ -74,7 +74,7 @@ async function verifyMotion() {
   const weekButton=moving.ids.weekStrip.children[1], monthButton=moving.ids.calendarGrid.children[0];
   weekButton.onclick(); assert.equal(moving.ids.weekStrip.children[1],weekButton); assert.equal(moving.ids.calendarGrid.children[0],monthButton);
   moving.ids.weekStrip.children[6].onclick();
-  assert.equal(moving.ids.dayTitle.textContent,'Sunday.'); assert.equal(moving.ids.routinesView.hidden,true);
+  assert.equal(moving.ids.dayTitle.textContent,'Sunday'); assert.equal(moving.ids.routinesView.hidden,true);
   const dayFades=moving.animations.filter(animation=>animation.node===moving.ids.dayTitle);
   assert.equal(dayFades.length>=2,true); assert.equal(dayFades.some(animation=>animation.cancelled),true);
   assert.equal(dayFades.every(animation=>animation.frames.every(frame=>!('transform' in frame))),true);
@@ -378,7 +378,7 @@ async function verifyOverdue() {
   work.clock(new Date(2026,9,28,14,0).getTime());work.windowListeners.focus.forEach(callback=>callback());
   assert.equal(ids(work.ids.overdueList).includes('once'),true);assert.equal(ids(work.ids.taskList).includes('all'),true);
   work.clock(new Date(2026,9,29,0,0).getTime());work.documentListeners.visibilitychange.forEach(callback=>callback());
-  assert.equal(work.ids.dayTitle.textContent,'Thursday.');assert.equal(ids(work.ids.overdueList).includes('all'),true);
+  assert.equal(work.ids.dayTitle.textContent,'Thursday');assert.equal(ids(work.ids.overdueList).includes('all'),true);
   assert.equal(ids(work.ids.overdueList).includes('routine'),false);assert.equal(ids(work.ids.taskList).includes('routine'),true);
   // Keep the edit dialog and unsaved text intact if a deadline passes while it is open.
   const editing=boot(new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[tasks[3]],completed:{}})]]),clock);
@@ -527,7 +527,7 @@ function verifyAnnouncementAndFocusFixes() {
     const labels=moving.ids.overdueList.querySelectorAll('.check-button').map(button=>button.getAttribute('aria-label'));
     assert.equal(new Set(labels).size,2);assert.ok(labels.every(label=>label.includes('2026')));
     moving.ids.weekStrip.children[1].onclick();moving.ids.taskList.querySelector('.move-today').onclick();
-    assert.equal(moving.ids.dayTitle.textContent,'Wednesday.');assert.equal(moving.state().tasks[0].date,'2026-10-28');
+    assert.equal(moving.ids.dayTitle.textContent,'Wednesday');assert.equal(moving.state().tasks[0].date,'2026-10-28');
     const container=time?moving.ids.overdueList:moving.ids.taskList;
     const moved=container.querySelectorAll('.task-row').find(item=>item.dataset.id==='moved');
     assert.equal(moving.context.document.activeElement,moved.querySelector('.edit-task'));
@@ -551,7 +551,7 @@ function verifyMoveToTomorrow() {
   assert.equal(control.getAttribute('aria-label'),'Move Evening task to tomorrow');control.onclick();
   let moved=app.state().tasks[0];assert.equal(moved.date,'2026-11-05');assert.equal(moved.time,'18:30');assert.equal(moved.id,task.id);
   assert.equal(moved.description,task.description);assert.deepEqual(moved.reminders,[15,5]);assert.equal(moved.reminderFrom,now);
-  assert.equal(app.ids.dayTitle.textContent,'Wednesday.');assert.equal(app.ids.overdueSection.hidden,true);assert.equal(app.ids.todayCount.textContent,'0');
+  assert.equal(app.ids.dayTitle.textContent,'Wednesday');assert.equal(app.ids.overdueSection.hidden,true);assert.equal(app.ids.todayCount.textContent,'0');
   assert.equal(app.context.document.activeElement,app.ids.inlineAdd);assert.equal(app.ids.reminderPanel.hidden,true);
   assert.equal(app.state().completed['2026-11-04'],undefined);
   control.onclick();assert.equal(app.state().tasks[0].date,'2026-11-05'); // stale double click does not move again
@@ -588,7 +588,7 @@ function verifyMoveToTomorrow() {
   app=make([{...routine,weekdays:[3],versions:undefined,snapshots:undefined}]);row(app,'routine').querySelector('.move-tomorrow').onclick();
   const weekly=app.state().tasks[0];assert.equal(app.context.window.DayByDay.scheduled(weekly,'2026-11-05'),false);assert.equal(app.context.window.DayByDay.scheduled(weekly,'2026-11-11'),true);
   // Do not turn a stale post-midnight control into another date change.
-  app=make([task]);const stale=row(app,task.id).querySelector('.move-tomorrow');app.clock(new Date(2026,10,5,0).getTime());stale.onclick();assert.equal(app.state().tasks[0].date,'2026-11-04');assert.equal(app.ids.dayTitle.textContent,'Thursday.');
+  app=make([task]);const stale=row(app,task.id).querySelector('.move-tomorrow');app.clock(new Date(2026,10,5,0).getTime());stale.onclick();assert.equal(app.state().tasks[0].date,'2026-11-04');assert.equal(app.ids.dayTitle.textContent,'Thursday');
   // Calendar arithmetic handles month/year changes, leap day, and DST without adding fixed milliseconds.
   for(const [from,to] of [['2026-12-31','2027-01-01'],['2028-02-28','2028-02-29'],['2026-10-31','2026-11-01'],['2026-03-08','2026-03-09']]) {
     const [y,m,d]=from.split('-').map(Number);app=make([{...task,date:from}],{},new Date(y,m-1,d,19).getTime());row(app,task.id).querySelector('.move-tomorrow').onclick();assert.equal(app.state().tasks[0].date,to);
@@ -683,7 +683,7 @@ async function verifySecondReviewFixes() {
   let low=1800,high=2000;while(low<high){const middle=Math.ceil((low+high)/2);if(bytes(middle)<=limit)low=middle;else high=middle-1;}
   app=boot(store(bulky.slice(0,low)),wed);const kept=app.storage.get(key);
   app.ids.addTask.onclick();app.ids.taskTitle.value='One too large';app.ids.taskDescription.value='y'.repeat(5000);app.ids.taskForm.dispatch('submit');
-  assert.equal(app.storage.get(key),kept);assert.equal(app.ids.taskDialog.open,true);assert.match(app.ids.formError.textContent,/10 MB limit/);assert.equal(app.ids.dayTitle.textContent,'Wednesday.');
+  assert.equal(app.storage.get(key),kept);assert.equal(app.ids.taskDialog.open,true);assert.match(app.ids.formError.textContent,/10 MB limit/);assert.equal(app.ids.dayTitle.textContent,'Wednesday');
   // Data that is already too large can still shrink, so deleting is never blocked.
   app=boot(store(bulky.slice(0,low+10).map(task=>({...task,date:'2026-11-04'}))),wed);assert.ok(bytes(low+10)>limit);
   row(app,'big0').querySelector('.edit-task').onclick();app.ids.deleteTask.onclick();
@@ -746,11 +746,11 @@ function verifyMovedLinks() {
   const forward=app.ids.skippedList.querySelector('.moved-link');
   assert.match(forward.textContent,/^Moved to /);assert.match(forward.getAttribute('aria-label'),/Evening run was moved to .*Go to that day/);
   forward.onclick();
-  assert.equal(app.ids.dayTitle.textContent,'Thursday.');assert.equal(app.context.document.activeElement,row(app,copy.id).querySelector('.edit-task'));
+  assert.equal(app.ids.dayTitle.textContent,'Thursday');assert.equal(app.context.document.activeElement,row(app,copy.id).querySelector('.edit-task'));
   const back=row(app,copy.id).querySelector('.moved-link');
   assert.match(back.textContent,/^Moved from /);assert.equal(row(app,copy.id).querySelector('.task-meta').textContent,'One time');
   back.onclick();
-  assert.equal(app.ids.dayTitle.textContent,'Wednesday.');assert.equal(app.context.document.activeElement,app.ids.skippedTitle);
+  assert.equal(app.ids.dayTitle.textContent,'Wednesday');assert.equal(app.context.document.activeElement,app.ids.skippedTitle);
   // The link survives a reload, and ordinary one-time tasks get none.
   app=boot(app.storage,new Date(2026,10,5,9).getTime());
   assert.ok(row(app,copy.id).querySelector('.moved-link'));assert.equal(row(app,'routine').querySelector('.moved-link'),null);
@@ -768,15 +768,15 @@ function verifyCalendarKeyboard() {
   app.ids.nextMonth.onclick();assert.deepEqual(tabbable(),['2027-01-01']);
   app.ids.prevMonth.onclick();app.ids.prevMonth.onclick();assert.deepEqual(tabbable(),['2026-11-04']);
   // Arrow keys move by day and week, select the day, and carry focus, across month and year boundaries.
-  assert.equal(press('ArrowRight','2026-11-04'),true);assert.deepEqual(tabbable(),['2026-11-05']);assert.equal(app.context.document.activeElement.dataset.date,'2026-11-05');assert.equal(app.ids.dayTitle.textContent,'Thursday.');
+  assert.equal(press('ArrowRight','2026-11-04'),true);assert.deepEqual(tabbable(),['2026-11-05']);assert.equal(app.context.document.activeElement.dataset.date,'2026-11-05');assert.equal(app.ids.dayTitle.textContent,'Thursday');
   press('ArrowUp','2026-11-05');assert.equal(app.context.document.activeElement.dataset.date,'2026-10-29');assert.match(app.ids.monthLabel.textContent,/October/);
   press('ArrowLeft','2026-10-29');press('ArrowDown','2026-10-28');assert.equal(app.context.document.activeElement.dataset.date,'2026-11-04');
   app.ids.jumpDate.value='2026-12-29';app.ids.jumpDate.onchange();press('ArrowDown','2026-12-29');
   assert.equal(app.context.document.activeElement.dataset.date,'2027-01-05');assert.match(app.ids.monthLabel.textContent,/2027/);
   assert.equal(press('Enter','2027-01-05'),false);assert.equal(app.context.document.activeElement.dataset.date,'2027-01-05'); // other keys keep their usual meaning
   // Go to date opens any day, ignores an empty or invalid value, and follows other navigation.
-  app.ids.jumpDate.value='2027-03-15';app.ids.jumpDate.onchange();assert.equal(app.ids.dayTitle.textContent,'Monday.');assert.deepEqual(tabbable(),['2027-03-15']);
-  app.ids.jumpDate.value='';app.ids.jumpDate.onchange();app.ids.jumpDate.value='2027-02-30';app.ids.jumpDate.onchange();assert.equal(app.ids.dayTitle.textContent,'Monday.');
+  app.ids.jumpDate.value='2027-03-15';app.ids.jumpDate.onchange();assert.equal(app.ids.dayTitle.textContent,'Monday');assert.deepEqual(tabbable(),['2027-03-15']);
+  app.ids.jumpDate.value='';app.ids.jumpDate.onchange();app.ids.jumpDate.value='2027-02-30';app.ids.jumpDate.onchange();assert.equal(app.ids.dayTitle.textContent,'Monday');
   app.ids.nextWeek.onclick();assert.equal(app.ids.jumpDate.value,'2027-03-22');
   console.log('Calendar keyboard passed: one Tab stop that survives month changes, arrow keys across month and year boundaries with focus, other keys untouched, and Go to date.');
 }
@@ -940,7 +940,7 @@ function verifyComingUp() {
   assert.match(text(days()[4]),/Mon, Nov 9.*All done/);assert.deepEqual(names(days()[4]),['Finished early']);
   // Clicking a day opens it, and the column then follows that day.
   days()[2].onclick();
-  assert.equal(app.ids.dayTitle.textContent,'Saturday.');assert.equal(app.ids.comingUpHint.textContent,'7 days after Sat, Nov 7');
+  assert.equal(app.ids.dayTitle.textContent,'Saturday');assert.equal(app.ids.comingUpHint.textContent,'7 days after Sat, Nov 7');
   // A skipped routine occurrence is left out (Gym is skipped on Thu, Nov 12).
   assert.match(text(days()[4]),/Thu, Nov 12.*Nothing planned/);
   // A seventh task on a day shows as "+1 more" after six names.
