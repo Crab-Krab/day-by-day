@@ -6,9 +6,10 @@
   "license": "MIT",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node tests/schedule.test.cjs && node tests/runtime.test.cjs && node tests/theme.test.cjs && node tests/history.test.cjs && node tests/file-storage.test.cjs && node tests/ui.test.cjs",
+    "test": "node tests/schedule.test.cjs && node tests/runtime.test.cjs && node tests/theme.test.cjs && node tests/history.test.cjs && node tests/file-storage.test.cjs && node tests/ui.test.cjs && node tests/markup.test.cjs",
     "test:browser": "node tests/browser.test.cjs",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "engines": {
     "node": ">=22"

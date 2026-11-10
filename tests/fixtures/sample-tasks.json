@@ -1,0 +1,181 @@
+{
+  "version": 5,
+  "tasks": [
+    {
+      "id": "gym",
+      "kind": "weekly",
+      "title": "Gym",
+      "description": "Leg day",
+      "time": "07:00",
+      "reminderFrom": 0,
+      "reminders": [
+        15
+      ],
+      "weekdays": [
+        1,
+        3,
+        5
+      ],
+      "startDate": "2026-10-01",
+      "versions": [
+        {
+          "from": "1900-01-01",
+          "title": "Run",
+          "description": "",
+          "time": null,
+          "reminderFrom": 0,
+          "reminders": [],
+          "weekdays": [
+            1,
+            3
+          ],
+          "startDate": "2026-10-01"
+        },
+        {
+          "from": "2026-10-26",
+          "title": "Gym",
+          "description": "Leg day",
+          "time": "07:00",
+          "reminderFrom": 0,
+          "reminders": [
+            15
+          ],
+          "weekdays": [
+            1,
+            3,
+            5
+          ],
+          "startDate": "2026-10-01"
+        }
+      ],
+      "snapshots": {
+        "2026-10-21": {
+          "title": "Run",
+          "description": "",
+          "time": null,
+          "reminderFrom": 0,
+          "reminders": [],
+          "weekdays": [
+            1,
+            3
+          ],
+          "startDate": "2026-10-01"
+        }
+      },
+      "exceptions": [
+        "2026-10-30"
+      ],
+      "endedOn": null
+    },
+    {
+      "id": "piano",
+      "kind": "weekly",
+      "title": "Piano lesson",
+      "description": "",
+      "time": null,
+      "reminderFrom": 0,
+      "reminders": [],
+      "weekdays": [
+        2
+      ],
+      "startDate": "2026-09-01",
+      "versions": [
+        {
+          "from": "1900-01-01",
+          "title": "Piano lesson",
+          "description": "",
+          "time": null,
+          "reminderFrom": 0,
+          "reminders": [],
+          "weekdays": [
+            2
+          ],
+          "startDate": "2026-09-01"
+        }
+      ],
+      "snapshots": {},
+      "exceptions": [],
+      "endedOn": "2026-10-20"
+    },
+    {
+      "id": "report",
+      "kind": "once",
+      "title": "Send the report",
+      "description": "Draft at https://example.com/report",
+      "time": null,
+      "reminderFrom": 0,
+      "reminders": [],
+      "date": "2026-10-20"
+    },
+    {
+      "id": "call",
+      "kind": "once",
+      "title": "Call the dentist",
+      "description": "",
+      "time": "09:00",
+      "reminderFrom": 0,
+      "reminders": [
+        30,
+        5
+      ],
+      "date": "2026-10-28"
+    },
+    {
+      "id": "done",
+      "kind": "once",
+      "title": "Water the plants",
+      "description": "",
+      "time": null,
+      "reminderFrom": 0,
+      "reminders": [],
+      "date": "2026-10-28"
+    },
+    {
+      "id": "moved",
+      "kind": "once",
+      "title": "Gym",
+      "description": "Leg day",
+      "time": "07:00",
+      "reminderFrom": 0,
+      "reminders": [
+        15
+      ],
+      "date": "2026-10-29",
+      "movedFrom": {
+        "taskId": "gym",
+        "date": "2026-10-30"
+      }
+    },
+    {
+      "id": "long",
+      "kind": "once",
+      "title": "Renew the passport before the summer trip, and check whether the photo booth near the library still takes cards",
+      "description": "Bring:\n- old passport\n- two photos\n- the form from https://example.com/passport-renewal-form-with-a-very-long-address-that-should-wrap\nOffice closes at 4.",
+      "time": null,
+      "reminderFrom": 0,
+      "reminders": [],
+      "date": "2026-10-28"
+    }
+  ],
+  "completed": {
+    "2026-10-21": [
+      "gym"
+    ],
+    "2026-10-28": [
+      "done",
+      "gym"
+    ]
+  },
+  "weekdayOrders": {
+    "3": [
+      "done",
+      "gym",
+      "call",
+      "long"
+    ]
+  },
+  "routineOrder": [
+    "piano",
+    "gym"
+  ]
+}

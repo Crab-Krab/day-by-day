@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 2.0 redesign. The app itself is unchanged.
+
 ## 1.6.3 — 2026-11-10
 
 - If **Create new task file** ends without a folder, because Chrome refused a top-level folder such as Documents, permission was declined, or the dialog was cancelled, the panel now says **No folder chosen** and suggests making a folder such as `Documents\Day by Day`. Before, nothing visible happened.

@@ -79,8 +79,9 @@ Use **Node.js 22 or newer**. There are no packages to install.
 | `scripts/build.mjs` | Builds the standalone HTML and its checksums |
 | `scripts/release-files.mjs` | Prepares the files attached to a GitHub release |
 | `scripts/preview.mjs` | Serves the app and browser checks on this computer |
+| `scripts/screenshots.mjs` | Takes review screenshots of the built app with sample tasks, at seven widths in light and dark |
 | `docs/TESTING.md` | Browser checks and the manual checklist before a release |
-| `tests/` | Scheduling, history/migration, theme, runtime, interface, and file-storage checks. `helpers/runtime.cjs` is the shared simulated browser, and `browser.html` and `ui-browser.html` run in real browsers |
+| `tests/` | Scheduling, history/migration, theme, runtime, interface, and file-storage checks. `helpers/runtime.cjs` is the shared simulated browser, `fixtures/sample-tasks.json` is a sample task file using every saved feature, and `browser.html` and `ui-browser.html` run in real browsers |
 | `.github/workflows/` | Automated checks on every pull request and on `main`, real-browser checks in Chrome and Edge, and the release publisher |
 | `docs/USAGE.txt` | Detailed user guide |
 | `Day-by-Day.html` | Ready-to-use app generated from the source |
