@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Unsupported file-autosave browsers can collapse the availability notice to save space and use **Show info** to bring it back. Saving status and **Manage** remain available.
 - Redesign both themes with neutral surfaces, violet actions and selection, consistent system typography, shared controls, visible Edit labels, and a bounded workspace. Date navigation remains available at narrow widths; row actions reflow beneath task text.
 - Add collapsed Coming up below the checklist in smaller windows, using the same seven-day list as the wide-screen column. Its disclosure state stays in the current tab, and resizing keeps a focused date reachable.
 - Make One time / Every week, weekdays, and routine effective dates visible in the main editor. Keep notes/time/reminders optional, add adjacent accessible errors, and keep invalid fields reachable. New routines no longer require expanding optional fields.

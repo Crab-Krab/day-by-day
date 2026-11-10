@@ -113,6 +113,17 @@ async function main() {
   assert.match(unsupported.nodes.taskFileDetail.textContent,/Chrome or Edge/);
   assert.match(unsupported.nodes.taskFileAvailability.textContent,/File autosave unavailable/);
   assert.equal(unsupported.nodes.taskFileDetails.hidden,true);
+  assert.equal(unsupported.nodes.toggleFileAvailability.hidden,false);
+  unsupported.click('toggleFileAvailability');
+  assert.equal(unsupported.nodes.taskFileAvailability.hidden,true);
+  assert.equal(unsupported.nodes.toggleFileAvailability['aria-expanded'],'false');
+  assert.equal(unsupported.nodes.toggleFileAvailability.textContent,'Show info');
+  unsupported.click('manageTaskFile');assert.equal(unsupported.nodes.taskFileDetails.hidden,false);
+  assert.equal(unsupported.nodes.taskFileAvailability.hidden,true); // Managing backups does not reopen the notice.
+  unsupported.click('toggleFileAvailability');
+  assert.equal(unsupported.nodes.taskFileAvailability.hidden,false);
+  assert.equal(unsupported.nodes.toggleFileAvailability['aria-expanded'],'true');
+  assert.equal(unsupported.nodes.toggleFileAvailability.textContent,'Collapse');
   // A slow remembered-file permission check must not make the checklist inert.
   const slowFile=disk(JSON.stringify(sample('Before startup')));
   let releasePermission;slowFile.queryPermission=()=>new Promise(resolve=>releasePermission=resolve);

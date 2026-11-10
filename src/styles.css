@@ -149,6 +149,7 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .task-file-copy { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .task-file-copy strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
 .task-file-summary .text-button { flex-shrink: 0; }
+.task-file-summary-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 12px; flex-shrink: 0; }
 .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--secondary); flex-shrink: 0; }
 .task-file-panel[data-state=saved] .task-file-copy .status-dot { width: 14px; height: 8px; border-radius: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; background: transparent; transform: rotate(-45deg); }
 .task-file-panel[data-state=error] { border-color: var(--danger); }

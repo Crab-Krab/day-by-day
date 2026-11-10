@@ -198,6 +198,35 @@ async function main() {
     assert.equal(await choices.locator('#saveStatus').innerText(),'Saved in this browser');assert.ok(await choices.locator('#storageWarning').isHidden());
     await choices.close();
     console.log('PASS file states: equal conflict candidates with separate Cancel, preserved copies on cancel, long filename reflow, independent browser failure with a saved file, retry');
+    const unsupported = await context.newPage();
+    unsupported.on('pageerror',e=>errors.push(e.message));
+    await unsupported.setViewportSize({width:320,height:700});
+    await unsupported.clock.install({time:new Date('2026-11-10T14:00:00Z')});
+    await unsupported.addInitScript(({raw})=>{
+      localStorage.clear();localStorage.setItem('day-by-day.v1',raw);
+      Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:undefined});
+      Object.defineProperty(window,'showDirectoryPicker',{configurable:true,value:undefined});
+    },{raw});
+    await unsupported.goto(url);
+    await unsupported.waitForFunction(()=>document.getElementById('taskFilePanel').dataset.state==='unsupported');
+    const expandedHeight=await unsupported.locator('#taskFilePanel').evaluate(n=>n.getBoundingClientRect().height);
+    await unsupported.locator('#toggleFileAvailability').click();
+    assert.ok(await unsupported.locator('#taskFileAvailability').isHidden());
+    assert.equal(await unsupported.locator('#toggleFileAvailability').innerText(),'Show info');
+    assert.equal(await unsupported.locator('#toggleFileAvailability').getAttribute('aria-expanded'),'false');
+    assert.ok(await unsupported.locator('#taskFilePanel').evaluate((n,h)=>n.getBoundingClientRect().height<h,expandedHeight));
+    await unsupported.locator('#manageTaskFile').click();
+    assert.ok(await unsupported.locator('#backupBtn').isVisible());
+    assert.ok(await unsupported.locator('#taskFileAvailability').isHidden());
+    await unsupported.locator('#manageTaskFile').click();
+    await unsupported.locator('#toggleFileAvailability').focus();await unsupported.keyboard.press('Enter');
+    assert.ok(await unsupported.locator('#taskFileAvailability').isVisible());
+    assert.equal(await unsupported.locator('#toggleFileAvailability').getAttribute('aria-expanded'),'true');
+    assert.equal(await unsupported.evaluate(()=>localStorage.getItem('day-by-day.v1')),raw);
+    assert.ok(await unsupported.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    if(output) await unsupported.screenshot({path:path.join(output,'unsupported-autosave-notice.png')});
+    await unsupported.close();
+    console.log('PASS unsupported autosave: Collapse saves space, Show info works by keyboard, Manage/backups stay available, task data unchanged');
     assert.deepEqual(errors,[]);
     console.log('PASS forced colors and 320px reflow; no browser runtime errors');
   } finally { await context.close();await browser.close(); }

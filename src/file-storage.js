@@ -15,6 +15,13 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
   }
   $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
+  $('toggleFileAvailability').onclick = () => {
+    const expanded = $('taskFileAvailability').hidden;
+    $('taskFileAvailability').hidden = !expanded;
+    $('toggleFileAvailability').setAttribute('aria-expanded', String(expanded));
+    $('toggleFileAvailability').textContent = expanded ? 'Collapse' : 'Show info';
+    $('toggleFileAvailability').setAttribute('aria-label', `${expanded ? 'Collapse' : 'Show'} file autosave availability notice`);
+  };
   const snapshot = () => JSON.stringify(validate(getData()));
   const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
   function status(title, detail, state = 'idle') {
@@ -271,6 +278,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   async function init() {
     if (!supported) {
+      $('toggleFileAvailability').hidden = false;
       $('taskFileAvailability').hidden = false;
       $('taskFileAvailability').textContent = 'File autosave unavailable here. Browser saving and backups work.';
       status(browserStatus(), 'File autosave works in current desktop Chrome or Edge. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');

@@ -31,6 +31,8 @@ When current tasks and file tasks differ, choose which copy to keep or cancel.
 Use Back up tasks to keep a separate copy first. Disconnect forgets the connection
 without deleting the JSON. Avoid editing one JSON in multiple app windows.
 Firefox and restricted browsers retain browser saving and manual backup/restore.
+Collapse hides the file-autosave availability message; Show info brings it back.
+Saving status and Manage remain available while the message is collapsed.
 See docs/FILE-AUTOSAVE.md in the repository for full setup and recovery details.
 
 Use the sun/moon button beside Add task to switch between light and dark.

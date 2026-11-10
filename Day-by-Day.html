@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-q1U66eBAKq9NZHux2bt5wAV4Dy9cYGCeHhsFVYuHPn8=' 'sha256-V5SbwiK5IhQnMkEX63QwpE7Yq8FZ7VTcUKeV5rrKqrc='; style-src 'sha256-i+HXTB1fjXxY1pH2cq5sOpMY2fd6LIeByVhea8xF2nc='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-q1U66eBAKq9NZHux2bt5wAV4Dy9cYGCeHhsFVYuHPn8=' 'sha256-1cwHnuNIICv3ecKltxM2oKtwkMcNS3IbE6JAw5oFk9c='; style-src 'sha256-1bZ1WEjRfxIQeYKj1n//bCQEb8NwJ6VzZNWN6C11C+g='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f7f8">
   <meta name="description" content="A little space for everything you want to do. A daily checklist with weekly routines and a built-in calendar.">
@@ -182,6 +182,7 @@ main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .task-file-copy { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .task-file-copy strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
 .task-file-summary .text-button { flex-shrink: 0; }
+.task-file-summary-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 12px; flex-shrink: 0; }
 .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--secondary); flex-shrink: 0; }
 .task-file-panel[data-state=saved] .task-file-copy .status-dot { width: 14px; height: 8px; border-radius: 0; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; background: transparent; transform: rotate(-45deg); }
 .task-file-panel[data-state=error] { border-color: var(--danger); }
@@ -514,7 +515,7 @@ button, a, input, textarea, summary { scroll-margin-block: 24px; }
     <main id="mainContent" tabindex="-1">
       <header class="topbar"><div class="breadcrumb"><b id="viewBreadcrumb">My day</b></div><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span id="addTaskLabel">Add task</span></button></div></header>
       <section id="taskFilePanel" class="task-file-panel" aria-label="Saving and backups">
-        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Saved in this browser</strong></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="true" aria-controls="taskFileDetails">Hide details</button></div>
+        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Saved in this browser</strong></div><div class="task-file-summary-actions"><button type="button" id="toggleFileAvailability" class="text-button" aria-expanded="true" aria-controls="taskFileAvailability" aria-label="Collapse file autosave availability notice" hidden>Collapse</button><button type="button" id="manageTaskFile" class="text-button" aria-expanded="true" aria-controls="taskFileDetails">Hide details</button></div></div>
         <p id="taskFileAvailability" class="field-hint" hidden></p>
         <div id="taskFileDetails" class="task-file-details"><h2 class="saving-group-title">Working task file</h2><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
         <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Create new task file</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div>
@@ -990,6 +991,13 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
   }
   $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
+  $('toggleFileAvailability').onclick = () => {
+    const expanded = $('taskFileAvailability').hidden;
+    $('taskFileAvailability').hidden = !expanded;
+    $('toggleFileAvailability').setAttribute('aria-expanded', String(expanded));
+    $('toggleFileAvailability').textContent = expanded ? 'Collapse' : 'Show info';
+    $('toggleFileAvailability').setAttribute('aria-label', `${expanded ? 'Collapse' : 'Show'} file autosave availability notice`);
+  };
   const snapshot = () => JSON.stringify(validate(getData()));
   const connectionNote = () => remembered ? 'Reopens automatically when the browser keeps access. After browser cleanup, choose Open task file to reconnect.' : 'Saved files stay on disk, but this browser could not remember the connection. Choose Open task file next time.';
   function status(title, detail, state = 'idle') {
@@ -1246,6 +1254,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   async function init() {
     if (!supported) {
+      $('toggleFileAvailability').hidden = false;
       $('taskFileAvailability').hidden = false;
       $('taskFileAvailability').textContent = 'File autosave unavailable here. Browser saving and backups work.';
       status(browserStatus(), 'File autosave works in current desktop Chrome or Edge. Browser saving and manual backup still work here. Workplace policies may restrict file access.', 'unsupported');
