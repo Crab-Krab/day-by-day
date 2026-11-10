@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+## 1.6.3 — 2026-11-10
+
 - If **Create new task file** ends without a folder, because Chrome refused a top-level folder such as Documents, permission was declined, or the dialog was cancelled, the panel now says **No folder chosen** and suggests making a folder such as `Documents\Day by Day`. Before, nothing visible happened.
+
+Saved-data format remains 5, so v1.4.x through v1.6.3 can read each other's tasks and backups.
 
 ## 1.6.2 — 2026-11-10
 
