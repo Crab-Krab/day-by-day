@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-## 2.0.0 — not released yet (in testing)
+## 1.7.0 — not released yet (in testing)
 
-A redesign of how the app looks and is laid out. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged. Saved-data format remains 5, so v1.4.x through v2.0.0 can read each other's tasks and backups.
+A refresh of how the app looks and is laid out. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged. Saved-data format remains 5, so v1.4.x through v1.7.0 can read each other's tasks and backups.
 
 - New look: grey surfaces in light and dark mode, with violet for actions, selection and focus. The green palette is gone, including the tab icon and browser color. The tab icon matches the logo in both themes and changes with the theme button.
 - One system font throughout, with a consistent text scale. Day and dialog titles no longer use a serif font, and the date above the day title is no longer in capitals.
@@ -25,7 +25,7 @@ A redesign of how the app looks and is laid out. Saved data, storage, and how ta
 - Saving: one status row, Browser saving only when no task file is connected, and a check mark when saved to a file. It no longer opens by itself unless something needs attention. While no task file is connected, the row explains why to connect one and offers Set up task file. Manage shows three groups: Task file, Browser copy and backups (now as buttons), and Recovery copies, which moved inside. Paused recovery copies are noted in the status row.
 - Which-copy dialogs: neither choice looks preferred, and Cancel sits apart from them.
 - With Reduce motion on, View this day jumps to the task instead of scrolling smoothly.
-- Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 2.0 redesign. The app itself is unchanged.
+- Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 1.7 redesign. The app itself is unchanged.
 
 ## 1.6.3 — 2026-11-10
 

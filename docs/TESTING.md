@@ -57,7 +57,7 @@ Why Create new task file uses a folder: in Chrome 157 on Windows 11 (November 20
 - [ ] Using only the keyboard, add, edit, cancel, and complete tasks. Focus returns to a sensible place each time.
 - [ ] Repeat a few steps in a narrow window, in dark mode, and with reduced motion turned on in the system settings.
 
-**Redesign (2.0)**
+**Redesign (1.7)**
 
 - [ ] With no task file connected, the saving row says **Browser saving only** and offers **Set up task file**. Choose it, then **Create new task file**. The row then says **Saved to** with a check, and the prompt is gone.
 - [ ] In Windows Settings, turn on a contrast theme (Accessibility, Contrast themes). The selected day, **My day**, checked tasks, and the progress bar stay visible. Turn it off again.

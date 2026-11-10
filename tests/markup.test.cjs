@@ -32,7 +32,7 @@ assert.match(html, /<meta name="theme-color"/, 'theme.js needs the theme-color m
 for (const tag of ['<link rel="stylesheet" href="styles.css">', '<script src="theme.js"></script>', '<script src="app.js" defer></script>', '<script src="schedule.js" defer></script>', '<script src="recovery.js" defer></script>', '<script src="file-storage.js" defer></script>']) {
   assert.equal(html.split(tag).length - 1, 1, `index.html must contain ${tag} once for the build`);
 }
-// The 2.0 palette replaced the green one everywhere: styles, theme colors, and the tab icon.
+// The 1.7 palette replaced the green one everywhere: styles, theme colors, and the tab icon.
 const legacyGreens = ['236653', '1b5142', '397a5f', '3c8062', 'dfe8d7', '2c604b', 'd0dfc6', 'f2f5ed', 'e8eee0', 'f8faf4', '68785f', '96643d', '7a8d6e', 'f6f7f2', 'eef1e8', '243c34', '151c19', '202b25', '85a970', '79a16d', 'd6e8c6', 'd2e7ba', '284f3e', '3b6046', 'e0efb7', 'fff2df', '815218', '17291f', '070d0a'];
 for (const file of ['styles.css', 'theme.js', 'index.html', 'app.js']) {
   const text = fs.readFileSync('src/' + file, 'utf8').toLowerCase();
@@ -40,7 +40,7 @@ for (const file of ['styles.css', 'theme.js', 'index.html', 'app.js']) {
   assert.deepEqual(found, [], `src/${file} still uses colors from the old green palette`);
 }
 assert.doesNotMatch(fs.readFileSync('src/styles.css', 'utf8'), /Georgia/, 'the serif headings were replaced by the system font');
-// 2.0 removed the decorative slogans and kept the footer line.
+// 1.7 removed the decorative slogans and kept the footer line.
 for (const slogan of ['YOUR EVERYDAY SPACE', 'A little progress, every day.', 'Make room for what matters.', 'MAKE A LITTLE PLAN', 'A RHYTHM THAT WORKS FOR YOU', 'A fresh day. A little space']) assert.equal(html.includes(slogan), false, `slogan "${slogan}" came back`);
 assert.match(html, /Less remembering\. More doing\./, 'the footer line stays');
 assert.match(html, /<a class="skip-link" href="#mainContent">/, 'the skip link leads to the main content');
