@@ -5,7 +5,7 @@ const valid = value => JSON.parse(JSON.stringify(helpers.validate(value)));
 const empty = () => valid({version:5,tasks:[],completed:{}});
 const sample = title => valid({version:5,tasks:[{id:'task1',title,kind:'once',date:'2026-11-01'}],completed:{}});
 const settle = async () => { for (let n = 0; n < 60; n++) await Promise.resolve(); };
-function disk(initial = '', name = 'Day-by-Day-data.json') {
+function disk(initial = '', name = 'Day-by-Day-tasks.json') {
   return { name, raw: initial, permission:'granted', requests:0, writes:0, active:0, maxActive:0, aborted:0,
     async queryPermission() { return this.permission; },
     async requestPermission() { this.requests++; return this.permission; },
@@ -17,6 +17,15 @@ function disk(initial = '', name = 'Day-by-Day-data.json') {
       return {async write(text){if(target.gate)await target.gate;if(target.writeFails)throw Error('Disk full');next=text;},async close(){if(target.closeFails)throw Error('Close failed');target.raw=next;target.writes++;end();},async abort(){target.aborted++;end();}};
     }
   };
+}
+// A chosen folder holding one file. An empty file stands for "no task file yet", and is created on request.
+function folderWith(file) {
+  const missing=()=>Object.assign(Error('Missing'),{name:'NotFoundError'});
+  return {name:'Tasks',async getFileHandle(name,{create}={}){
+    if(name===file.name)return file;
+    if(file.raw===''&&create){file.name=name;return file;}
+    throw missing();
+  }};
 }
 function idb(store, fail = false) {
   return {open(){
@@ -37,7 +46,8 @@ function boot({data=empty(),store={},file=disk(),supported=true,storageFails=fal
   const nodes={}, listeners={}, shell={};
   const node=id=>nodes[id] ||= {hidden:false,disabled:false,textContent:'',dataset:{},listeners:{},setAttribute(key,value){this[key]=String(value);},addEventListener(key,fn){this.listeners[key]=fn;},showModal(){this.open=true;},close(){this.open=false;}};
   const window={isSecureContext:supported,addEventListener:(key,fn)=>listeners[key]=fn,confirm:()=>true,
-    showSaveFilePicker:async()=>file, showOpenFilePicker:async()=>[file]};
+    showDirectoryPicker:async()=>folderWith(file), showOpenFilePicker:async()=>[file],
+    showSaveFilePicker:async()=>{throw Error('Create new task file must never use a Save dialog.');}};
   const context={window,document:{getElementById:node,querySelector:()=>shell},indexedDB:database||idb(store,storageFails),setTimeout:quickTimeouts?(fn,ms)=>ms===4000?(queueMicrotask(fn),0):setTimeout(fn,ms):setTimeout,clearTimeout,console,Blob,navigator:{locks}};
   vm.createContext(context);vm.runInContext(source,context);
   const controller=window.createTaskFileStorage({sizeLimit:helpers.SIZE_LIMIT,getData:()=>state,validate:valid,applyData:value=>state=valid(value),backup:()=>{},hasRecovery:()=>recovery,keepCopy});
@@ -120,14 +130,21 @@ async function main() {
   synced.raw=JSON.stringify(sample('Edited in another program'));expiry.change(sample('Edited here too'));synced.permission='granted';
   const asking=expiry.click('reconnectTaskFile');await settle();assert.equal(expiry.nodes.fileChoiceDialog.open,true);expiry.click('fileChoiceCurrent');await asking;
   assert.equal(JSON.parse(synced.raw).tasks[0].title,'Edited here too');
-  // Create new task file suggests a dated name, so the save dialog never offers an existing file by default (audit F-01).
-  let suggested;const naming=boot({data:sample('Named')});naming.window.showSaveFilePicker=async options=>{suggested=options.suggestedName;return naming.file;};
-  await naming.controller.init();await naming.click('createTaskFile');assert.match(suggested,/^Day-by-Day-tasks-\d{4}-\d{2}-\d{2}\.json$/);
-  // Chrome empties a file chosen in the save dialog before the app can read it. The empty file
-  // is treated as new, which is why existing files must go through Open task file.
-  const replaced=disk(JSON.stringify(sample('Old history')));const wiping=boot({data:sample('Browser tasks'),file:replaced});
-  wiping.window.showSaveFilePicker=async()=>{replaced.raw='';return replaced;};await wiping.controller.init();await wiping.click('createTaskFile');
-  assert.equal(JSON.parse(replaced.raw).tasks[0].title,'Browser tasks');
+  // Create new task file asks for a folder and makes Day-by-Day-tasks.json there (audit F-01).
+  // Chrome empties a file chosen in a Save dialog before the app can read it, so no Save dialog is used.
+  const fresh=boot({data:sample('Brand new')});await fresh.controller.init();await fresh.click('createTaskFile');
+  assert.equal(fresh.file.name,'Day-by-Day-tasks.json');assert.equal(JSON.parse(fresh.file.raw).tasks[0].title,'Brand new');assert.match(fresh.title(),/^Saved to Day-by-Day-tasks\.json/);
+  // A folder that already has a task file opens it instead of replacing it. After browser cleanup, its tasks simply load.
+  for(const name of ['Day-by-Day-tasks.json','Day-by-Day-data.json']){
+    const existing=disk(JSON.stringify(sample('Old history')),name),cleaned=boot({data:empty(),file:existing});
+    await cleaned.controller.init();await cleaned.click('createTaskFile');
+    assert.equal(cleaned.state().tasks[0].title,'Old history');assert.equal(JSON.parse(existing.raw).tasks[0].title,'Old history');
+    assert.match(cleaned.nodes.taskFileDetail.textContent,/already had a task file/);
+  }
+  // With different tasks in the browser, it asks which to keep, and Cancel leaves the file untouched.
+  const kept=disk(JSON.stringify(sample('Old history')),'Day-by-Day-tasks.json'),askingNew=boot({data:sample("Browser tasks"),file:kept});
+  await askingNew.controller.init();const choosing=askingNew.click('createTaskFile');await settle();assert.equal(askingNew.nodes.fileChoiceDialog.open,true);
+  askingNew.click('fileChoiceCancel');await choosing;assert.equal(JSON.parse(kept.raw).tasks[0].title,'Old history');assert.equal(askingNew.controller.isConnected(),false);
   // A rejected Change file keeps the working file saving (audit F-03).
   const working=disk(),notTasks=disk('not json','notes.json');const switching=boot({data:sample('Working'),file:working});
   await switching.controller.init();await switching.click('createTaskFile');switching.window.showOpenFilePicker=async()=>[notTasks];
@@ -165,11 +182,9 @@ async function main() {
   await Promise.all([one.controller.flush(),two.controller.flush()]);
   assert.equal(JSON.parse(shared.raw).tasks[0].title,'Winner');assert.match(two.title(),/not saved/);assert.equal(shared.maxActive,1);
   // Integrate the real app's form/save/load paths with the file controller.
-  const harnessSource=fs.readFileSync('tests/runtime.test.cjs','utf8');
-  const harness={require,console,Blob,URL,queueMicrotask};vm.createContext(harness);
-  vm.runInContext(harnessSource.slice(0,harnessSource.indexOf('const clock = new Date'))+';this.boot=boot;',harness);
+  const harness=require('./helpers/runtime.cjs');
   const realFile=disk(),realStore={},cache=new Map();
-  const options={fileWindow:{isSecureContext:true,showSaveFilePicker:async()=>realFile,showOpenFilePicker:async()=>[realFile]},indexedDB:idb(realStore)};
+  const options={fileWindow:{isSecureContext:true,showDirectoryPicker:async()=>folderWith(realFile),showOpenFilePicker:async()=>[realFile]},indexedDB:idb(realStore)};
   let integrated=harness.boot(cache,new Date(2026,10,1,10).getTime(),options);await settle();
   await integrated.ids.createTaskFile.onclick();
   integrated.ids.addTask.onclick();integrated.ids.taskTitle.value='Form autosave';integrated.ids.taskForm.dispatch('submit');await settle();
@@ -186,7 +201,7 @@ async function main() {
     let release;startupFile.queryPermission=()=>new Promise(resolve=>release=resolve);
     const startupCache=new Map([['day-by-day.v1',JSON.stringify(before)]]);
     const editing=harness.boot(startupCache,new Date(2026,10,1,10).getTime(),{
-      fileWindow:{isSecureContext:true,showSaveFilePicker:async()=>startupFile,showOpenFilePicker:async()=>[startupFile]},
+      fileWindow:{isSecureContext:true,showDirectoryPicker:async()=>folderWith(startupFile),showOpenFilePicker:async()=>[startupFile]},
       indexedDB:idb({value:{handle:startupFile,baseline:JSON.stringify(before)}})
     });
     await settle();editing.ids.taskList.querySelector('.edit-task').onclick();
@@ -219,7 +234,7 @@ async function main() {
   assert.equal(JSON.parse(realFile.raw).tasks.length,2);assert.match(noCache.ids.taskFileStatus.textContent,/Saved to/);
   // Deferring from today's Overdue list and Undo both reach the autosave JSON.
   const deferFile=disk(),deferConnection={},deferCache=new Map([['day-by-day.v1',JSON.stringify({version:5,tasks:[{id:'defer',kind:'once',title:'Carry forward',date:'2026-11-04',time:'18:30',description:'Keep notes',reminders:[15]}],completed:{}})]]);
-  const deferOptions={fileWindow:{isSecureContext:true,showSaveFilePicker:async()=>deferFile,showOpenFilePicker:async()=>[deferFile]},indexedDB:idb(deferConnection)};
+  const deferOptions={fileWindow:{isSecureContext:true,showDirectoryPicker:async()=>folderWith(deferFile),showOpenFilePicker:async()=>[deferFile]},indexedDB:idb(deferConnection)};
   let deferring=harness.boot(deferCache,new Date(2026,10,4,19).getTime(),deferOptions);await settle();await deferring.ids.createTaskFile.onclick();
   deferring.ids.overdueList.querySelector('.move-tomorrow').onclick();await settle();assert.equal(JSON.parse(deferFile.raw).tasks[0].date,'2026-11-05');
   deferring.ids.undoAction.onclick();await settle();assert.equal(JSON.parse(deferFile.raw).tasks[0].date,'2026-11-04');

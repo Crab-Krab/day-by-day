@@ -21,6 +21,14 @@ inline('<script src="schedule.js" defer></script>', '');
 inline('<script src="recovery.js" defer></script>', '');
 inline('<script src="file-storage.js" defer></script>', '');
 inline('</body>', '<script>' + escapeScript(read('schedule.js') + '\n' + read('recovery.js') + '\n' + read('file-storage.js') + '\n' + read('app.js')) + '</script>\n</body>');
+// A Content Security Policy makes the browser enforce what the app promises: it runs only its own
+// inline code and styles (matched by checksum), shows only its built-in icon, and can't connect anywhere.
+const hash = text => `'sha256-${crypto.createHash('sha256').update(text, 'utf8').digest('base64')}'`;
+const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => hash(match[1]));
+const styles = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(match => hash(match[1]));
+if (scripts.length !== 2 || styles.length !== 1) throw new Error(`Build stopped: expected 2 scripts and 1 style block, found ${scripts.length} and ${styles.length}.`);
+const policy = `default-src 'none'; script-src ${scripts.join(' ')}; style-src ${styles.join(' ')}; img-src data:; base-uri 'none'; form-action 'none'`;
+inline('<meta charset="utf-8">', `<meta charset="utf-8">\n  <meta http-equiv="Content-Security-Policy" content="${policy}">`);
 fs.writeFileSync(path.join(root, 'Day-by-Day.html'), html);
 // Checksums for the release downloads stay in step with every build.
 const sums = ['Day-by-Day.html', 'docs/USAGE.txt', 'LICENSE']

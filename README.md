@@ -35,13 +35,15 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 
 ## Your data and updates
 
-Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, always choose **Open task file** instead. Saving over an existing file in the create dialog empties it.
+Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** and choose a folder, such as a **Day by Day** folder inside Documents. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
 
 After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 
 Without file autosave, tasks stay only in browser storage. Keep using the **same browser and file location**. Clearing browser data, changing browsers, or moving the HTML can make that copy unavailable. Avoid private/incognito windows. If the browser cannot save a change, choose **Retry saving**, or the app retries with each later change. It asks before you close the tab with unsaved changes. If another tab saves different tasks meanwhile, the app asks which copy to keep.
+
+**Privacy and safety.** The app never connects to the internet, and the HTML includes a Content Security Policy, a browser rule that enforces this: the page can run only its own built-in code and can't load or send anything. One limit comes from how browsers treat local files. In Chrome and Edge, every HTML file you open from your own computer shares the same browser storage, so another local HTML file could read the tasks saved in this browser. Only open local HTML files you trust. A connected task file is not affected, since it needs your permission.
 
 Before updating:
 
@@ -67,7 +69,7 @@ In-app reminders need no notification permission and have no action-confirmation
 
 ## Development
 
-Use **Node.js 20 or newer**. There are no packages to install.
+Use **Node.js 22 or newer**. There are no packages to install.
 
 | Path | Purpose |
 | --- | --- |

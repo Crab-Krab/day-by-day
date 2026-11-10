@@ -1,11 +1,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const harness = fs.readFileSync('tests/runtime.test.cjs', 'utf8');
-const context = { require, console, Blob, URL, queueMicrotask };
-vm.createContext(context);
-vm.runInContext(harness.slice(0, harness.indexOf('const clock = new Date')) + ';this.boot=boot;', context);
-const boot = context.boot;
+const { boot } = require('./helpers/runtime.cjs');
 const clock = new Date(2026, 9, 28, 0, 0).getTime();
 const tasks = [
   { id: 'a', title: 'First', kind: 'weekly', weekdays: [3], startDate: '2026-10-01' },

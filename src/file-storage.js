@@ -3,7 +3,7 @@
 // and the last synchronized state; losing browser data never deletes the file.
 window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyData, backup, hasRecovery, keepCopy = () => {}, waitForEditor = () => null }) {
   const $ = id => document.getElementById(id);
-  const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
+  const supported = window.isSecureContext && typeof window.showOpenFilePicker === 'function' && typeof window.showDirectoryPicker === 'function';
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
   let handle = null, rawBaseline = null, baseline = null, dirty = false, writing = null;
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
@@ -33,7 +33,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file is only for starting a new file. The file stays on your computer when browser data is cleared.'); }
+  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.'); }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;
@@ -101,11 +101,17 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
       : error?.name === 'NotFoundError' ? 'The task file was moved or removed. Open it at its new location, or disconnect and create a new file.'
       : error?.message || 'The file could not be saved. Reconnect and try again.';
   }
-  // A dated name means the save dialog never suggests an existing task file by default.
-  // Saving over an existing file empties it, so existing files belong in Open task file.
-  function newFileName() {
-    const now = new Date(), pad = n => String(n).padStart(2, '0');
-    return 'Day-by-Day-tasks-' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + '.json';
+  // New files are made inside a chosen folder, never through a Save dialog. Chrome empties a file
+  // chosen in a Save dialog before the app can read it, so an existing task file could be wiped.
+  // If the folder already has a task file, it is opened and compared like Open task file instead.
+  const FILE_NAME = 'Day-by-Day-tasks.json', OLD_FILE_NAME = 'Day-by-Day-data.json';
+  async function taskFileIn(folder) {
+    for (const name of [FILE_NAME, OLD_FILE_NAME]) {
+      // An empty file holds no tasks to protect, so it is filled like a new one.
+      try { const target = await folder.getFileHandle(name); return { target, found: (await target.getFile()).size > 0 }; }
+      catch (error) { if (error?.name !== 'NotFoundError' && error?.name !== 'TypeMismatchError') throw error; }
+    }
+    return { target: await folder.getFileHandle(FILE_NAME, { create: true }), found: false };
   }
   async function withFileLock(callback) {
     if (typeof navigator !== 'undefined' && navigator.locks?.request) return navigator.locks.request('day-by-day.task-file.write', callback);
@@ -193,14 +199,14 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     if (busy || writing || !supported) return;
     setBusy(true);
     const oldHandle = handle, oldWorking = Boolean(handle) && !paused;
-    let keptMessage = null;
+    let keptMessage = null, found = false;
     try {
       // Invoke the picker synchronously in the click's activation, before any await.
-      const target = creating
-        ? await window.showSaveFilePicker({ id: 'day-by-day-tasks', suggestedName: newFileName(), types: fileTypes })
-        : (await window.showOpenFilePicker({ id: 'day-by-day-tasks', multiple: false, types: fileTypes }))[0];
+      let target;
+      if (creating) ({ target, found } = await taskFileIn(await window.showDirectoryPicker({ id: 'day-by-day-tasks-folder', mode: 'readwrite' })));
+      else target = (await window.showOpenFilePicker({ id: 'day-by-day-tasks', multiple: false, types: fileTypes }))[0];
       if (await target.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Allow editing access to enable automatic saving.');
-      const attached = await attach(target, { creating });
+      const attached = await attach(target, { creating: creating && !found });
       // A cancelled switch leaves a working file connected as it was.
       if (!attached && oldHandle && !oldWorking) { paused = true; status('Task file paused', 'Your current tasks have been kept. Reconnect to continue saving.', 'error'); }
       if (!attached && oldWorking) keptMessage = 'The other file was not opened. Your current tasks have been kept.';
@@ -211,6 +217,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
       setBusy(false);
       if (handle && !paused) {
         if (dirty) await flush(); else savedStatus();
+        if (found && handle && !paused && !dirty) status('Saved to ' + handle.name, 'That folder already had a task file, so it was opened instead of replaced. Changes save automatically. ' + connectionNote(), 'saved');
         if (keptMessage && handle && !paused && !dirty) status('Still saving to ' + handle.name, keptMessage + ' Changes keep saving to ' + handle.name + '.', 'error');
       }
     }

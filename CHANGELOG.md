@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Create new task file** now asks for a folder and creates `Day-by-Day-tasks.json` there, instead of using a Save dialog. A manual test confirmed that Chrome empties a file chosen in a Save dialog before the app can read it. If the chosen folder already has a task file, including the older `Day-by-Day-data.json`, the app opens it and asks which tasks to keep when they differ, and never replaces it.
+- Add a Content Security Policy to the built HTML. The browser now enforces that the app runs only its own code and can't connect anywhere. The README explains that other local HTML files share browser storage in Chrome and Edge.
+- The release workflow runs the Chrome browser checks before publishing. Checks run once per pull request, Node 22 is the minimum for development, and checkouts no longer keep the GitHub token on disk.
+- Tests: the simulated browser lives in `tests/helpers/runtime.cjs`, a hung async check now fails the run, and the real-browser tests open the built file by `file://`, checking that the page policy blocks outside code and connections.
+
 ## 1.6.1 — 2026-11-10
 
 - Reconnecting a task file no longer asks which copy to keep when only one side changed. If the file still matches the last synced copy, your newer tasks save. If only the file changed, it loads. The app asks only when both changed, and neither answer is highlighted.
