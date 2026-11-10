@@ -32,13 +32,13 @@ function idb(store, fail = false) {
     });return request;
   }};
 }
-function boot({data=empty(),store={},file=disk(),supported=true,storageFails=false,recovery=false,locks,keepCopy}={}) {
+function boot({data=empty(),store={},file=disk(),supported=true,storageFails=false,recovery=false,locks,keepCopy,database,quickTimeouts=false}={}) {
   let state=data;
   const nodes={}, listeners={}, shell={};
   const node=id=>nodes[id] ||= {hidden:false,disabled:false,textContent:'',dataset:{},listeners:{},setAttribute(key,value){this[key]=String(value);},addEventListener(key,fn){this.listeners[key]=fn;},showModal(){this.open=true;},close(){this.open=false;}};
   const window={isSecureContext:supported,addEventListener:(key,fn)=>listeners[key]=fn,confirm:()=>true,
     showSaveFilePicker:async()=>file, showOpenFilePicker:async()=>[file]};
-  const context={window,document:{getElementById:node,querySelector:()=>shell},indexedDB:idb(store,storageFails),setTimeout,clearTimeout,console,Blob,navigator:{locks}};
+  const context={window,document:{getElementById:node,querySelector:()=>shell},indexedDB:database||idb(store,storageFails),setTimeout:quickTimeouts?(fn,ms)=>ms===4000?(queueMicrotask(fn),0):setTimeout(fn,ms):setTimeout,clearTimeout,console,Blob,navigator:{locks}};
   vm.createContext(context);vm.runInContext(source,context);
   const controller=window.createTaskFileStorage({getData:()=>state,validate:valid,applyData:value=>state=valid(value),backup:()=>{},hasRecovery:()=>recovery,keepCopy});
   return {controller,nodes,window,store,file,listeners,shell,state:()=>state,change(value){state=value;controller.changed();},click:id=>nodes[id].onclick(),title:()=>nodes.taskFileStatus.textContent};
@@ -80,8 +80,8 @@ async function main() {
   assert.match(app.title(),/not saved/);assert.equal(JSON.parse(file.raw).tasks[0].title,'Latest edit');assert.equal(app.nodes.reconnectTaskFile.disabled,false);
   assert.equal(app.nodes.taskFileDetails.hidden,false); // errors cannot be hidden by the compact status
   delete file.closeFails;
-  const reconnect=app.click('reconnectTaskFile');await settle();assert.equal(app.nodes.fileChoiceDialog.open,true);
-  app.click('fileChoiceCurrent');await reconnect;assert.equal(JSON.parse(file.raw).tasks[0].title,'Unsaved edit');
+  // The file still matches the last synced copy, so Reconnect saves the newer browser tasks without asking.
+  await app.click('reconnectTaskFile');assert.notEqual(app.nodes.fileChoiceDialog.open,true);assert.equal(JSON.parse(file.raw).tasks[0].title,'Unsaved edit');
   // External edits cannot be silently overwritten.
   file.raw=JSON.stringify(sample('External edit'));app.change(sample('My conflicting edit'));await app.controller.flush();
   assert.equal(JSON.parse(file.raw).tasks[0].title,'External edit');assert.match(app.nodes.taskFileDetail.textContent,/changed elsewhere/);
@@ -107,8 +107,44 @@ async function main() {
   const slow=boot({data:sample('Before startup'),file:slowFile,store:{value:{handle:slowFile,baseline:JSON.stringify(sample('Before startup'))}}});
   const initializing=slow.controller.init();await settle();assert.equal(slow.shell.inert,false);
   slow.change(sample('Edited while connecting'));releasePermission('granted');await settle();
-  assert.equal(slow.nodes.fileChoiceDialog.open,true);slow.click('fileChoiceCurrent');await initializing;
+  assert.notEqual(slow.nodes.fileChoiceDialog.open,true);await initializing; // file unchanged, so the edit simply saves
   assert.equal(JSON.parse(slowFile.raw).tasks[0].title,'Edited while connecting');assert.equal(slow.shell.inert,false);
+  // Reconnect after permission expires: an unchanged file never asks, and the edit is kept (audit F-02).
+  const synced=disk(),syncedStore={};let expiry=boot({data:sample('Synced'),file:synced,store:syncedStore});await expiry.controller.init();await expiry.click('createTaskFile');
+  synced.permission='prompt';expiry=boot({data:sample('Synced'),file:synced,store:syncedStore});await expiry.controller.init();assert.match(expiry.title(),/^Reconnect/);
+  expiry.change(sample('Edited before reconnect'));synced.permission='granted';await expiry.click('reconnectTaskFile');
+  assert.notEqual(expiry.nodes.fileChoiceDialog.open,true);assert.equal(expiry.state().tasks[0].title,'Edited before reconnect');
+  assert.equal(JSON.parse(synced.raw).tasks[0].title,'Edited before reconnect');assert.match(expiry.title(),/^Saved to/);
+  // When both the file and the browser copy changed, it still asks.
+  synced.permission='prompt';expiry=boot({data:sample('Edited before reconnect'),file:synced,store:syncedStore});await expiry.controller.init();
+  synced.raw=JSON.stringify(sample('Edited in another program'));expiry.change(sample('Edited here too'));synced.permission='granted';
+  const asking=expiry.click('reconnectTaskFile');await settle();assert.equal(expiry.nodes.fileChoiceDialog.open,true);expiry.click('fileChoiceCurrent');await asking;
+  assert.equal(JSON.parse(synced.raw).tasks[0].title,'Edited here too');
+  // Create new task file suggests a dated name, so the save dialog never offers an existing file by default (audit F-01).
+  let suggested;const naming=boot({data:sample('Named')});naming.window.showSaveFilePicker=async options=>{suggested=options.suggestedName;return naming.file;};
+  await naming.controller.init();await naming.click('createTaskFile');assert.match(suggested,/^Day-by-Day-tasks-\d{4}-\d{2}-\d{2}\.json$/);
+  // Chrome empties a file chosen in the save dialog before the app can read it. The empty file
+  // is treated as new, which is why existing files must go through Open task file.
+  const replaced=disk(JSON.stringify(sample('Old history')));const wiping=boot({data:sample('Browser tasks'),file:replaced});
+  wiping.window.showSaveFilePicker=async()=>{replaced.raw='';return replaced;};await wiping.controller.init();await wiping.click('createTaskFile');
+  assert.equal(JSON.parse(replaced.raw).tasks[0].title,'Browser tasks');
+  // A rejected Change file keeps the working file saving (audit F-03).
+  const working=disk(),notTasks=disk('not json','notes.json');const switching=boot({data:sample('Working'),file:working});
+  await switching.controller.init();await switching.click('createTaskFile');switching.window.showOpenFilePicker=async()=>[notTasks];
+  await switching.click('openTaskFile');assert.match(switching.title(),/^Still saving to/);assert.match(switching.nodes.taskFileDetail.textContent,/not a valid/);
+  assert.equal(switching.nodes.reconnectTaskFile.hidden,true);switching.change(sample('Saved after a wrong pick'));await switching.controller.flush();
+  assert.equal(JSON.parse(working.raw).tasks[0].title,'Saved after a wrong pick');assert.equal(notTasks.raw,'not json');assert.match(switching.title(),/^Saved to/);
+  // Cancelling a switch also keeps the working file saving.
+  const otherTasks=disk(JSON.stringify(sample('Other file')),'other.json');switching.window.showOpenFilePicker=async()=>[otherTasks];
+  const switchCancel=switching.click('openTaskFile');await settle();switching.click('fileChoiceCancel');await switchCancel;
+  assert.match(switching.title(),/^Still saving to/);switching.change(sample('Saved after cancel'));await switching.controller.flush();
+  assert.equal(JSON.parse(working.raw).tasks[0].title,'Saved after cancel');assert.equal(JSON.parse(otherTasks.raw).tasks[0].title,'Other file');
+  // A slow browser database at startup is reported, not shown as first-time setup, and is tried again (audit F-04).
+  const slowDb={value:undefined},slowStoreFile=disk(JSON.stringify(sample('Slow lookup')));let opens=0;const realIdb=idb(slowDb);
+  const hanging={open(){opens++;return opens===1?{}:realIdb.open();}}; // the first open never answers
+  const lookupApp=boot({data:sample('Slow lookup'),file:slowStoreFile,database:hanging,quickTimeouts:true});
+  await lookupApp.controller.init();assert.match(lookupApp.title(),/^Could not check/);assert.equal(lookupApp.nodes.taskFileDetails.hidden,false);
+  await lookupApp.click('openTaskFile');assert.equal(opens,2);assert.equal(slowDb.value.handle,slowStoreFile);assert.match(lookupApp.title(),/^Saved to/);
   // Cancel replacement preserves both datasets.
   const cancel=boot({data:sample('Local'),file:disk(JSON.stringify(sample('Disk')))});await cancel.controller.init();const opening=cancel.click('openTaskFile');await settle();cancel.click('fileChoiceCancel');await opening;
   assert.equal(cancel.state().tasks[0].title,'Local');assert.equal(JSON.parse(cancel.file.raw).tasks[0].title,'Disk');assert.equal(cancel.controller.isConnected(),false);
@@ -210,4 +246,7 @@ async function main() {
   await sameApp.controller.init();await sameApp.click('openTaskFile');assert.equal(quiet.length,0); // nothing replaced, nothing copied
   console.log('File persistence passed: creation, autosave, automatic reopening, cleanup/reconnect, permission renewal, queued edits, failed writes, pending recovery, external conflict, invalid files, blocked browser storage, cancellation, unsupported browser, missing file, disconnect, retrying a failed file save, and recovery copies before which-copy choices.');
 }
-main().catch(error=>{console.error(error);process.exitCode=1;});
+// A step that waits forever (for example on a dialog nobody answers) would otherwise end the run silently with success.
+let finished=false;
+process.on('exit',code=>{if(!finished&&code===0){console.error('File tests stopped before finishing: a step never completed.');process.exitCode=1;}});
+main().then(()=>{finished=true;},error=>{finished=true;console.error(error);process.exitCode=1;});
