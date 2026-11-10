@@ -1051,9 +1051,10 @@
     }
   });
   void fileStore.init();
-  // The file store warns about its own pending writes. Warn here when changes reached neither copy.
+  // The file store warns about its own pending writes. Warn here when changes reached neither copy,
+  // or a recovery copy is still being written, since closing would leave it empty.
   window.addEventListener('beforeunload', event => {
-    if (browserUnsaved && !(fileStore.isConnected() && !fileStore.isPending())) { event.preventDefault(); event.returnValue = ''; }
+    if ((browserUnsaved && !(fileStore.isConnected() && !fileStore.isPending())) || recovery.isPending()) { event.preventDefault(); event.returnValue = ''; }
   });
   // Pure date helpers are exposed for focused schedule verification.
   window.DayByDay = Object.freeze({ dateKey, parseDate, validDate, plusDays, monday, weekdaysOf, recurrenceLabel, scheduled, resolveTask, reviseRoutine, orderByIds, moveOrderedId, overdueTasks, validTime, taskTimeOrder, sortTasksByTime, dueTime, reminderKey, dueReminders, validate });

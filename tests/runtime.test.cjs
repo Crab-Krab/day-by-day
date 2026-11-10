@@ -857,7 +857,7 @@ async function verifyRecoveryCopies() {
   const tick=async()=>{for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));};
   function fakeFolder() {
     const files=new Map(),top={name:'Private',permission:'granted',fail:false};
-    const sub={files,async getFileHandle(name,{create}={}){if(!files.has(name)){if(!create)throw Error('Missing');files.set(name,{kind:'file',raw:'',async getFile(){const raw=this.raw;return {size:Buffer.byteLength(raw),text:async()=>raw};},async createWritable(){const file=this;let text='';return {async write(value){if(top.fail)throw Error('Disk full');text=value;},async close(){file.raw=text;},async abort(){}};}});}return files.get(name);},
+    const sub={files,async getFileHandle(name,{create}={}){if(!files.has(name)){if(!create)throw Error('Missing');files.set(name,{kind:'file',raw:'',async getFile(){const raw=this.raw;return {size:Buffer.byteLength(raw),text:async()=>raw};},async createWritable(){const file=this;let text='';return {async write(value){if(top.gate)await top.gate;if(top.fail)throw Error('Disk full');text=value;},async close(){file.raw=text;},async abort(){}};}});}return files.get(name);},
       async removeEntry(name){files.delete(name);},async *entries(){yield* [...files.entries()];}};
     return Object.assign(top,{sub,async queryPermission(){return top.permission;},async requestPermission(){return top.permission;},async getDirectoryHandle(name){assert.equal(name,'Day-by-Day recovery copies');return sub;}});
   }
@@ -932,7 +932,31 @@ async function verifyRecoveryCopies() {
   // Turning off forgets the folder and leaves its copies.
   const kept=copies(folder).length;await app.ids.stopRecoveryCopies.onclick();
   assert.equal(app.ids.recoveryState.textContent,'Off');assert.equal(idbStore.value,undefined);assert.equal(copies(folder).length,kept);
-  console.log('Recovery copies passed: off by default, first copy, hourly limit, copies before deleting, ending, restoring and which-copy choices, confirmed restore, unreadable copies, newest 20 kept, other files untouched, paused without blocking saving, reopening, and turning off.');
+  // A burst of deletes makes one copy per 5 minutes, and that copy holds every task from before the burst (audit F-08).
+  const burstFolder=fakeFolder(),burstOptions={secure:true,fileWindow:{showDirectoryPicker:async()=>burstFolder},indexedDB:idb({})};
+  const many=[...Array(6)].map((_,n)=>({id:'d'+n,kind:'once',title:'Old task '+n,date:'2026-11-06'}));
+  const burstStorage=new Map([[key,JSON.stringify({version:5,tasks:many,completed:{}})]]);
+  const burst=boot(burstStorage,t0,burstOptions);await tick();await burst.ids.chooseRecoveryFolder.onclick();await tick();
+  // New names carry a random part, so two windows never write the same file (audit AUD-04).
+  assert.match(newest(burstFolder),/^day-by-day-copy-\d{13}-[0-9a-f]{8}-first\.json$/);
+  const deleteCopies=()=>copies(burstFolder).filter(name=>name.endsWith('-delete.json'));
+  const remove=id=>{row(burst,id).querySelector('.edit-task').onclick();burst.ids.deleteTask.onclick();};
+  for(let n=0;n<4;n++){burst.clock(t0+n*60000);remove('d'+n);await tick();}
+  assert.equal(deleteCopies().length,1);assert.equal(titles(burstFolder,deleteCopies()[0]).length,6);
+  burst.clock(t0+9*60000);remove('d4');await tick();assert.equal(deleteCopies().length,2);
+  // Two windows turning copies on in the same millisecond keep both copies.
+  const twin=boot(burstStorage,t0,burstOptions);await tick();await twin.ids.chooseRecoveryFolder.onclick();await tick();
+  assert.equal(copies(burstFolder).filter(name=>name.endsWith('-first.json')).length,2);
+  // Copies named before random parts were added are still listed and restorable.
+  burstFolder.sub.files.set('day-by-day-copy-1762400000000-delete.json',{kind:'file',raw:JSON.stringify({version:5,tasks:[],completed:{}}),async getFile(){const raw=this.raw;return {size:raw.length,text:async()=>raw};}});
+  await burst.ids.showRecoveryCopies.onclick();assert.equal(burst.ids.recoveryList.children.length,copies(burstFolder).length);
+  // While a copy is still being written, the panel says so and closing the page warns (audit AUD-03).
+  const leaving=()=>{let prevented=false;for(const fn of burst.windowListeners.beforeunload||[])fn({preventDefault(){prevented=true;}});return prevented;};
+  let release;burstFolder.gate=new Promise(resolve=>release=resolve);burst.clock(t0+20*60000);remove('d5');await tick();
+  assert.match(burst.ids.recoveryStatus.textContent,/Saving a recovery copy/);assert.equal(leaving(),true);
+  release();delete burstFolder.gate;await tick();
+  assert.match(burst.ids.recoveryStatus.textContent,/^Last copy: .*before deleting a task/);assert.equal(leaving(),false);
+  console.log('Recovery copies passed: off by default, first copy, hourly limit, copies before deleting, ending, restoring and which-copy choices, confirmed restore, unreadable copies, newest 20 kept, other files untouched, paused without blocking saving, reopening, turning off, one copy per 5 minutes during bursts, unique names, older names, and warning while a copy is still being written.');
 }
 verifyRecoveryCopies().catch(error=>{console.error(error);process.exitCode=1;});
 function verifyVisibleOverdueActionsAndBell() {
