@@ -3,6 +3,13 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const {pathToFileURL} = require('node:url');
 const fixture = require('./helpers/redesign-fixture.cjs');
 const widths = [320,375,599,600,768,959,960,1024,1359,1360,1366,1920,2560];
+function contrast(a,b) {
+  const luminance = hex => {
+    const c = hex.trim().slice(1).match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+    return .2126*c[0]+.7152*c[1]+.0722*c[2];
+  };
+  const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+}
 async function main() {
   const pw = require(process.env.DAY_BY_DAY_PLAYWRIGHT_PATH || 'playwright');
   const type = process.env.DAY_BY_DAY_BROWSER_TYPE === 'firefox' ? pw.firefox : pw.chromium;
@@ -28,6 +35,8 @@ async function main() {
       targets:[...document.querySelectorAll('.check-button,.edit-task,.task-menu-toggle')].filter(visible).map(rect),
       days:[...document.querySelectorAll('#weekStrip button')].map(rect),
       comingUp:document.getElementById('comingUp').open,
+      workspace:document.getElementById('dailyView').getBoundingClientRect().width,
+      rail:document.querySelector('.sidebar').getBoundingClientRect().width,
       state:localStorage.getItem('day-by-day.v1')
     };
   });
@@ -38,8 +47,16 @@ async function main() {
       await page.goto(url);
       await page.waitForFunction(()=>window.DayByDay && ['idle','unsupported'].includes(document.getElementById('taskFilePanel').dataset.state));
       if(theme==='dark') await page.locator('#themeToggle').click();
+      if(width===320) {
+        const pairs=[['text','surface',4.5],['text-secondary','sidebar',4.5],['on-accent','accent',4.5],['on-accent','accent-hover',4.5],['on-selection','selection',4.5],['text-completed','surface-subtle',4.5],['link','surface',4.5],['control-border','field',3],['focus','canvas',3],['warning','warning-surface',4.5],['danger','danger-surface',4.5]];
+        const palette=await page.evaluate(()=>Object.fromEntries([...getComputedStyle(document.documentElement)].filter(k=>k.startsWith('--')).map(k=>[k.slice(2),getComputedStyle(document.documentElement).getPropertyValue(k)])));
+        for(const [foreground,background,min] of pairs) assert.ok(contrast(palette[foreground],palette[background])>=min,`${theme}: ${foreground}/${background} contrast`);
+        console.log(`PASS ${theme}: text, action/hover, selection, completed, warning/error, essential border and focus token contrast`);
+      }
       let result = await layout();
       assert.ok(result.scroll<=width,`${width}/${theme}: page overflow`);
+      assert.ok(result.workspace<=1440,`${width}/${theme}: unbounded workspace`);
+      if(width>=960) assert.equal(result.rail,248);
       assert.deepEqual(result.duplicateIDs,[]);
       assert.ok(result.targets.every(r=>r.width>=44&&r.height>=44),`${width}/${theme}: task action below 44px`);
       assert.equal(result.days.length,7);assert.ok(result.days.every(r=>r.width>=24&&r.height>=60));
@@ -84,6 +101,18 @@ async function main() {
     await page.setViewportSize({width:1440,height:900});await page.setViewportSize({width:375,height:900});
     await page.waitForFunction(()=>!document.getElementById('comingUp').open);
     console.log('PASS Coming up: focused dates survive resize; collapse survives navigation and wide/narrow transitions');
+
+    // Moving from the rail to the compact header cannot hide the focused calendar.
+    await page.setViewportSize({width:1024,height:900});await page.goto(url);await page.waitForFunction(()=>window.DayByDay);
+    await page.locator('#jumpDate').fill('2026-12-01');await page.locator('#jumpDate').press('Tab');
+    await page.locator('#prevMonth').click();await page.locator('#calendarGrid .today').focus();
+    assert.ok(await page.locator('#calendarGrid .today').evaluate(n=>parseFloat(getComputedStyle(n).outlineWidth)>=3),'today marker must not override keyboard focus');
+    await page.setViewportSize({width:375,height:900});
+    await page.waitForFunction(()=>document.querySelector('.calendar-mobile-toggle').getAttribute('aria-expanded')==='true');
+    assert.ok(await page.locator('#calendarGrid .today').isVisible());
+    await page.locator('.calendar-mobile-toggle').focus();await page.setViewportSize({width:1024,height:900});
+    await page.waitForFunction(()=>document.activeElement?.parentElement?.id==='calendarGrid');
+    console.log('PASS calendar resize: focused dates remain exposed; disappearing toggle returns focus to the calendar; today keeps its focus outline');
 
     // Native and custom validation are associated with visible fields, with no saved mutation.
     await page.goto(url);await page.waitForFunction(()=>window.DayByDay);

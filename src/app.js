@@ -1107,6 +1107,15 @@
   setInterval(checkReminders, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); }); window.addEventListener('focus', () => { checkReminders(); updateNotificationStatus(); renderBackupStatus(); });
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-controls', 'calendarPanel'); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
+  const railNarrow = window.matchMedia?.('(max-width: 959px)');
+  railNarrow?.addEventListener?.('change', () => {
+    if (railNarrow.matches && $('calendarPanel').contains(document.activeElement)) {
+      document.querySelector('.sidebar').classList.toggle('mobile-calendar', true);
+      calendarToggle.setAttribute('aria-expanded', 'true');
+    } else if (!railNarrow.matches && document.activeElement === calendarToggle) {
+      [...$('calendarGrid').children].find(day => day.tabIndex === 0)?.focus({ preventScroll: true });
+    }
+  });
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
   recovery = window.createRecoveryCopies({ sizeLimit: SIZE_LIMIT, validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label), onAttention: () => fileStore?.showDetails() });

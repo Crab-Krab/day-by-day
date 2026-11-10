@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-q1U66eBAKq9NZHux2bt5wAV4Dy9cYGCeHhsFVYuHPn8=' 'sha256-4GODDF3C48YIplZh1W9SOanFfZmNzOX0An0X0OZPEco='; style-src 'sha256-mF83rV/+DnmgAcr0Quk8i8qT3QsfNPUqBomF/xKZwxQ='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-q1U66eBAKq9NZHux2bt5wAV4Dy9cYGCeHhsFVYuHPn8=' 'sha256-V5SbwiK5IhQnMkEX63QwpE7Yq8FZ7VTcUKeV5rrKqrc='; style-src 'sha256-v/VKmxK+JjMeWphUI6OSbwLjlHWaQ+9d7s0nSVEgMQs='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f7f8">
   <meta name="description" content="A little space for everything you want to do. A daily checklist with weekly routines and a built-in calendar.">
@@ -133,6 +133,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .nav-count, .quiet-count { display: inline-grid; place-items: center; margin-left: auto; min-width: 24px; min-height: 24px; padding: 2px 6px; border-radius: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .nav-item.active .nav-count, .nav-item.active .quiet-count { background: var(--surface); }
 .calendar-panel { border-top: 1px solid var(--border); padding-top: 24px; }
+/* Keep focus alive until the resize handler exposes the corresponding layout. */
+.calendar-mobile-toggle:focus { display: inline-flex !important; }
 .calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 16px; }
 .calendar-heading h2 { font-size: 14px; font-weight: 600; margin: 0; }
 .arrow-group { display: flex; align-items: center; gap: 4px; }
@@ -145,7 +147,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .calendar-grid button { position: relative; min-width: 24px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
 .calendar-grid button:hover { background: var(--hover); }
 .calendar-grid .outside { color: var(--outside); }
-.calendar-grid .today { outline: 1px solid var(--control-border); outline-offset: -2px; font-weight: 700; }
+.calendar-grid .today { box-shadow: inset 0 0 0 1px var(--control-border); font-weight: 700; }
 .calendar-grid .selected, .calendar-grid .selected:hover { background: var(--accent); color: var(--on-accent); }
 .calendar-grid .selected:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .calendar-grid .has-tasks::after { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: currentColor; bottom: 2px; left: calc(50% - 2px); }
@@ -398,6 +400,7 @@ button, a, input, textarea, summary { scroll-margin-block: 24px; }
   .nav-item { width: auto; }
   .nav-count, .quiet-count { margin-left: 4px; }
   .calendar-panel { display: none; margin-top: 16px; max-width: 360px; }
+  .calendar-panel:focus-within { display: block; }
   .sidebar.mobile-calendar .calendar-panel { display: block; }
   .calendar-mobile-toggle { display: inline-flex !important; position: absolute; top: 20px; right: var(--gutter); margin: 0; padding: 10px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text); text-decoration: none; }
   .calendar-grid button { min-height: 36px; }
@@ -2392,6 +2395,15 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   setInterval(checkReminders, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); }); window.addEventListener('focus', () => { checkReminders(); updateNotificationStatus(); renderBackupStatus(); });
   // Compact screens keep the calendar and backup controls within reach.
   const calendarToggle = el('button', 'text-button calendar-mobile-toggle', 'Calendar'); calendarToggle.type = 'button'; calendarToggle.style.display = 'none'; calendarToggle.prepend(icon('calendar')); calendarToggle.setAttribute('aria-controls', 'calendarPanel'); calendarToggle.setAttribute('aria-expanded', 'false'); calendarToggle.onclick = () => { const open = document.querySelector('.sidebar').classList.toggle('mobile-calendar'); calendarToggle.setAttribute('aria-expanded', String(open)); }; document.querySelector('.main-nav').append(calendarToggle);
+  const railNarrow = window.matchMedia?.('(max-width: 959px)');
+  railNarrow?.addEventListener?.('change', () => {
+    if (railNarrow.matches && $('calendarPanel').contains(document.activeElement)) {
+      document.querySelector('.sidebar').classList.toggle('mobile-calendar', true);
+      calendarToggle.setAttribute('aria-expanded', 'true');
+    } else if (!railNarrow.matches && document.activeElement === calendarToggle) {
+      [...$('calendarGrid').children].find(day => day.tabIndex === 0)?.focus({ preventScroll: true });
+    }
+  });
   render();
   checkReminders(); renderReminderPanel(); updateNotificationStatus(); renderBackupStatus();
   recovery = window.createRecoveryCopies({ sizeLimit: SIZE_LIMIT, validate, getData: () => data, restore: (next, label) => replaceAllTasks(next, label), onAttention: () => fileStore?.showDetails() });

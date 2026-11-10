@@ -100,6 +100,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .nav-count, .quiet-count { display: inline-grid; place-items: center; margin-left: auto; min-width: 24px; min-height: 24px; padding: 2px 6px; border-radius: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .nav-item.active .nav-count, .nav-item.active .quiet-count { background: var(--surface); }
 .calendar-panel { border-top: 1px solid var(--border); padding-top: 24px; }
+/* Keep focus alive until the resize handler exposes the corresponding layout. */
+.calendar-mobile-toggle:focus { display: inline-flex !important; }
 .calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 16px; }
 .calendar-heading h2 { font-size: 14px; font-weight: 600; margin: 0; }
 .arrow-group { display: flex; align-items: center; gap: 4px; }
@@ -112,7 +114,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .calendar-grid button { position: relative; min-width: 24px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
 .calendar-grid button:hover { background: var(--hover); }
 .calendar-grid .outside { color: var(--outside); }
-.calendar-grid .today { outline: 1px solid var(--control-border); outline-offset: -2px; font-weight: 700; }
+.calendar-grid .today { box-shadow: inset 0 0 0 1px var(--control-border); font-weight: 700; }
 .calendar-grid .selected, .calendar-grid .selected:hover { background: var(--accent); color: var(--on-accent); }
 .calendar-grid .selected:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .calendar-grid .has-tasks::after { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: currentColor; bottom: 2px; left: calc(50% - 2px); }
@@ -365,6 +367,7 @@ button, a, input, textarea, summary { scroll-margin-block: 24px; }
   .nav-item { width: auto; }
   .nav-count, .quiet-count { margin-left: 4px; }
   .calendar-panel { display: none; margin-top: 16px; max-width: 360px; }
+  .calendar-panel:focus-within { display: block; }
   .sidebar.mobile-calendar .calendar-panel { display: block; }
   .calendar-mobile-toggle { display: inline-flex !important; position: absolute; top: 20px; right: var(--gutter); margin: 0; padding: 10px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text); text-decoration: none; }
   .calendar-grid button { min-height: 36px; }

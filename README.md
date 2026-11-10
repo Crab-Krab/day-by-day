@@ -35,9 +35,9 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 
 ## Your data
 
-Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
+Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, choose **Manage**, then **Create new task file**, and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
 
-After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
+Browser-only and connected-file saving normally use one compact status row. Choose **Manage** for file controls, browser saving, manual backups, and recovery copies. Saving failures, unreadable data, and paused recovery copies expand the details automatically.
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 

@@ -1,6 +1,6 @@
 # Day by Day: redesign implementation gameplan
 
-Prepared November 10, 2026. Planning deliverable; app implementation has not started.
+Prepared November 10, 2026. Implementation is now on this branch; see [verification](VERIFICATION.md) for completed checks and remaining manual acceptance work. The original planning sequence below remains the implementation record.
 
 ## Baseline and scope
 
@@ -138,7 +138,9 @@ Update `docs/USAGE.txt`, relevant saving/testing guidance, README if needed, and
 - [x] Create and verify the redesign branch at that baseline.
 - [x] Incorporate the user's narrow-screen Coming up decision.
 - [x] Record the implementation sequence and acceptance checks.
-- [ ] Start implementation and capture the live baseline.
-- [ ] Run implementation regression/browser/manual checks.
+- [x] Start implementation and capture the live baseline.
+- [x] Implement the visual system, shell, rows, editor, saving/recovery, reminders, and narrow Coming up.
+- [x] Run implementation regression checks and the Chrome browser/width/theme matrix.
+- [ ] Complete native Windows permission, screen-reader, software-keyboard, and sleep/wake acceptance checks.
 
-No app code, generated HTML, or saved-task data was changed during this planning task. Tests were inspected, not executed. No blocking product question remains; use the written specification and confirmed Coming up addition as the implementation contract.
+The initial planning task changed documentation only. The user's follow-up authorized implementation; app sources, generated HTML, guides, and tests are now updated on this branch. Task format remains 5. Current verification and environment limitations are recorded separately; no release has been published.
