@@ -27,11 +27,14 @@ Use a test JSON file in a test folder, never your everyday task file. Open the d
 
 **File autosave (Chrome or Edge)**
 
-- [ ] **Set up autosave**, change a task, and wait for **Saved to**. Close and reopen the HTML. The tasks load without a prompt when the browser kept permission.
+- [ ] **Create new task file**, change a task, and wait for **Saved to**. Close and reopen the HTML. The tasks load without a prompt when the browser kept permission.
 - [ ] Remove the site's file permission in browser settings, then make a change. Saving pauses. **Reconnect task file** asks for access and saves.
 - [ ] Clear the browser's site data. **Open task file**, select the same JSON, and check tasks and history come back.
 - [ ] Make the JSON read-only, then make a change. The status says the change isn't saved, and **Retry file save** appears. Make it writable again and select **Retry file save**. Check the file on disk has the change.
 - [ ] With the app open, edit the JSON in a text editor and save it. The next change pauses saving instead of overwriting it. **Reconnect task file** asks which copy to keep. Try both answers and Cancel.
+- [ ] Let the browser forget file permission (or remove it in site settings), reopen the HTML, change a task, and choose **Reconnect task file**. It saves without asking which copy to keep.
+- [ ] With a working file connected, choose **Change file** and pick a file that isn't a task file. The message says it wasn't opened, and the next change still saves to the original file.
+- [ ] Make a copy of a test task file with history. Clear site data, choose **Create new task file**, select that copy, and confirm Replace. Check whether the copy was emptied before the app read it (audit F-01), and record the Chrome or Edge version and result.
 - [ ] **Disconnect**, then check the JSON file is still on disk.
 
 **Recovery copies (Chrome or Edge)**

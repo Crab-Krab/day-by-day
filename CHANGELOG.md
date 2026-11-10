@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Reconnecting a task file no longer asks which copy to keep when only one side changed. If the file still matches the last synced copy, your newer tasks save. If only the file changed, it loads. The app asks only when both changed, and neither answer is highlighted.
+- Rename **Set up autosave** to **Create new task file**, explain that existing files belong in **Open task file**, and suggest a dated file name so the save dialog never offers an existing task file by default. Saving over a file in that dialog can empty it before the app reads it.
+- A rejected or cancelled **Change file** keeps the working file saving instead of pausing it.
+- If the browser is slow to answer at startup, say the task file couldn't be checked instead of showing first-time setup, and try again on the next file action.
+- File tests now fail when a step hangs, instead of ending silently with success.
+
 ## 1.6.0 — 2026-11-07
 
 - On screens 1360px wide and up, add a **Coming up** column beside the checklist with the 7 days after the selected day: each day's task count and up to six task names, and a click to open it. Remove the width cap so the checklist and Coming up use the whole screen beside the sidebar, and line the saving panels up with the content. The day title and week strip stay stacked above. Narrower screens and phones are unchanged.

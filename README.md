@@ -35,7 +35,7 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 
 ## Your data and updates
 
-Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Set up autosave** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, choose **Open task file** instead.
+Your tasks and history stay on your computer; they are not uploaded to GitHub or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** to save your current tasks to a permanent local JSON file. Changes save automatically. Wait for **Saved to [filename]** before closing. If you already have a task JSON, always choose **Open task file** instead. Saving over an existing file in the create dialog empties it.
 
 After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
 

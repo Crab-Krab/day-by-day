@@ -5,10 +5,10 @@ Use the updated Day-by-Day.html in current desktop Chrome or Edge. No installati
 ## First setup
 
 1. Keep the HTML in a permanent folder. If tasks are in an older copy, export a backup from that copy before replacing it.
-2. If your tasks are already visible, click **Set up autosave**. Save **Day-by-Day-data.json** in a permanent local folder such as Documents. Avoid temporary folders.
-3. If you already have a task JSON or exported backup, click **Open task file** and select it instead. That file becomes the live autosave file; make a separate copy first if you want to keep the original backup unchanged.
+2. If your tasks are already visible, click **Create new task file**. Save the suggested file, named like **Day-by-Day-tasks-2026-11-10.json**, in a permanent local folder such as Documents. Avoid temporary folders.
+3. If you already have a task JSON or exported backup, click **Open task file** and select it instead. Never pick an existing task file in the **Create new task file** dialog: saving over a file empties it before the app can read it. That file becomes the live autosave file; make a separate copy first if you want to keep the original backup unchanged.
 4. Allow editing when the browser asks. If offered **Allow on every visit**, this can make reopening smoother.
-5. Make changes normally. Each task change starts a save automatically. Wait for **Saved to Day-by-Day-data.json** before closing the tab or signing out.
+5. Make changes normally. Each task change starts a save automatically. Wait for **Saved to** and your file's name before closing the tab or signing out.
 
 Only the HTML needs to be opened. Do not open or edit the JSON manually during normal use. The JSON contains your tasks, schedules, completion history, and custom ordering. Appearance, desktop notification permissions, and reminder-delivery history remain browser preferences.
 
@@ -26,11 +26,11 @@ The status above the checklist reports file saves separately from the browser co
 
 If the file and current tasks differ, the app asks which to keep. **Use file tasks** replaces the tasks currently shown. **Use current tasks** writes the current list to the selected file. **Cancel** preserves both copies. Download current tasks before choosing if you need to keep both. Invalid JSON files are never overwritten by the app.
 
-An interrupted save can leave pending changes in browser storage. On reopening, the app compares them with the last synchronized copy and asks before replacing them. Changes that never reached disk cannot survive browser cleanup; always wait for the saved status.
+An interrupted save can leave pending changes in browser storage. On reopening, the app compares the file, the browser copy, and the last synchronized copy. If only the browser copy changed, it saves it without asking. If only the file changed, it loads the file. It asks only when both changed. Changes that never reached disk cannot survive browser cleanup; always wait for the saved status.
 
 Avoid using multiple copies of the app to edit the same JSON simultaneously. Writes are serialized within a tab, and the app checks for external changes before committing a write. A conflicting window pauses rather than silently replacing newer file contents. This is not a multi-user synchronization system.
 
-**Change file** opens another existing task file. **Disconnect** removes the remembered browser connection without deleting the JSON. If the browser cannot forget the connection, the app still disconnects for this visit and says the file may reopen next time. To create a new file after disconnecting, choose **Set up autosave**. Keep occasional separate backups; autosaving also saves deliberate deletions and restores.
+**Change file** opens another existing task file. **Disconnect** removes the remembered browser connection without deleting the JSON. If the browser cannot forget the connection, the app still disconnects for this visit and says the file may reopen next time. To create a new file after disconnecting, choose **Create new task file**. Keep occasional separate backups; autosaving also saves deliberate deletions and restores.
 
 Firefox and unsupported browsers continue to offer browser saving and manual backup/restore, but cannot use this direct-file autosave feature. If a browser copy cannot be saved, file autosaving can still work. The app explains when it cannot remember the connection for the next visit.
 

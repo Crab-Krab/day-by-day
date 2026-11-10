@@ -33,7 +33,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Keep your tasks in a file', 'Set up autosave once, or open your existing JSON task file. The file stays on your computer when browser data is cleared.'); }
+  function idleStatus() { status('Keep your tasks in a file', 'Already have a task file? Choose Open task file. Create new task file is only for starting a new file. The file stays on your computer when browser data is cleared.'); }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;
@@ -48,7 +48,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
       request.onerror = () => { clearTimeout(timer); reject(request.error); };
       request.onblocked = () => { clearTimeout(timer); reject(new Error('Connection storage blocked')); };
       request.onsuccess = () => { clearTimeout(timer); const database = request.result; database.onversionchange = () => database.close(); resolve(database); };
-    });
+    }).catch(error => { dbPromise = null; throw error; }); // A slow or failed open is tried again next time.
     return dbPromise;
   }
   async function connection(action, value) {
@@ -93,10 +93,19 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
 
   function fail(error) {
     paused = Boolean(handle);
-    const message = error?.name === 'NotAllowedError' ? 'File access needs your permission again. Reconnect to continue saving.'
-      : error?.name === 'NotFoundError' ? 'The task file was moved or removed. Open it at its new location, or disconnect and set up a new file.'
-      : error?.message || 'The file could not be saved. Reconnect and try again.';
+    const message = failMessage(error);
     status(dirty ? 'Changes not saved to file' : 'Task file needs attention', message + ' Your current tasks remain available here; Back up tasks can save a separate copy.', 'error');
+  }
+  function failMessage(error) {
+    return error?.name === 'NotAllowedError' ? 'File access needs your permission again. Reconnect to continue saving.'
+      : error?.name === 'NotFoundError' ? 'The task file was moved or removed. Open it at its new location, or disconnect and create a new file.'
+      : error?.message || 'The file could not be saved. Reconnect and try again.';
+  }
+  // A dated name means the save dialog never suggests an existing task file by default.
+  // Saving over an existing file empties it, so existing files belong in Open task file.
+  function newFileName() {
+    const now = new Date(), pad = n => String(n).padStart(2, '0');
+    return 'Day-by-Day-tasks-' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + '.json';
   }
   async function withFileLock(callback) {
     if (typeof navigator !== 'undefined' && navigator.locks?.request) return navigator.locks.request('day-by-day.task-file.write', callback);
@@ -163,7 +172,11 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     // requires an explicit decision. Missing cache after cleanup is not a deletion.
     const cacheUnchanged = automatic && knownBaseline !== null && current === knownBaseline;
     const pendingCache = automatic && knownBaseline !== null && current !== knownBaseline;
-    if (disk.canonical !== null && (hasRecovery() || (disk.canonical !== current &&
+    // When the file still matches the last synced copy, only this browser changed, so
+    // its tasks simply continue. An empty browser copy still asks, since browser cleanup looks the same.
+    const fileUnchanged = pendingCache && disk.canonical === knownBaseline && currentHasTasks;
+    if (fileUnchanged) decision = 'current';
+    else if (disk.canonical !== null && (hasRecovery() || (disk.canonical !== current &&
         (creating || (!cacheUnchanged && (currentHasTasks || pendingCache)))))) {
       decision = await choose('“' + target.name + '” and the tasks currently shown are different. ' + (automatic ? 'There may be changes that did not finish saving last time.' : 'Choose the copy you want to continue with.'));
       if (decision === 'cancel') return false;
@@ -179,20 +192,27 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
   async function pick(creating) {
     if (busy || writing || !supported) return;
     setBusy(true);
-    const oldHandle = handle;
+    const oldHandle = handle, oldWorking = Boolean(handle) && !paused;
+    let keptMessage = null;
     try {
       // Invoke the picker synchronously in the click's activation, before any await.
       const target = creating
-        ? await window.showSaveFilePicker({ id: 'day-by-day-tasks', suggestedName: 'Day-by-Day-data.json', types: fileTypes })
+        ? await window.showSaveFilePicker({ id: 'day-by-day-tasks', suggestedName: newFileName(), types: fileTypes })
         : (await window.showOpenFilePicker({ id: 'day-by-day-tasks', multiple: false, types: fileTypes }))[0];
       if (await target.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Allow editing access to enable automatic saving.');
       const attached = await attach(target, { creating });
-      if (!attached && oldHandle) { paused = true; status('Task file paused', 'Your current tasks have been kept. Reconnect to continue saving.', 'error'); }
+      // A cancelled switch leaves a working file connected as it was.
+      if (!attached && oldHandle && !oldWorking) { paused = true; status('Task file paused', 'Your current tasks have been kept. Reconnect to continue saving.', 'error'); }
+      if (!attached && oldWorking) keptMessage = 'The other file was not opened. Your current tasks have been kept.';
     } catch (error) {
-      if (error.name !== 'AbortError') fail(error);
+      // A rejected new file never pauses the file that was already saving.
+      if (error.name !== 'AbortError') { if (oldWorking && handle === oldHandle) keptMessage = failMessage(error); else fail(error); }
     } finally {
       setBusy(false);
-      if (handle && !paused) { if (dirty) await flush(); else savedStatus(); }
+      if (handle && !paused) {
+        if (dirty) await flush(); else savedStatus();
+        if (keptMessage && handle && !paused && !dirty) status('Still saving to ' + handle.name, keptMessage + ' Changes keep saving to ' + handle.name + '.', 'error');
+      }
     }
   }
   async function retry() {
@@ -242,7 +262,7 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
     // waits for an open editor, then compares the latest browser and file copies.
     setBusy(true, false);
     status('Looking for your task file…', 'Checking the connection saved in this browser.');
-    let failed = false;
+    let failed = false, lookupFailed = false;
     try {
       const record = await connection('get');
       if (record?.handle) {
@@ -251,11 +271,13 @@ window.createTaskFileStorage = function ({ getData, validate, applyData, backup,
           await attach(handle, { automatic: true, knownBaseline: baseline });
         }
       }
-    } catch (error) { if (handle) { fail(error); failed = true; } else remembered = false; }
+    } catch (error) { if (handle) { fail(error); failed = true; } else { remembered = false; lookupFailed = true; } }
     finally {
       setBusy(false); initialized = true;
       if (handle && !paused) { if (dirty) await flush(); else savedStatus(); }
       else if (handle && !failed) status('Reconnect ' + handle.name, 'Your task file is remembered. Click Reconnect task file and allow access to load it and resume saving.', 'error');
+      // A failed lookup is not the same as never having a file, so say so instead of showing first-time setup.
+      else if (lookupFailed) status('Could not check for your task file', 'The browser did not answer in time. If you use a task file, choose Open task file to reconnect it, or reload the page to try again.', 'error');
       else if (!handle) idleStatus();
     }
   }
