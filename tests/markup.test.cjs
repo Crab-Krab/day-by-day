@@ -44,6 +44,14 @@ assert.doesNotMatch(fs.readFileSync('src/styles.css', 'utf8'), /Georgia/, 'the s
 for (const slogan of ['YOUR EVERYDAY SPACE', 'A little progress, every day.', 'Make room for what matters.', 'MAKE A LITTLE PLAN', 'A RHYTHM THAT WORKS FOR YOU', 'A fresh day. A little space']) assert.equal(html.includes(slogan), false, `slogan "${slogan}" came back`);
 assert.match(html, /Less remembering\. More doing\./, 'the footer line stays');
 assert.match(html, /<a class="skip-link" href="#mainContent">/, 'the skip link leads to the main content');
+// Release notes for this version that quote a checksum must quote the committed build's, as the
+// release workflow requires. Catching it here means a later change can't leave the notes stale.
+const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version, notesFile = `docs/releases/v${version}.md`;
+if (fs.existsSync(notesFile) && /SHA-256/.test(fs.readFileSync(notesFile, 'utf8'))) {
+  const built = require('node:crypto').createHash('sha256').update(fs.readFileSync('Day-by-Day.html')).digest('hex');
+  assert.ok(fs.readFileSync(notesFile, 'utf8').includes(built), `${notesFile} must quote the SHA-256 of the current Day-by-Day.html (${built}). Run npm run build, then update the notes.`);
+}
+assert.match(fs.readFileSync('CHANGELOG.md', 'utf8'), new RegExp(`^## ${version.replace(/\./g, '\\.')} `, 'm'), `CHANGELOG.md needs a ${version} section`);
 console.log(`Markup passed: ${declared.length} unique element ids, all ${referenced.size} looked up by the scripts present, shared page parts and build tags intact.`);
 
 // A saved file using every part of format 5: routine versions, a completed snapshot, a skipped and a

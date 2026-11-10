@@ -7,11 +7,17 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
   let handle = null, rawBaseline = null, baseline = null, dirty = false, writing = null;
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
-  let dbPromise = null, hasSaved = false;
+  let dbPromise = null, hasSaved = false, inviting = false;
+  // While no task file is connected, the folded status row itself invites setting one up.
   function showDetails(expanded = true) {
     $('taskFileDetails').hidden = !expanded;
     $('manageTaskFile').setAttribute('aria-expanded', String(expanded));
-    $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
+    refreshManage();
+  }
+  function refreshManage() {
+    const expanded = !$('taskFileDetails').hidden;
+    $('manageTaskFile').textContent = expanded ? 'Hide details' : inviting ? 'Set up task file' : 'Manage';
+    $('taskFilePrompt').hidden = !inviting || expanded;
   }
   $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
   const snapshot = () => JSON.stringify(validate(getData()));
@@ -22,7 +28,8 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
-    if (state === 'error' || (state === 'idle' && !compact)) showDetails();
+    inviting = false;
+    if (state === 'error' || (state === 'idle' && !compact)) showDetails(); else refreshManage();
     if (state === 'idle' || state === 'unsupported') hasSaved = false;
     if (state === 'saved' && !hasSaved) { showDetails(false); hasSaved = true; }
     // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
@@ -35,7 +42,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Browser saving only', 'No task file is connected, so your tasks are saved in this browser. Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.', 'idle', true); }
+  function idleStatus() { status('Browser saving only', 'No task file is connected, so your tasks are saved in this browser. Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.', 'idle', true); inviting = supported && !handle; refreshManage(); }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;

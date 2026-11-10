@@ -149,6 +149,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .task-file-panel[data-state="error"] .status-dot { background: var(--danger); }
 .task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--text); }
 .task-file-panel[data-state="saved"] .status-dot { width: 6px; height: 11px; margin: 0 3px 3px; border-radius: 0; background: none; border-right: 2px solid var(--text); border-bottom: 2px solid var(--text); transform: rotate(45deg); }
+.task-file-copy { flex-wrap: wrap; row-gap: 2px; }
+.task-file-prompt { flex-basis: 100%; padding-inline-start: 17px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+.task-file-panel:has(#taskFilePrompt:not([hidden])) #manageTaskFile { color: var(--link); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .recovery-summary { padding: 1px 8px; border-radius: 999px; background: var(--warning-surface); color: var(--warning); font-size: 12px; line-height: 18px; font-weight: 600; white-space: nowrap; }
 /* Inside Manage: Task file, Browser copy and backups, and Recovery copies, one after another. */
 .task-file-details { padding-bottom: 12px; }

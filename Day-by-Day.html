@@ -25,7 +25,7 @@ SOFTWARE.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-df8FEI60dZn3jEXPeOfUmL0cqqBYlQM6BVEzP7JMhI8=' 'sha256-7yn4VuO/2KdEMwqGRxWuD6g+YEiLYMYbVXCl4DTzWfQ='; style-src 'sha256-mIbqjvNSoZftTzmK81LzKhCYuYPoJOFAbApfs26RpeQ='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-df8FEI60dZn3jEXPeOfUmL0cqqBYlQM6BVEzP7JMhI8=' 'sha256-PE0ysVoUVvsQzWeeRbmFvDIsCvi1VaF7ewsqpYqr80Y='; style-src 'sha256-u/LqE8zrsLQ7nx/url2xOh7gILmv69MEsEu3PhfB4+A='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f7f8">
   <meta name="description" content="A little space for everything you want to do. A daily checklist with weekly routines and a built-in calendar.">
@@ -182,6 +182,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .task-file-panel[data-state="error"] .status-dot { background: var(--danger); }
 .task-file-panel[data-state="saved"] .task-file-copy strong { color: var(--text); }
 .task-file-panel[data-state="saved"] .status-dot { width: 6px; height: 11px; margin: 0 3px 3px; border-radius: 0; background: none; border-right: 2px solid var(--text); border-bottom: 2px solid var(--text); transform: rotate(45deg); }
+.task-file-copy { flex-wrap: wrap; row-gap: 2px; }
+.task-file-prompt { flex-basis: 100%; padding-inline-start: 17px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+.task-file-panel:has(#taskFilePrompt:not([hidden])) #manageTaskFile { color: var(--link); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .recovery-summary { padding: 1px 8px; border-radius: 999px; background: var(--warning-surface); color: var(--warning); font-size: 12px; line-height: 18px; font-weight: 600; white-space: nowrap; }
 /* Inside Manage: Task file, Browser copy and backups, and Recovery copies, one after another. */
 .task-file-details { padding-bottom: 12px; }
@@ -600,7 +603,7 @@ input:not([type=radio]):not([type=checkbox]):disabled, textarea:disabled { backg
     <main id="mainContent" tabindex="-1">
       <header class="topbar"><p class="view-label" id="viewBreadcrumb">My day</p><div class="topbar-actions"><button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-sun" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-sun"/></svg><svg class="theme-moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.4 14.2A8.8 8.8 0 0 1 9.8 3.6a8.8 8.8 0 1 0 10.6 10.6Z"/></svg></button><button class="primary-button" id="addTask"><svg><use href="#i-plus"/></svg><span id="addTaskLabel">Add task</span></button></div></header>
       <section id="taskFilePanel" class="task-file-panel" aria-label="Saving and backups">
-        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Browser saving only</strong><span id="recoverySummary" class="recovery-summary" hidden>Recovery copies paused</span></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="false" aria-controls="taskFileDetails">Manage</button></div>
+        <div class="task-file-summary"><div class="task-file-copy"><span class="status-dot" aria-hidden="true"></span><strong id="taskFileStatus" role="status" aria-live="polite">Browser saving only</strong><span id="recoverySummary" class="recovery-summary" hidden>Recovery copies paused</span><span id="taskFilePrompt" class="task-file-prompt" hidden>Connect a task file so your tasks stay safe when browser data is cleared.</span></div><button type="button" id="manageTaskFile" class="text-button" aria-expanded="false" aria-controls="taskFileDetails">Manage</button></div>
         <div id="taskFileDetails" class="task-file-details" hidden>
           <section class="saving-group" aria-labelledby="taskFileGroupTitle"><h3 id="taskFileGroupTitle">Task file</h3><p id="taskFileDetail">Automatically save to a JSON file that stays on your computer, even when browser data is cleared.</p>
           <div class="task-file-actions"><button type="button" id="retryTaskFile" class="primary-button" hidden>Retry file save</button><button type="button" id="reconnectTaskFile" class="primary-button" hidden>Reconnect task file</button><button type="button" id="openTaskFile" class="outline-button">Open task file</button><button type="button" id="createTaskFile" class="outline-button">Create new task file</button><button type="button" id="disconnectTaskFile" class="text-button" hidden>Disconnect</button></div></section>
@@ -1069,11 +1072,17 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   const fileTypes = [{ description: 'Day by Day tasks', accept: { 'application/json': ['.json'] } }];
   let handle = null, rawBaseline = null, baseline = null, dirty = false, writing = null;
   let busy = false, paused = false, remembered = true, choiceResolve = null, initialized = false;
-  let dbPromise = null, hasSaved = false;
+  let dbPromise = null, hasSaved = false, inviting = false;
+  // While no task file is connected, the folded status row itself invites setting one up.
   function showDetails(expanded = true) {
     $('taskFileDetails').hidden = !expanded;
     $('manageTaskFile').setAttribute('aria-expanded', String(expanded));
-    $('manageTaskFile').textContent = expanded ? 'Hide details' : 'Manage';
+    refreshManage();
+  }
+  function refreshManage() {
+    const expanded = !$('taskFileDetails').hidden;
+    $('manageTaskFile').textContent = expanded ? 'Hide details' : inviting ? 'Set up task file' : 'Manage';
+    $('taskFilePrompt').hidden = !inviting || expanded;
   }
   $('manageTaskFile').onclick = () => showDetails($('taskFileDetails').hidden);
   const snapshot = () => JSON.stringify(validate(getData()));
@@ -1084,7 +1093,8 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
     $('taskFileStatus').textContent = title;
     $('taskFileDetail').textContent = detail;
     $('taskFilePanel').dataset.state = state;
-    if (state === 'error' || (state === 'idle' && !compact)) showDetails();
+    inviting = false;
+    if (state === 'error' || (state === 'idle' && !compact)) showDetails(); else refreshManage();
     if (state === 'idle' || state === 'unsupported') hasSaved = false;
     if (state === 'saved' && !hasSaved) { showDetails(false); hasSaved = true; }
     // A failed write to an unchanged file can simply be retried. Reconnect handles everything else.
@@ -1097,7 +1107,7 @@ window.createTaskFileStorage = function ({ sizeLimit, getData, validate, applyDa
   }
   function refreshControls() { for (const id of ['retryTaskFile', 'reconnectTaskFile', 'disconnectTaskFile', 'createTaskFile', 'openTaskFile']) $(id).disabled = busy || Boolean(writing) || !supported; }
   function savedStatus() { status('Saved to ' + handle.name, 'Changes save automatically. ' + connectionNote(), 'saved'); }
-  function idleStatus() { status('Browser saving only', 'No task file is connected, so your tasks are saved in this browser. Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.', 'idle', true); }
+  function idleStatus() { status('Browser saving only', 'No task file is connected, so your tasks are saved in this browser. Already have a task file? Choose Open task file. Create new task file asks for a folder and makes the file there. The file stays on your computer when browser data is cleared.', 'idle', true); inviting = supported && !handle; refreshManage(); }
   function setBusy(value, blockChecklist = true) {
     busy = value;
     document.querySelector('.app-shell').inert = value && blockChecklist;

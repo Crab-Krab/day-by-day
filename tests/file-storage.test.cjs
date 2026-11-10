@@ -55,8 +55,13 @@ function boot({data=empty(),store={},file=disk(),supported=true,storageFails=fal
 }
 async function main() {
   const file=disk(),store={}; let app=boot({data:sample('First'),file,store});
-  await app.controller.init(); await app.click('createTaskFile');
-  assert.equal(app.nodes.taskFileDetails.hidden,true);
+  await app.controller.init();
+  // With no task file, the folded row invites setting one up instead of opening the whole panel.
+  assert.match(app.title(),/Browser saving only/);app.click('manageTaskFile');assert.equal(app.nodes.taskFileDetails.hidden,true);
+  assert.equal(app.nodes.taskFilePrompt.hidden,false);assert.equal(app.nodes.manageTaskFile.textContent,'Set up task file');
+  app.click('manageTaskFile');assert.equal(app.nodes.taskFilePrompt.hidden,true);assert.equal(app.nodes.manageTaskFile.textContent,'Hide details');
+  await app.click('createTaskFile');
+  assert.equal(app.nodes.taskFileDetails.hidden,true);assert.equal(app.nodes.taskFilePrompt.hidden,true);assert.equal(app.nodes.manageTaskFile.textContent,'Manage');
   assert.equal(app.nodes.manageTaskFile['aria-expanded'],'false');
   app.click('manageTaskFile');assert.equal(app.nodes.taskFileDetails.hidden,false);
   assert.equal(JSON.parse(file.raw).tasks[0].title,'First'); assert.match(app.title(),/^Saved to/);
