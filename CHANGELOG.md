@@ -2,18 +2,22 @@
 
 ## Unreleased
 
+## 1.6.1 — 2026-11-10
+
 - Reconnecting a task file no longer asks which copy to keep when only one side changed. If the file still matches the last synced copy, your newer tasks save. If only the file changed, it loads. The app asks only when both changed, and neither answer is highlighted.
 - Rename **Set up autosave** to **Create new task file**, explain that existing files belong in **Open task file**, and suggest a dated file name so the save dialog never offers an existing task file by default. Saving over a file in that dialog can empty it before the app reads it.
 - A rejected or cancelled **Change file** keeps the working file saving instead of pausing it.
 - If the browser is slow to answer at startup, say the task file couldn't be checked instead of showing first-time setup, and try again on the next file action.
-- File tests now fail when a step hangs, instead of ending silently with success.
-- Deleting many tasks or ending many routines in a row saves one recovery copy per 5 minutes, from before the first one, so a cleanup can't push out older copies. Copies before restoring or choosing which copy to keep are always saved.
-- While a recovery copy is being written, the panel says **Saving a recovery copy…** and closing the page warns first, since closing then could leave the copy empty.
 - If two tabs save at almost the same moment, the later one asks which copy to keep instead of erasing the earlier change.
 - Saving a task that another tab deleted or changed while you were editing now asks first. A deleted task can be saved as a new one. The app no longer reports **Task updated.** when nothing was saved, and deleting an already-deleted task says so.
 - Skipped routine days that the routine no longer runs on are no longer offered for **Restore occurrence**, which used to report success while restoring nothing.
-- Keep the 10 MB limit in one place and remove an unreachable message.
+- Deleting many tasks or ending many routines in a row saves one recovery copy per 5 minutes, from before the first one, so a cleanup can't push out older copies. Copies before restoring or choosing which copy to keep are always saved.
+- While a recovery copy is being written, the panel says **Saving a recovery copy…** and closing the page warns first, since closing then could leave the copy empty.
 - Recovery copy names now include a random part, so two app windows saving in the same millisecond keep both copies. Copies with older names still appear and restore.
+- Keep the 10 MB limit in one place and remove an unreachable message.
+- File tests now fail when a step hangs, instead of ending silently with success.
+
+Saved-data format remains 5, so v1.4.x, v1.5.0, v1.6.0, and v1.6.1 can read each other's tasks and backups.
 
 ## 1.6.0 — 2026-11-07
 
