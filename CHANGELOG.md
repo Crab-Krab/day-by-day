@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.1 — 2026-11-12
+
+Documentation only. The app is the same as 1.7.0.
+
 - Docs: the README, user guide and file autosave guide now say **Set up task file**, which is what the saving row's button reads until a task file is connected (it becomes **Manage** after). The README also describes **Coming up** and where the reorder arrows sit on phones.
 
 ## 1.7.0 — 2026-11-12
