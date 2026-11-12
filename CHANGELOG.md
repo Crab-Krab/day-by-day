@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## 1.7.0 — 2026-11-12
+
+A refresh of how the app looks and is laid out. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged. Saved-data format remains 5, so v1.4.x through v1.7.0 can read each other's tasks and backups.
+
+- New look: grey surfaces in light and dark mode, with violet for actions, selection and focus. The green palette is gone, including the tab icon and browser color. The tab icon matches the logo in both themes and changes with the theme button.
+- One system font throughout, with a consistent text scale. Day and dialog titles no longer use a serif font, and the date above the day title is no longer in capitals.
+- Buttons, fields and choices share one size (44 pixels tall), corner shape and focus outline. Pressed buttons no longer shrink, and checkmarks no longer zoom in.
+- New layout: a narrower sidebar, and a workspace that stops widening at 1440 pixels so tasks don't stretch into long, sparse rows on big monitors. The top bar, saving panel, day title, week, checklist and footer line up.
+- On screens narrower than 1360 pixels, Coming up is now available below the checklist. Select Show to open it. Before, it was hidden on those screens.
+- The sidebar becomes a top bar below 960 pixels (was 860). Phones use 16-pixel margins.
+- On phones, each task's buttons (reorder, Edit, More) sit on their own row under the task text, so long titles have room. The reorder arrows are full-size there.
+- Decorative slogans are gone: the sidebar tagline and leaf note, the "Your everyday space" prefix, the dialog and routines headlines, and the general day subtitle. The footer stays. "All done for this day." appears only when it's true.
+- Empty days say "No tasks planned for" the date, and when everything left today is overdue the checklist points to the Overdue section. An empty progress bar is no longer shown.
+- Overdue uses amber: a clock beside the heading, the original due date, and the due time of today's late tasks. Skipped and moved dates are labeled in words.
+- Add task reads Add routine on the Weekly routines page. The routine order line now also says daily orders are unchanged.
+- Accessibility: a Skip to main content link, the current view announced in the navigation, an explanation of what the My day count includes, and support for Windows High Contrast mode. Completed, Ended routines and Recovery copies show an arrow that turns when opened.
+- Messages at the bottom of the screen use the same card style as Undo. Save problems use red, paused recovery copies use amber.
+- Task editor: One time / Every week, the Repeat on days and the routine's changes-from date are always shown, before More options, which now holds notes, time and reminders. New tasks and routines open compact. Titles say Add routine, Edit routine or Edit task.
+- Problems are explained under the field they concern, and the field is marked, while the message is still announced to screen readers. A routine with no days no longer shows the hint twice.
+- An ended routine's history shows a notice that it can't be changed, and its fields look read-only. Delete task and End routine are red outlined buttons, on their own row on phones.
+- Saving: one status row, Browser saving only when no task file is connected, and a check mark when saved to a file. It no longer opens by itself unless something needs attention. While no task file is connected, the row explains why to connect one and offers Set up task file. Manage shows three groups: Task file, Browser copy and backups (now as buttons), and Recovery copies, which moved inside. Paused recovery copies are noted in the status row.
+- Which-copy dialogs: neither choice looks preferred, and Cancel sits apart from them.
+- With Reduce motion on, View this day jumps to the task instead of scrolling smoothly.
+- Development: a markup check now confirms that every element the scripts look up still exists exactly once, and that looking around the app never changes saved tasks. `npm run screenshots` takes review screenshots of the built app with a shared sample task file. Groundwork for the 1.7 redesign. The app itself is unchanged.
+
 ## 1.6.3 — 2026-11-10
 
 - If **Create new task file** ends without a folder, because Chrome refused a top-level folder such as Documents, permission was declined, or the dialog was cancelled, the panel now says **No folder chosen** and suggests making a folder such as `Documents\Day by Day`. Before, nothing visible happened.

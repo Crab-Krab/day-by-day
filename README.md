@@ -8,7 +8,7 @@ A daily checklist with weekly routines, a calendar, and reminders, all in one HT
 
 1. Download the HTML file and save it in a folder you plan to keep using.
 2. Double-click it to open it in your browser. You only need this file; source-code downloads are for development.
-3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Choose **More options** for notes, repetition, a due time, or reminders. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
+3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Choose **More options** for notes, a due time, or reminders. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
 
 The app opens to today. Select another day from the week strip, the month calendar (arrow keys work there too), or **Go to date**, and use the pencil beside a task to edit it.
 
@@ -35,9 +35,9 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 
 ## Your data
 
-Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, click **Create new task file** and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
+Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, choose **Manage**, then **Create new task file**, and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
 
-After a successful connection, saving controls collapse to a compact status. Choose **Manage** to see file controls, browser saving, and backups together. Setup and saving errors expand the details automatically.
+Saving shows as one compact status row. Choose **Manage** to see the task file, browser copy and backups, and recovery copies together. Setup and saving errors expand the details automatically.
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 
@@ -79,8 +79,9 @@ Use **Node.js 22 or newer**. There are no packages to install.
 | `scripts/build.mjs` | Builds the standalone HTML and its checksums |
 | `scripts/release-files.mjs` | Prepares the files attached to a GitHub release |
 | `scripts/preview.mjs` | Serves the app and browser checks on this computer |
+| `scripts/screenshots.mjs` | Takes review screenshots of the built app with sample tasks, at seven widths in light and dark |
 | `docs/TESTING.md` | Browser checks and the manual checklist before a release |
-| `tests/` | Scheduling, history/migration, theme, runtime, interface, and file-storage checks. `helpers/runtime.cjs` is the shared simulated browser, and `browser.html` and `ui-browser.html` run in real browsers |
+| `tests/` | Scheduling, history/migration, theme, runtime, interface, and file-storage checks. `helpers/runtime.cjs` is the shared simulated browser, `fixtures/sample-tasks.json` is a sample task file using every saved feature, and `browser.html` and `ui-browser.html` run in real browsers |
 | `.github/workflows/` | Automated checks on every pull request and on `main`, real-browser checks in Chrome and Edge, and the release publisher |
 | `docs/USAGE.txt` | Detailed user guide |
 | `Day-by-Day.html` | Ready-to-use app generated from the source |

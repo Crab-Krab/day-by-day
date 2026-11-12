@@ -4,9 +4,10 @@ Day by Day has three kinds of checks. Each one catches things the others can't.
 
 | Check | How to run it | What it covers |
 | --- | --- | --- |
-| Automated tests | `npm test` (GitHub runs them on every push) | Scheduling, history, saving, and the app's screens in a simulated browser |
+| Automated tests | `npm test` (GitHub runs them on every push) | Scheduling, history, saving, and the app's screens in a simulated browser. A markup check confirms every element the scripts look up still exists exactly once, and that looking around the app (changing dates and views, opening menus and the editor, then cancelling) never changes saved tasks |
 | Browser checks | `npm run preview`, then open the printed browser-checks address and select **Run browser checks** | The real built app in a real browser: adding, editing, reloading, the calendar keyboard, Retry saving, two tabs, and Move to tomorrow links |
 | Interface browser tests (optional) | `npm run test:browser`, after installing Playwright as shown below. GitHub runs them in Chrome and Edge on every pull request and on main, and the release workflow runs them in Chrome before publishing. | Interface checks at desktop and phone widths, with animations on and off: quick entry, task menus, collapsing Completed, saving panel, real mouse and keyboard input, plus all browser checks above, and opening the built file by `file://` the way users do, checking that its page policy blocks outside code and connections. Screenshots are saved for review |
+| Review screenshots (optional) | `npm run build`, then `npm run screenshots -- <folder>`, with Playwright installed as below | The built app with the sample tasks in `tests/fixtures/sample-tasks.json` at 320, 375, 768, 1024, 1366, 1920 and 2560 pixels wide, in light and dark: My day, reminders, Weekly routines, the editor, and an empty day. Pass widths such as `375,1366` after the folder to take fewer |
 | Manual checklist | Below, before a release | File permission prompts and other browser behavior that can't be automated |
 
 Run the browser checks in desktop Chrome or Edge, and in Firefox when a change touches the calendar, dialogs, or saving. They use only the preview page's own storage, put back whatever was there, and never touch your everyday tasks. Stop the preview with Ctrl+C.
@@ -44,7 +45,7 @@ Why Create new task file uses a folder: in Chrome 157 on Windows 11 (November 20
 
 **Recovery copies (Chrome or Edge)**
 
-- [ ] Open **Recovery copies**, choose a test folder, and check a first copy appears in its **Day-by-Day recovery copies** folder.
+- [ ] Choose **Manage**, open **Recovery copies**, choose a test folder, and check a first copy appears in its **Day-by-Day recovery copies** folder.
 - [ ] Delete a task, then **Show copies** and **Restore** the "before deleting a task" copy. The app asks first, and the task comes back.
 - [ ] Close and reopen the HTML. The panel shows **On**, or **Paused** if the browser didn't keep folder access. In that case **Turn copies back on** asks again.
 - [ ] Remove the folder's permission in browser settings, then make a change. The panel shows **Paused**, and the task still saves.
@@ -55,6 +56,14 @@ Why Create new task file uses a folder: in Chrome 157 on Windows 11 (November 20
 - [ ] Add a timed task with a reminder a few minutes ahead. The in-app reminder appears. With desktop alerts allowed, a desktop notification appears too.
 - [ ] Using only the keyboard, add, edit, cancel, and complete tasks. Focus returns to a sensible place each time.
 - [ ] Repeat a few steps in a narrow window, in dark mode, and with reduced motion turned on in the system settings.
+
+**Redesign (1.7)**
+
+- [ ] With no task file connected, the saving row says **Browser saving only** and offers **Set up task file**. Choose it, then **Create new task file**. The row then says **Saved to** with a check, and the prompt is gone.
+- [ ] In Windows Settings, turn on a contrast theme (Accessibility, Contrast themes). The selected day, **My day**, checked tasks, and the progress bar stay visible. Turn it off again.
+- [ ] Zoom the browser to 200%. Nothing scrolls sideways, and the task window's **Save** and **Cancel** stay reachable.
+- [ ] Make the window narrow. **Coming up** appears below the checklist; **Show** and **Hide** open and fold it.
+- [ ] Press Tab once after the page loads. **Skip to main content** appears; Enter moves past the sidebar.
 
 **Known Edge issue**
 

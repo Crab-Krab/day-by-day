@@ -8,12 +8,17 @@ function boot(saved,systemDark,storageFails=false){
   const media={matches:systemDark,addEventListener:(name,callback)=>mediaHandlers[name]=callback};
   const state=new Map(saved?[['day-by-day.theme',saved]]:[]);
   const localStorage={getItem:key=>{if(storageFails)throw Error('blocked');return state.get(key)??null;},setItem:(key,value)=>{if(storageFails)throw Error('blocked');state.set(key,value);}};
-  const context={document:{documentElement:root,getElementById:()=>button,querySelector:()=>({setAttribute(){}}),addEventListener:(name,callback)=>handlers[name]=callback},window:{matchMedia:()=>media,addEventListener:(name,callback)=>windowHandlers[name]=callback},localStorage};
+  const head={};
+  const context={document:{documentElement:root,getElementById:()=>button,querySelector:selector=>({setAttribute:(name,value)=>head[selector]=value}),addEventListener:(name,callback)=>handlers[name]=callback},window:{matchMedia:()=>media,addEventListener:(name,callback)=>windowHandlers[name]=callback},localStorage};
   vm.runInNewContext(source,context); handlers.DOMContentLoaded();
-  return {root,state,toggle:()=>buttonHandlers.click(),system:dark=>{media.matches=dark;mediaHandlers.change({matches:dark});},storage:value=>windowHandlers.storage({key:'day-by-day.theme',newValue:value})};
+  return {root,state,head,toggle:()=>buttonHandlers.click(),system:dark=>{media.matches=dark;mediaHandlers.change({matches:dark});},storage:value=>windowHandlers.storage({key:'day-by-day.theme',newValue:value})};
 }
 let app=boot(null,true);assert.equal(app.root.dataset.theme,'dark');app.system(false);assert.equal(app.root.dataset.theme,'light');
 app.toggle();assert.equal(app.root.dataset.theme,'dark');app.system(false);assert.equal(app.root.dataset.theme,'dark');assert.equal(app.state.get('day-by-day.theme'),'dark');
 app=boot('light',true);assert.equal(app.root.dataset.theme,'light');app.storage('dark');assert.equal(app.root.dataset.theme,'dark');app.storage(null);assert.equal(app.root.dataset.theme,'dark');app.system(false);assert.equal(app.root.dataset.theme,'light');
+// The browser color and tab icon follow the app's theme, including the toggle, not only the system setting.
+const icon=app=>decodeURIComponent(app.head['link[rel="icon"]']);
+app=boot('dark',false);assert.equal(app.head['meta[name="theme-color"]'],'#111113');assert.match(icon(app),/fill="#b8abff".*stroke="#211848"/);
+app.toggle();assert.equal(app.head['meta[name="theme-color"]'],'#f7f7f8');assert.match(icon(app),/fill="#5b4ce2".*stroke="#ffffff"/);
 app=boot(null,true,true);assert.equal(app.root.dataset.theme,'dark');app.toggle();assert.equal(app.root.dataset.theme,'light');
-console.log('Theme passed: system default and changes, saved overrides, cross-tab updates, preference removal, and unavailable storage.');
+console.log('Theme passed: system default and changes, saved overrides, cross-tab updates, preference removal, unavailable storage, and a browser color and tab icon that follow the theme.');
