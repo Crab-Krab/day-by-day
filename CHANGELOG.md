@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 1.7.0 — not released yet (in testing)
+## 1.7.0 — 2026-11-12
 
 A refresh of how the app looks and is laid out. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged. Saved-data format remains 5, so v1.4.x through v1.7.0 can read each other's tasks and backups.
 
