@@ -45,7 +45,7 @@ Why Create new task file uses a folder: in Chrome 157 on Windows 11 (November 20
 
 **Recovery copies (Chrome or Edge)**
 
-- [ ] Choose **Manage**, open **Recovery copies**, choose a test folder, and check a first copy appears in its **Day-by-Day recovery copies** folder.
+- [ ] Choose **Manage** (or **Set up task file**), open **Recovery copies**, choose a test folder, and check a first copy appears in its **Day-by-Day recovery copies** folder.
 - [ ] Delete a task, then **Show copies** and **Restore** the "before deleting a task" copy. The app asks first, and the task comes back.
 - [ ] Close and reopen the HTML. The panel shows **On**, or **Paused** if the browser didn't keep folder access. In that case **Turn copies back on** asks again.
 - [ ] Remove the folder's permission in browser settings, then make a change. The panel shows **Paused**, and the task still saves.

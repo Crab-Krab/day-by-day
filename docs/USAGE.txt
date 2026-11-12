@@ -9,16 +9,17 @@ The downloaded file works without an internet connection or account.
 
 AUTOMATIC FILE SAVING (CHROME / EDGE)
 Until a task file is connected, the line above the day says Browser saving only.
-Choose Manage there, then Create new task file, then choose a folder that stays on your computer,
-such as a new Day by Day folder inside Documents. The app saves your tasks there
+Choose Set up task file there, then Create new task file, then choose a folder
+that stays on your computer, such as a new Day by Day folder inside Documents. The app saves your tasks there
 as Day-by-Day-tasks.json. Allow editing access. Each task change saves
 automatically; wait for Saved to before closing or signing out. If that folder
 already has a task file, the app opens it instead of replacing it. If you keep a
 task JSON or backup somewhere else, use Open task file; it becomes the live
 autosave file.
 
-Saving shows as one status row. Choose Manage to see three groups: Task file
-(open, create, reconnect or disconnect), Browser copy and backups (Back up tasks
+Saving shows as one status row. Choose Set up task file (called Manage once a
+task file is connected) to see three groups: Task file (open, create, reconnect
+or disconnect), Browser copy and backups (Back up tasks
 and Restore backup), and Recovery copies. Setup and file-saving errors show the
 details automatically, and paused recovery copies are noted in the status row.
 
@@ -193,7 +194,8 @@ warns before replacing unreadable data; cancel keeps the original untouched.
 
 RECOVERY COPIES (OPTIONAL, CHROME / EDGE)
 Recovery copies keep up to 20 earlier versions of your tasks in a folder you
-choose. Choose Manage in the saving row, open Recovery copies, and choose a folder. A
+choose. Choose Manage (or Set up task file) in the saving row, open Recovery
+copies, and choose a folder. A
 copy is saved at most once an hour while you work, and right before deleting a
 task, ending a routine, restoring, or choosing which copy to keep. Many deletes
 or endings in a row save one copy per 5 minutes, from before the first one, so

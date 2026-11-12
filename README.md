@@ -10,13 +10,13 @@ A daily checklist with weekly routines, a calendar, and reminders, all in one HT
 2. Double-click it to open it in your browser. You only need this file; source-code downloads are for development.
 3. Select **+ Add task**, enter a task, and choose **One time** or **Every week**. Choose **More options** for notes, a due time, or reminders. Weekly tasks can repeat on multiple days, with **Mon–Fri** and **Every day** shortcuts.
 
-The app opens to today. Select another day from the week strip, the month calendar (arrow keys work there too), or **Go to date**, and use the pencil beside a task to edit it.
+The app opens to today. Select another day from the week strip, the month calendar (arrow keys work there too), **Go to date**, or **Coming up**, which lists the next 7 days beside the checklist on wide screens and below it (select **Show**) on smaller ones. Use the pencil beside a task to edit it.
 
 ## What it does
 
 - **Plan your day:** All-day tasks or specific due times, with optional descriptions, notes, and clickable web links.
 - **Repeat weekly:** Each scheduled date gets its own checkbox. Completing a routine today leaves future occurrences unchecked.
-- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows beside each task rearrange it, and **More** holds Skip and reminder details when a task has them. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
+- **Arrange your list:** Due times sort earliest first, alphabetical ties follow, and all-day tasks come last. Arrows beside each task (below it on phones) rearrange it, and **More** holds Skip and reminder details when a task has them. Custom order repeats on that weekday; other weekdays and the routine catalog remain independent.
 - **Keep routine history:** Choose when edits take effect, end a routine without removing its history, or skip and restore one occurrence. Routine-edit Undo restores replaced future changes.
 - **Keep the list focused:** Collapse **Completed** to hide finished tasks; its count and your progress remain visible.
 - **Choose your appearance:** Light/dark themes follow your system until you choose a preference. Subtle animations respect reduced-motion settings.
@@ -35,9 +35,9 @@ An unfinished timed task that becomes overdue **today** offers **Move to tomorro
 
 ## Your data
 
-Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, choose **Manage**, then **Create new task file**, and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
+Your tasks and history stay on your computer. They are not uploaded anywhere or synced between devices. In desktop **Chrome or Edge**, choose **Set up task file** in the saving row, then **Create new task file**, and choose a folder, such as a **Day by Day** folder inside Documents. Chrome and Edge won't accept Documents, Desktop or Downloads themselves, so make a folder inside one. The app saves your tasks there as `Day-by-Day-tasks.json`, and changes save automatically. Wait for **Saved to [filename]** before closing. If that folder already has a task file, the app opens it instead of replacing it. To use a task file kept elsewhere, choose **Open task file**.
 
-Saving shows as one compact status row. Choose **Manage** to see the task file, browser copy and backups, and recovery copies together. Setup and saving errors expand the details automatically.
+Saving shows as one compact status row. Until a task file is connected it reads **Browser saving only** and offers **Set up task file**; after that, the same button is called **Manage**. Either one shows the task file, browser copy and backups, and recovery copies together. Setup and saving errors expand the details automatically.
 
 The app automatically reopens its remembered file when the browser keeps access. Otherwise, click **Reconnect task file**. If daily browser cleanup erases the connection, click **Open task file** and select the same JSON again; the JSON itself stays on disk. A plain HTML file cannot silently rediscover files after access is forgotten. See [file autosave setup and recovery](docs/FILE-AUTOSAVE.md).
 
