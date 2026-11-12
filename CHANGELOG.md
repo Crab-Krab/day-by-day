@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Docs: the README, user guide and file autosave guide now say **Set up task file**, which is what the saving row's button reads until a task file is connected (it becomes **Manage** after). The README also describes **Coming up** and where the reorder arrows sit on phones.
+
 ## 1.7.0 — 2026-11-12
 
 A refresh of how the app looks and is laid out. Saved data, storage, and how tasks, routines, reminders and saving behave are unchanged. Saved-data format remains 5, so v1.4.x through v1.7.0 can read each other's tasks and backups.

@@ -5,7 +5,7 @@ Use the updated Day-by-Day.html in current desktop Chrome or Edge. No installati
 ## First setup
 
 1. Keep the HTML in a permanent folder. If tasks are in an older copy, export a backup from that copy before replacing it.
-2. If your tasks are already visible, choose **Manage** in the saving row, then **Create new task file**, and choose a folder that stays on your computer. Make a new folder for it, such as **Documents\\Day by Day**, since browsers refuse some top-level and system folders. Avoid temporary folders. The app creates **Day-by-Day-tasks.json** there.
+2. If your tasks are already visible, choose **Set up task file** in the saving row, then **Create new task file**, and choose a folder that stays on your computer. Make a new folder for it, such as **Documents\\Day by Day**, since browsers refuse some top-level and system folders. Avoid temporary folders. The app creates **Day-by-Day-tasks.json** there.
    - If the folder already has **Day-by-Day-tasks.json**, or **Day-by-Day-data.json** from an older version, the app opens it instead of replacing it. If your browser has different tasks, it asks which to keep first.
 3. If you already have a task JSON or exported backup somewhere else, click **Open task file** and select it instead. That file becomes the live autosave file; make a separate copy first if you want to keep the original backup unchanged.
 4. Allow editing when the browser asks. If offered **Allow on every visit**, this can make reopening smoother.
@@ -39,7 +39,7 @@ Firefox and unsupported browsers continue to offer browser saving and manual bac
 
 Recovery copies keep up to 20 earlier versions of your tasks in a folder you choose, so you can go back after a mistake long after Undo has gone. They work in desktop Chrome and Edge, with or without file autosave.
 
-1. Choose **Manage** in the saving row, open **Recovery copies**, and choose **Choose a folder**. Pick a private folder that stays on your computer, then allow editing.
+1. Choose **Manage** in the saving row (it reads **Set up task file** until a task file is connected), open **Recovery copies**, and choose **Choose a folder**. Pick a private folder that stays on your computer, then allow editing.
 2. The app saves a first copy right away. After that, it saves a copy at most once an hour while you work, and right before you delete a task, end a routine, restore, or choose which copy to keep. Deleting many tasks or ending many routines in a row saves one copy per 5 minutes, from before the first one, so a cleanup can't push out your older copies. Restoring and choosing which copy to keep always save a copy first.
 
 While a copy is being written, the panel says **Saving a recovery copy…** and the browser warns if you try to close the page. Wait for **Last copy** before closing.
